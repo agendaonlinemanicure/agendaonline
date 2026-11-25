@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Atelier Cliente">
+    <meta name="apple-mobile-web-app-title" content="Atelier Agenda">
     <link rel="manifest" href="./manifest.webmanifest">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,6 +48,13 @@
             letter-spacing: -0.01em;
             overflow-x: hidden;
         }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
         .fade-in {
             animation: fadeIn 0.22s ease-out;
         }
@@ -75,155 +82,261 @@
 <body class="min-h-screen text-[#111111] antialiased selection:bg-[#111111] selection:text-white">
 
     <header class="sticky top-0 z-30 backdrop-blur-sm border-b border-[#EAEAEA]" style="background-color: color-mix(in srgb, var(--brand-bg) 95%, transparent);">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2.5 min-w-0">
-                <span id="client-header-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal overflow-hidden shrink-0">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <button onclick="goClientHome()" class="flex items-center gap-2.5 text-left group min-w-0">
+                <span id="client-header-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal tracking-wider overflow-hidden shrink-0">
                     A
                 </span>
                 <div class="min-w-0">
-                    <span id="client-header-name" class="text-sm font-normal text-[#111111] block truncate leading-none">
+                    <span id="client-header-name" class="text-sm font-normal tracking-tight text-[#111111] block leading-none truncate">
                         Atelier Studio
                     </span>
-                    <span id="client-header-hours" class="text-[10px] text-[#737373] block truncate mt-0.5">
+                    <span id="client-header-hours" class="text-[10px] text-[#737373] leading-tight block truncate">
                         Seg – Sáb • 09h às 19h
                     </span>
                 </div>
-            </div>
+            </button>
 
             <div class="flex items-center gap-2 shrink-0">
-                <span id="client-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] border border-[#EAEAEA] surface-brand">
-                    <span id="client-status-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
-                    <span id="client-status-text">Disponível</span>
-                </span>
+                <button onclick="syncClientNow(true)"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] bg-white hover:border-[#111111] text-[#111111] transition-colors">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                    <span class="hidden sm:inline">Atualizar</span>
+                </button>
+
+                <button onclick="openClientAccountModal()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] surface-brand hover:border-[#111111] text-[#111111] transition-colors">
+                    <i data-lucide="user" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                    <span id="client-account-pill" class="max-w-[110px] truncate">Entrar / Conta</span>
+                </button>
 
                 <button id="install-client-pwa-btn" onclick="installClientPwa()"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs btn-brand hover:opacity-90 transition-opacity">
+                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs btn-brand hover:opacity-90 transition-opacity">
                     <i data-lucide="download" class="w-3.5 h-3.5 stroke-[1.75]"></i>
-                    <span class="hidden sm:inline font-normal">Instalar App</span>
+                    <span class="font-normal">Instalar App</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-7 space-y-6 fade-in">
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-7 sm:py-10">
+        <section id="view-client" class="fade-in space-y-8">
 
-        <!-- CAPA COLORIDA DO ESTABELECIMENTO -->
-        <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden">
-            <img id="client-cover-img"
-                 src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
-                 alt="Foto de capa do estabelecimento"
-                 onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
-                 class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent flex items-end justify-between p-4 sm:p-5 gap-3">
-                <div class="text-white flex items-center gap-3 min-w-0">
-                    <span id="client-cover-logo" class="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-sm font-normal overflow-hidden shrink-0">
-                        A
+            <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden">
+                <img id="client-cover-img"
+                     src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
+                     alt="Foto do estabelecimento"
+                     onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent flex items-end justify-between p-4 sm:p-5 gap-3">
+                    <div class="text-white min-w-0">
+                        <p id="client-cover-niche" class="text-[10px] uppercase tracking-[0.16em] text-white/75 truncate">Estabelecimento</p>
+                        <h1 id="client-cover-title" class="text-lg sm:text-xl font-normal tracking-tight truncate">Atelier Studio</h1>
+                        <p id="client-cover-hours" class="text-[11px] text-white/80 truncate">Seg – Sáb • 09h às 19h</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full bg-black/55 backdrop-blur-xs text-white text-[11px] inline-flex items-center gap-2 shrink-0">
+                        <span id="client-cover-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
+                        <span id="client-cover-status-text">Online</span>
                     </span>
-                    <div class="min-w-0">
-                        <p id="client-cover-niche" class="text-[10px] uppercase tracking-[0.16em] text-white/75 truncate">Estúdio</p>
-                        <h1 id="client-cover-name" class="text-base sm:text-lg font-normal tracking-tight truncate">Atelier Studio</h1>
+                </div>
+            </div>
+
+            <div id="studio-offline-banner" class="hidden p-4 rounded-2xl border border-[#EAEAEA] surface-brand text-xs text-[#737373] flex items-center justify-between gap-3">
+                <span>O agendamento online está pausado no momento.</span>
+                <span class="text-[11px] text-[#111111]">Studio Offline</span>
+            </div>
+
+            <div id="client-booking-flow" class="space-y-8">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs uppercase tracking-[0.12em] text-[#737373]">1. Escolha o profissional</span>
+                        <span id="selected-pro-summary" class="text-xs text-[#737373]"></span>
+                    </div>
+                    <div id="client-pro-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs uppercase tracking-[0.12em] text-[#737373]">2. Escolha o serviço</span>
+                        <span class="text-[11px] text-[#A3A3A3]">Preço e duração conforme o profissional</span>
+                    </div>
+                    <div id="client-service-list" class="space-y-2.5"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <span class="block text-xs uppercase tracking-[0.12em] text-[#737373]">3. Data e horário</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input id="client-date" type="date" onchange="renderClientTimeSlots()"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                        <div id="client-time-slots" class="flex gap-2 overflow-x-auto no-scrollbar py-0.5"></div>
                     </div>
                 </div>
-                <span id="client-cover-hours" class="text-[11px] text-white/85 hidden sm:inline shrink-0">
-                    Seg – Sáb • 09h às 19h
-                </span>
-            </div>
-        </div>
 
-        <div id="client-offline-notice" class="hidden p-4 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] text-xs text-[#6B5B3E]">
-            O agendamento online está temporariamente pausado pelo estabelecimento.
-        </div>
-
-        <!-- FORMULÁRIO DE AGENDAMENTO DO CLIENTE -->
-        <form id="client-booking-form" onsubmit="submitClientBooking(event)" class="p-5 sm:p-6 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
-            <div class="flex items-center justify-between gap-2">
-                <div>
-                    <p class="text-[11px] uppercase tracking-[0.14em] text-[#737373]">Agendar Horário</p>
-                    <h2 class="text-lg font-light text-[#111111]">Reserve seu atendimento</h2>
+                <div class="space-y-3">
+                    <span class="block text-xs uppercase tracking-[0.12em] text-[#737373]">4. Forma de pagamento</span>
+                    <div id="client-payment-methods" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
                 </div>
-                <button type="button" onclick="syncClientState(true)" class="text-xs text-[#737373] hover:text-[#111111] underline underline-offset-4">
-                    Atualizar tabela
+
+                <div class="space-y-3 pt-2 border-t border-[#EAEAEA]">
+                    <span class="block text-xs uppercase tracking-[0.12em] text-[#737373]">5. Seus dados</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input id="client-name" type="text" placeholder="Seu nome completo"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                        <input id="client-phone" type="tel" placeholder="WhatsApp (ex: 11 99999-9999)"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="block text-xs text-[#737373]">Total do serviço</span>
+                        <span id="client-total-price" class="text-2xl font-light text-[#111111]">R$ 0</span>
+                        <span id="client-total-meta" class="block text-xs text-[#737373] mt-0.5">Selecione profissional e serviço</span>
+                    </div>
+                    <button id="btn-confirm-booking" onclick="submitClientBooking()"
+                            class="px-6 py-3 rounded-full btn-brand text-xs font-normal tracking-wide hover:opacity-90 transition-opacity">
+                        Solicitar agendamento
+                    </button>
+                </div>
+            </div>
+
+            <div id="client-success-box" class="hidden p-6 sm:p-8 rounded-2xl border border-[#EAEAEA] surface-brand text-center space-y-5">
+                <div class="w-10 h-10 rounded-full btn-brand flex items-center justify-center mx-auto">
+                    <i data-lucide="clock" class="w-4 h-4 stroke-[1.75]"></i>
+                </div>
+                <div class="space-y-1">
+                    <span class="inline-block text-[11px] px-3 py-0.5 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">
+                        Solicitação enviada • Aguardando aceite do profissional
+                    </span>
+                    <h2 class="text-xl font-light text-[#111111] pt-1">Horário reservado para análise</h2>
+                    <p id="client-success-summary" class="text-xs text-[#737373] max-w-md mx-auto leading-relaxed"></p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+                    <a id="client-whatsapp-link" href="#" target="_blank" rel="noopener noreferrer"
+                       class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                        <i data-lucide="message-circle" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                        <span>Avisar no WhatsApp</span>
+                    </a>
+                    <button onclick="resetClientBookingForm()"
+                            class="w-full sm:w-auto px-5 py-2.5 rounded-full border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111] transition-colors">
+                        Fazer novo agendamento
+                    </button>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-[#EAEAEA] space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs uppercase tracking-[0.12em] text-[#737373]">Meus agendamentos</span>
+                    <span id="client-appointments-count" class="text-xs text-[#A3A3A3]">0</span>
+                </div>
+                <div id="client-my-appointments" class="space-y-2"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL CONTA DO CLIENTE -->
+    <div id="modal-client-account" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-5 fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.14em] text-[#737373]">Área do Cliente</p>
+                    <h3 class="text-base font-normal text-[#111111]">Entrar ou criar conta</h3>
+                </div>
+                <button onclick="closeClientAccountModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Seu nome</label>
-                    <input id="client-name" type="text" required placeholder="Ex: Mariana Souza"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+            <div id="client-logged-in-box" class="hidden p-4 rounded-2xl border border-[#EAEAEA] surface-brand space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p id="logged-client-name" class="text-sm font-normal text-[#111111]"></p>
+                        <p id="logged-client-user" class="text-xs text-[#737373]"></p>
+                    </div>
+                    <span class="text-[11px] px-2.5 py-0.5 rounded-full btn-brand">Conectado</span>
                 </div>
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Seu WhatsApp</label>
-                    <input id="client-phone" type="tel" required placeholder="(11) 99999-0000"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
-                </div>
+                <button type="button" onclick="logoutClientAccount()"
+                        class="w-full py-2 rounded-xl border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111]">
+                    Sair da conta
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Profissional</label>
-                    <select id="client-pro-select" onchange="handleClientProOrServiceChange()"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]"></select>
-                </div>
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Serviço</label>
-                    <select id="client-service-select" onchange="handleClientProOrServiceChange()"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]"></select>
-                </div>
+            <div class="grid grid-cols-2 gap-1 p-1 rounded-full surface-brand border border-[#EAEAEA]">
+                <button type="button" id="tab-client-login" onclick="switchClientAuthTab('login')"
+                        class="py-1.5 rounded-full text-xs btn-brand">Entrar</button>
+                <button type="button" id="tab-client-register" onclick="switchClientAuthTab('register')"
+                        class="py-1.5 rounded-full text-xs text-[#737373]">Criar conta</button>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+            <form id="form-client-login" onsubmit="handleClientLogin(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs text-[#737373] mb-1">Data</label>
-                    <input id="client-date" type="date" required
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                    <label class="block text-xs text-[#737373] mb-1">Usuário ou WhatsApp</label>
+                    <input id="login-client-identifier" type="text" required placeholder="Ex: maria.silva ou 11999990000"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
                 </div>
                 <div>
-                    <label class="block text-xs text-[#737373] mb-1">Horário</label>
-                    <input id="client-time" type="time" required
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                    <label class="block text-xs text-[#737373] mb-1">Senha (PIN de 4+ dígitos)</label>
+                    <input id="login-client-pin" type="password" required placeholder="••••"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
                 </div>
-                <div class="col-span-2 sm:col-span-1">
-                    <label class="block text-xs text-[#737373] mb-1">Forma de pagamento</label>
-                    <select id="client-payment-select"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]"></select>
-                </div>
-            </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90">
+                    Entrar na minha conta
+                </button>
+            </form>
 
-            <div class="p-3.5 rounded-xl border border-[#EAEAEA] bg-white flex items-center justify-between">
+            <form id="form-client-register" onsubmit="handleClientRegister(event)" class="hidden space-y-3">
                 <div>
-                    <span class="block text-[11px] text-[#737373]">Resumo estimado</span>
-                    <span id="client-summary-meta" class="text-xs text-[#111111]">Duração: 45 min</span>
+                    <label class="block text-xs text-[#737373] mb-1">Nome completo</label>
+                    <input id="reg-client-name" type="text" required placeholder="Ex: Mariana Costa"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
                 </div>
-                <span id="client-summary-price" class="text-base font-normal text-[#111111]">R$ 120</span>
-            </div>
-
-            <button id="client-submit-btn" type="submit"
-                    class="w-full py-3 rounded-xl btn-brand text-xs font-normal tracking-wide hover:opacity-90 transition-opacity">
-                Solicitar agendamento
-            </button>
-        </form>
-
-        <!-- MEUS AGENDAMENTOS -->
-        <div class="space-y-3">
-            <h3 class="text-sm font-normal text-[#111111]">Meus agendamentos</h3>
-            <div id="client-my-appointments" class="space-y-2.5"></div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Nome de usuário</label>
+                        <input id="reg-client-username" type="text" required placeholder="mariana.costa"
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">WhatsApp</label>
+                        <input id="reg-client-phone" type="tel" required placeholder="11999990000"
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Crie uma senha / PIN</label>
+                    <input id="reg-client-pin" type="password" required minlength="4" placeholder="Mínimo 4 caracteres"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90">
+                    Criar conta e entrar
+                </button>
+            </form>
         </div>
-    </main>
+    </div>
 
     <div id="toast"
          class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200 bg-[#111111] text-white text-xs px-4 py-2.5 rounded-full shadow-sm max-w-[92vw] text-center">
     </div>
 
     <script>
-        const TODAY_ISO = '2026-11-25';
+        function getTodayLocalIso() {
+            const now = new Date();
+            const off = now.getTimezoneOffset();
+            return new Date(now.getTime() - off * 60000).toISOString().slice(0, 10);
+        }
+
+        const TODAY_ISO = getTodayLocalIso();
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
         const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
+        const CLIENT_SESSION_KEY = 'atelier_client_session_v1';
         const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
+        const TIME_SLOTS = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:30', '18:00'];
 
         let sbClient = null;
         let dbConnected = false;
-        let deferredClientPrompt = null;
+        let deferredClientPwaPrompt = null;
+        let syncInFlight = false;
 
         const state = {
             studioOnline: true,
@@ -237,6 +350,12 @@
                 bg: '#FFFFFF',
                 surface: '#FAFAFA'
             },
+            selectedProId: null,
+            selectedServiceId: null,
+            selectedDate: TODAY_ISO,
+            selectedTime: '10:00',
+            selectedPayment: 'Pix',
+            loggedClient: null,
             servicesCatalog: [
                 { id: 's1', name: 'Corte & Visagismo', specialty: 'Atendimento', duration: 45, price: 120 },
                 { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Atendimento', duration: 35, price: 70 },
@@ -246,6 +365,7 @@
                 { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
                 { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
             ],
+            clientsRoster: [],
             paymentMethods: [
                 { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
                 { id: 'pay-credit', label: 'Cartão de Crédito', detail: 'À vista ou parcelado', enabled: true },
@@ -255,18 +375,18 @@
             appointments: []
         };
 
-        function loadLocalState() {
+        function loadLocalBackup() {
             try {
-                const rawCfg = localStorage.getItem(LOCAL_CFG_KEY);
-                if (rawCfg) {
-                    const cfg = JSON.parse(rawCfg);
-                    if (cfg.studioName) state.studioName = cfg.studioName;
-                    if (cfg.studioNiche) state.studioNiche = cfg.studioNiche;
-                    if (typeof cfg.studioOnline === 'boolean') state.studioOnline = cfg.studioOnline;
-                    if (cfg.studioCover) state.studioCover = cfg.studioCover;
-                    if (typeof cfg.studioLogo === 'string') state.studioLogo = cfg.studioLogo;
-                    if (cfg.studioHours) state.studioHours = cfg.studioHours;
-                    if (cfg.themeColors) state.themeColors = { ...state.themeColors, ...cfg.themeColors };
+                const raw = localStorage.getItem(LOCAL_CFG_KEY);
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    if (saved.studioName) state.studioName = saved.studioName;
+                    if (saved.studioNiche) state.studioNiche = saved.studioNiche;
+                    if (typeof saved.studioOnline === 'boolean') state.studioOnline = saved.studioOnline;
+                    if (saved.studioCover) state.studioCover = saved.studioCover;
+                    if (typeof saved.studioLogo === 'string') state.studioLogo = saved.studioLogo;
+                    if (saved.studioHours) state.studioHours = saved.studioHours;
+                    if (saved.themeColors) state.themeColors = { ...state.themeColors, ...saved.themeColors };
                 }
 
                 const rawData = localStorage.getItem(LOCAL_DATA_KEY);
@@ -274,13 +394,20 @@
                     const d = JSON.parse(rawData);
                     if (Array.isArray(d.servicesCatalog)) state.servicesCatalog = d.servicesCatalog;
                     if (Array.isArray(d.professionals)) state.professionals = d.professionals;
+                    if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
                     if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
                     if (Array.isArray(d.appointments)) state.appointments = d.appointments;
+                }
+
+                const rawSession = localStorage.getItem(CLIENT_SESSION_KEY);
+                if (rawSession) {
+                    const sess = JSON.parse(rawSession);
+                    if (sess && sess.name) state.loggedClient = sess;
                 }
             } catch (e) {}
         }
 
-        function saveLocalState() {
+        function saveLocalBackup() {
             try {
                 localStorage.setItem(LOCAL_CFG_KEY, JSON.stringify({
                     studioName: state.studioName,
@@ -294,6 +421,7 @@
                 localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify({
                     servicesCatalog: state.servicesCatalog,
                     professionals: state.professionals,
+                    clientsRoster: state.clientsRoster,
                     paymentMethods: state.paymentMethods,
                     appointments: state.appointments
                 }));
@@ -308,24 +436,30 @@
             dbConnected = true;
         }
 
-        async function loadRemoteState() {
-            loadLocalState();
-            if (!dbConnected || !sbClient) return;
-            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+        async function loadFromSupabase() {
+            if (syncInFlight) return;
+            syncInFlight = true;
 
             try {
+                if (!dbConnected || !sbClient) {
+                    loadLocalBackup();
+                    return;
+                }
+
+                const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+
                 const { data: est, error: estErr } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
                 if (!estErr && est) {
                     state.studioName = est.nome || state.studioName;
                     state.studioNiche = est.nicho || state.studioNiche;
                     state.studioOnline = typeof est.online === 'boolean' ? est.online : state.studioOnline;
                     state.studioCover = est.capa_url || state.studioCover;
-                    state.studioLogo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : state.studioLogo;
+                    state.studioLogo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : '';
                     state.studioHours = est.horario_funcionamento || state.studioHours;
                     state.themeColors = {
-                        primary: est.cor_primaria || state.themeColors.primary || '#111111',
-                        bg: est.cor_fundo || state.themeColors.bg || '#FFFFFF',
-                        surface: est.cor_destaque || state.themeColors.surface || '#FAFAFA'
+                        primary: est.cor_primaria || '#111111',
+                        bg: est.cor_fundo || '#FFFFFF',
+                        surface: est.cor_destaque || '#FAFAFA'
                     };
                 }
 
@@ -349,8 +483,16 @@
                 }
 
                 const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
-                if (!payErr && Array.isArray(pays) && pays.length > 0) {
+                if (!payErr && Array.isArray(pays)) {
                     state.paymentMethods = pays.map(pm => ({ id: pm.id, label: pm.nome, detail: pm.descricao || '', enabled: !!pm.ativo }));
+                }
+
+                const { data: clis, error: cliErr } = await sbClient.from('clientes').select('*');
+                if (!cliErr && Array.isArray(clis)) {
+                    state.clientsRoster = clis.map(c => ({
+                        id: c.id, name: c.nome_completo, username: c.usuario || '', pin: c.senha_pin || '',
+                        phone: c.whatsapp || '', notes: c.observacoes || '', visits: Number(c.visitas) || 0
+                    }));
                 }
 
                 const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
@@ -369,224 +511,501 @@
                     }));
                 }
 
-                saveLocalState();
+                saveLocalBackup();
             } catch (e) {
-                console.warn('Erro ao sincronizar no app do cliente:', e);
+                console.warn('Erro ao sincronizar app cliente:', e);
+            } finally {
+                syncInFlight = false;
             }
         }
 
         function subscribeClientRealtime() {
             if (!dbConnected || !sbClient || !sbClient.channel) return;
             try {
-                sbClient
-                    .channel('client-live-updates')
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'estabelecimentos' }, () => syncClientState(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'servicos' }, () => syncClientState(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'profissionais' }, () => syncClientState(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'profissional_servicos' }, () => syncClientState(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'formas_pagamento' }, () => syncClientState(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, () => syncClientState(false))
-                    .subscribe();
-            } catch (e) {
-                console.warn('Realtime indisponível no cliente, mantendo sincronização automática.', e);
-            }
+                const tables = ['agendamentos', 'estabelecimentos', 'servicos', 'profissionais', 'profissional_servicos', 'formas_pagamento', 'clientes'];
+                const channel = sbClient.channel('client-full-realtime');
+                tables.forEach(tbl => {
+                    channel.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, async () => {
+                        await loadFromSupabase();
+                        renderClientView();
+                    });
+                });
+                channel.subscribe();
+            } catch (e) {}
         }
 
-        function applyClientThemeAndBranding() {
+        async function syncClientNow(showMsg = false) {
+            await loadFromSupabase();
+            renderClientView();
+            if (showMsg) showToast('Informações atualizadas.');
+        }
+
+        function applyBrandingAndTheme() {
             document.documentElement.style.setProperty('--brand-primary', state.themeColors.primary);
             document.documentElement.style.setProperty('--brand-bg', state.themeColors.bg);
             document.documentElement.style.setProperty('--brand-surface', state.themeColors.surface);
 
             document.getElementById('client-header-name').textContent = state.studioName;
             document.getElementById('client-header-hours').textContent = state.studioHours;
-            document.getElementById('client-cover-name').textContent = state.studioName;
+            document.getElementById('client-cover-title').textContent = state.studioName;
             document.getElementById('client-cover-niche').textContent = state.studioNiche;
             document.getElementById('client-cover-hours').textContent = state.studioHours;
             document.getElementById('client-cover-img').src = state.studioCover;
 
             const initial = (state.studioName || 'A').trim().charAt(0).toUpperCase() || 'A';
-            const headerLogo = document.getElementById('client-header-logo');
-            const coverLogo = document.getElementById('client-cover-logo');
-
+            const logoEl = document.getElementById('client-header-logo');
             if (state.studioLogo) {
-                const imgHtml = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
-                headerLogo.innerHTML = imgHtml;
-                coverLogo.innerHTML = imgHtml;
+                logoEl.innerHTML = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
             } else {
-                headerLogo.textContent = initial;
-                coverLogo.textContent = initial;
+                logoEl.textContent = initial;
             }
 
-            const dot = document.getElementById('client-status-dot');
-            const label = document.getElementById('client-status-text');
-            const notice = document.getElementById('client-offline-notice');
-            const submitBtn = document.getElementById('client-submit-btn');
+            const dot = document.getElementById('client-cover-dot');
+            const statusText = document.getElementById('client-cover-status-text');
+            dot.classList.remove(state.studioOnline ? 'status-dot-offline' : 'status-dot-online');
+            dot.classList.add(state.studioOnline ? 'status-dot-online' : 'status-dot-offline');
+            statusText.textContent = state.studioOnline ? 'Online' : 'Offline';
 
-            if (state.studioOnline) {
-                dot.classList.remove('status-dot-offline');
-                dot.classList.add('status-dot-online');
-                label.textContent = 'Disponível';
-                notice.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            const pill = document.getElementById('client-account-pill');
+            pill.textContent = state.loggedClient ? state.loggedClient.name.split(' ')[0] : 'Entrar / Conta';
+        }
+
+        function getProById(id) {
+            return state.professionals.find(p => p.id === id) || state.professionals[0] || { id: 'p1', name: 'Profissional', specialty: '', serviceRates: {} };
+        }
+        function getServiceById(id) {
+            return state.servicesCatalog.find(s => s.id === id) || state.servicesCatalog[0] || { id: 's1', name: 'Serviço', specialty: '', duration: 45, price: 0 };
+        }
+        function getProServiceInfo(pro, serviceId) {
+            const base = getServiceById(serviceId);
+            const custom = pro && pro.serviceRates && pro.serviceRates[serviceId];
+            if (custom && custom.enabled) {
+                return { available: true, price: Number(custom.price) || base.price, duration: Number(custom.duration) || base.duration };
+            }
+            return { available: false, price: base.price, duration: base.duration };
+        }
+
+        function ensureValidSelections() {
+            if (!state.professionals.some(p => p.id === state.selectedProId)) {
+                state.selectedProId = state.professionals[0] ? state.professionals[0].id : null;
+            }
+            const pro = getProById(state.selectedProId);
+            const availableServices = state.servicesCatalog.filter(s => getProServiceInfo(pro, s.id).available);
+            if (!availableServices.some(s => s.id === state.selectedServiceId)) {
+                state.selectedServiceId = availableServices[0] ? availableServices[0].id : (state.servicesCatalog[0] ? state.servicesCatalog[0].id : null);
+            }
+            const activePayments = state.paymentMethods.filter(m => m.enabled);
+            if (!activePayments.some(m => m.label === state.selectedPayment)) {
+                state.selectedPayment = activePayments[0] ? activePayments[0].label : 'Pix';
+            }
+        }
+
+        function renderClientView() {
+            applyBrandingAndTheme();
+            ensureValidSelections();
+
+            const dateInput = document.getElementById('client-date');
+            if (!dateInput.value) dateInput.value = state.selectedDate || TODAY_ISO;
+            state.selectedDate = dateInput.value || TODAY_ISO;
+
+            if (state.loggedClient) {
+                const nameInput = document.getElementById('client-name');
+                const phoneInput = document.getElementById('client-phone');
+                if (!nameInput.value) nameInput.value = state.loggedClient.name || '';
+                if (!phoneInput.value) phoneInput.value = state.loggedClient.phone || '';
+            }
+
+            const offlineBanner = document.getElementById('studio-offline-banner');
+            const flow = document.getElementById('client-booking-flow');
+            if (!state.studioOnline) {
+                offlineBanner.classList.remove('hidden');
+                flow.classList.add('opacity-50', 'pointer-events-none');
             } else {
-                dot.classList.remove('status-dot-online');
-                dot.classList.add('status-dot-offline');
-                label.textContent = 'Pausado';
-                notice.classList.remove('hidden');
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function populateClientFormOptions() {
-            const proSel = document.getElementById('client-pro-select');
-            const svcSel = document.getElementById('client-service-select');
-            const paySel = document.getElementById('client-payment-select');
-
-            const prevPro = proSel.value;
-            const prevSvc = svcSel.value;
-            const prevPay = paySel.value;
-
-            proSel.innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            if (prevPro && state.professionals.some(p => p.id === prevPro)) proSel.value = prevPro;
-
-            svcSel.innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            if (prevSvc && state.servicesCatalog.some(s => s.id === prevSvc)) svcSel.value = prevSvc;
-
-            const activePays = state.paymentMethods.filter(m => m.enabled);
-            const listPays = activePays.length ? activePays : state.paymentMethods;
-            paySel.innerHTML = listPays.map(m => `<option value="${m.label}">${m.label}</option>`).join('');
-            if (prevPay && listPays.some(m => m.label === prevPay)) paySel.value = prevPay;
-
-            handleClientProOrServiceChange();
-        }
-
-        function handleClientProOrServiceChange() {
-            const proId = document.getElementById('client-pro-select').value;
-            const svcId = document.getElementById('client-service-select').value;
-            const pro = state.professionals.find(p => p.id === proId);
-            const svc = state.servicesCatalog.find(s => s.id === svcId);
-
-            if (!svc) {
-                document.getElementById('client-summary-meta').textContent = 'Selecione um serviço';
-                document.getElementById('client-summary-price').textContent = 'R$ 0';
-                return;
+                offlineBanner.classList.add('hidden');
+                flow.classList.remove('opacity-50', 'pointer-events-none');
             }
 
-            const custom = pro && pro.serviceRates && pro.serviceRates[svcId] && pro.serviceRates[svcId].enabled
-                ? pro.serviceRates[svcId]
-                : null;
-
-            const price = custom ? Number(custom.price) : Number(svc.price);
-            const duration = custom ? Number(custom.duration) : Number(svc.duration);
-
-            document.getElementById('client-summary-meta').textContent = `Duração: ${duration} min`;
-            document.getElementById('client-summary-price').textContent = `R$ ${price}`;
+            renderClientProList();
+            renderClientServiceList();
+            renderClientTimeSlots();
+            renderClientPayments();
+            updateClientTotal();
+            renderClientAppointments();
+            lucide.createIcons();
         }
 
-        function renderClientAppointmentsList() {
-            const box = document.getElementById('client-my-appointments');
-            if (!state.appointments.length) {
-                box.innerHTML = `<div class="p-6 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum agendamento registrado ainda.</div>`;
-                return;
-            }
-            box.innerHTML = state.appointments.map(app => {
-                const pro = state.professionals.find(p => p.id === app.proId) || { name: 'Profissional' };
-                const svc = state.servicesCatalog.find(s => s.id === app.serviceId) || { name: 'Serviço' };
-                const statusLabel = app.status === 'pending'
-                    ? 'Aguardando aceite'
-                    : app.status === 'done'
-                        ? 'Concluído'
-                        : 'Confirmado';
+        function renderClientProList() {
+            const container = document.getElementById('client-pro-list');
+            const pro = getProById(state.selectedProId);
+            document.getElementById('selected-pro-summary').textContent = pro ? `${pro.name} selecionado` : '';
 
+            container.innerHTML = state.professionals.map(p => {
+                const active = p.id === state.selectedProId;
+                const count = Object.values(p.serviceRates || {}).filter(r => r && r.enabled).length;
                 return `
-                    <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+                    <button type="button" onclick="selectClientPro('${p.id}')"
+                            class="p-4 rounded-2xl border text-left transition-all ${active ? 'border-[#111111] btn-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-sm font-normal">${p.name}</span>
+                            <span class="text-[11px] ${active ? 'text-white/75' : 'text-[#737373]'}">${count} serviço(s)</span>
+                        </div>
+                        <p class="text-xs mt-1 ${active ? 'text-white/80' : 'text-[#737373]'}">${p.specialty || 'Profissional'}</p>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectClientPro(proId) {
+            state.selectedProId = proId;
+            const pro = getProById(proId);
+            const available = state.servicesCatalog.filter(s => getProServiceInfo(pro, s.id).available);
+            if (!available.some(s => s.id === state.selectedServiceId)) {
+                state.selectedServiceId = available[0] ? available[0].id : null;
+            }
+            renderClientView();
+        }
+
+        function renderClientServiceList() {
+            const container = document.getElementById('client-service-list');
+            const pro = getProById(state.selectedProId);
+            const list = state.servicesCatalog.filter(s => getProServiceInfo(pro, s.id).available);
+            const itemsToShow = list.length ? list : state.servicesCatalog;
+
+            container.innerHTML = itemsToShow.map(s => {
+                const info = getProServiceInfo(pro, s.id);
+                const active = s.id === state.selectedServiceId;
+                return `
+                    <button type="button" onclick="selectClientService('${s.id}')"
+                            class="w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all ${active ? 'border-[#111111] surface-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
                         <div>
-                            <p class="text-sm font-normal text-[#111111]">${svc.name} • ${app.time}</p>
-                            <p class="text-xs text-[#737373]">${app.clientName} • ${pro.name} • ${app.date}</p>
+                            <p class="text-sm font-normal text-[#111111]">${s.name}</p>
+                            <p class="text-xs text-[#737373]">${info.duration} min${s.specialty ? ` • ${s.specialty}` : ''}</p>
                         </div>
-                        <div class="text-right">
-                            <span class="block text-sm font-normal text-[#111111]">R$ ${app.price}</span>
-                            <span class="text-[11px] text-[#737373]">${statusLabel}</span>
+                        <span class="text-sm font-normal text-[#111111]">R$ ${info.price}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectClientService(svcId) {
+            state.selectedServiceId = svcId;
+            renderClientServiceList();
+            updateClientTotal();
+        }
+
+        function renderClientTimeSlots() {
+            const dateVal = document.getElementById('client-date').value || TODAY_ISO;
+            state.selectedDate = dateVal;
+            const bookedTimes = new Set(
+                state.appointments
+                    .filter(a => a.proId === state.selectedProId && a.date === dateVal)
+                    .map(a => a.time)
+            );
+
+            const container = document.getElementById('client-time-slots');
+            container.innerHTML = TIME_SLOTS.map(slot => {
+                const taken = bookedTimes.has(slot);
+                const active = !taken && state.selectedTime === slot;
+                return `
+                    <button type="button" ${taken ? 'disabled' : `onclick="selectClientTime('${slot}')"`}
+                            class="px-3.5 py-2 rounded-xl text-xs shrink-0 border transition-colors ${
+                                taken
+                                    ? 'border-[#EAEAEA] bg-[#F5F5F5] text-[#A3A3A3] line-through cursor-not-allowed'
+                                    : active
+                                        ? 'border-[#111111] btn-brand'
+                                        : 'border-[#EAEAEA] bg-white text-[#111111] hover:border-[#111111]'
+                            }">
+                        ${slot}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectClientTime(slot) {
+            state.selectedTime = slot;
+            renderClientTimeSlots();
+        }
+
+        function renderClientPayments() {
+            const activeMethods = state.paymentMethods.filter(m => m.enabled);
+            const list = activeMethods.length ? activeMethods : state.paymentMethods;
+            const container = document.getElementById('client-payment-methods');
+            container.innerHTML = list.map(pm => {
+                const active = pm.label === state.selectedPayment;
+                return `
+                    <button type="button" onclick="selectClientPayment('${pm.label.replace(/'/g, "\\'")}')"
+                            class="p-3 rounded-xl border text-left transition-colors ${active ? 'border-[#111111] btn-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
+                        <span class="block text-xs font-normal">${pm.label}</span>
+                        <span class="block text-[10px] mt-0.5 ${active ? 'text-white/75' : 'text-[#737373]'}">${pm.detail || ''}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectClientPayment(label) {
+            state.selectedPayment = label;
+            renderClientPayments();
+        }
+
+        function updateClientTotal() {
+            const pro = getProById(state.selectedProId);
+            const svc = getServiceById(state.selectedServiceId);
+            const info = getProServiceInfo(pro, svc.id);
+            document.getElementById('client-total-price').textContent = `R$ ${info.price}`;
+            document.getElementById('client-total-meta').textContent = `${svc.name} • ${info.duration} min • com ${pro.name}`;
+        }
+
+        async function submitClientBooking() {
+            if (!state.studioOnline) {
+                showToast('O agendamento online está pausado no momento.');
+                return;
+            }
+            const name = document.getElementById('client-name').value.trim();
+            const phone = document.getElementById('client-phone').value.trim();
+            const date = document.getElementById('client-date').value || TODAY_ISO;
+
+            if (!name) {
+                showToast('Por favor, informe seu nome.');
+                return;
+            }
+            if (!phone) {
+                showToast('Por favor, informe seu WhatsApp.');
+                return;
+            }
+
+            const pro = getProById(state.selectedProId);
+            const svc = getServiceById(state.selectedServiceId);
+            const info = getProServiceInfo(pro, svc.id);
+            const item = {
+                id: 'a-' + Date.now(),
+                clientName: name,
+                clientPhone: phone,
+                proId: pro.id,
+                serviceId: svc.id,
+                date,
+                time: state.selectedTime,
+                price: info.price,
+                paymentMethod: state.selectedPayment,
+                status: 'pending'
+            };
+
+            state.appointments.push(item);
+            saveLocalBackup();
+
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('agendamentos').insert({
+                    id: item.id,
+                    cliente_nome: item.clientName,
+                    cliente_whatsapp: item.clientPhone,
+                    profissional_id: item.proId,
+                    servico_id: item.serviceId,
+                    data_agendamento: item.date,
+                    hora_agendamento: item.time,
+                    valor: item.price,
+                    forma_pagamento: item.paymentMethod,
+                    status: 'pending'
+                });
+                if (error) {
+                    showToast('Erro ao enviar solicitação: ' + error.message);
+                }
+            }
+
+            document.getElementById('client-booking-flow').classList.add('hidden');
+            const box = document.getElementById('client-success-box');
+            box.classList.remove('hidden');
+            document.getElementById('client-success-summary').textContent =
+                `${name}, sua solicitação de ${svc.name} com ${pro.name} para ${date} às ${item.time} (${item.paymentMethod} • R$ ${item.price}) foi enviada.`;
+
+            const waMsg = `Olá! Solicitei um agendamento no ${state.studioName}: ${svc.name} com ${pro.name} em ${date} às ${item.time} (${item.paymentMethod}). Nome: ${name}.`;
+            document.getElementById('client-whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+
+            renderClientAppointments();
+            lucide.createIcons();
+            showToast('Solicitação enviada ao profissional!');
+        }
+
+        function resetClientBookingForm() {
+            document.getElementById('client-success-box').classList.add('hidden');
+            document.getElementById('client-booking-flow').classList.remove('hidden');
+            renderClientView();
+        }
+
+        function goClientHome() {
+            resetClientBookingForm();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function getClientStatusBadge(status) {
+            if (status === 'pending') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">Aguardando aceite</span>';
+            if (status === 'done') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full btn-brand">Concluído</span>';
+            return '<span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#111111]">Confirmado</span>';
+        }
+
+        function renderClientAppointments() {
+            const container = document.getElementById('client-my-appointments');
+            const countEl = document.getElementById('client-appointments-count');
+            const typedName = (document.getElementById('client-name')?.value || '').trim().toLowerCase();
+            const loggedName = (state.loggedClient?.name || '').trim().toLowerCase();
+            const filterName = typedName || loggedName;
+
+            const list = filterName
+                ? state.appointments.filter(a => (a.clientName || '').trim().toLowerCase().includes(filterName))
+                : state.appointments;
+
+            countEl.textContent = `${list.length}`;
+            if (!list.length) {
+                container.innerHTML = `<p class="text-xs text-[#737373] py-4 text-center border border-dashed border-[#EAEAEA] rounded-2xl">Nenhum agendamento encontrado.</p>`;
+                return;
+            }
+
+            container.innerHTML = list.map(app => {
+                const pro = getProById(app.proId);
+                const svc = getServiceById(app.serviceId);
+                return `
+                    <div class="p-3.5 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-normal text-[#111111]">${app.date} às ${app.time} • ${svc.name}</p>
+                            <p class="text-[11px] text-[#737373]">${app.clientName} • com ${pro.name} • R$ ${app.price}</p>
                         </div>
+                        ${getClientStatusBadge(app.status)}
                     </div>
                 `;
             }).join('');
         }
 
-        async function submitClientBooking(event) {
-            event.preventDefault();
-            if (!state.studioOnline) {
-                showToast('Agendamento online pausado no momento.');
-                return;
+        /* ================= CONTA DO CLIENTE ================= */
+        function openClientAccountModal() {
+            const m = document.getElementById('modal-client-account');
+            const loggedBox = document.getElementById('client-logged-in-box');
+            if (state.loggedClient) {
+                loggedBox.classList.remove('hidden');
+                document.getElementById('logged-client-name').textContent = state.loggedClient.name;
+                document.getElementById('logged-client-user').textContent = `@${state.loggedClient.username || 'cliente'} • ${state.loggedClient.phone || ''}`;
+            } else {
+                loggedBox.classList.add('hidden');
             }
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
 
-            const proId = document.getElementById('client-pro-select').value;
-            const svcId = document.getElementById('client-service-select').value;
-            const pro = state.professionals.find(p => p.id === proId);
-            const svc = state.servicesCatalog.find(s => s.id === svcId);
-            const custom = pro && pro.serviceRates && pro.serviceRates[svcId] && pro.serviceRates[svcId].enabled
-                ? pro.serviceRates[svcId]
-                : null;
-            const price = custom ? Number(custom.price) : Number(svc ? svc.price : 0);
+        function closeClientAccountModal() {
+            const m = document.getElementById('modal-client-account');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
 
-            const newItem = {
-                id: 'a-' + Date.now(),
-                clientName: document.getElementById('client-name').value.trim(),
-                clientPhone: document.getElementById('client-phone').value.trim(),
-                proId,
-                serviceId: svcId,
-                date: document.getElementById('client-date').value || TODAY_ISO,
-                time: document.getElementById('client-time').value || '09:00',
-                price,
-                paymentMethod: document.getElementById('client-payment-select').value || 'Pix',
-                status: 'pending'
-            };
+        function switchClientAuthTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('tab-client-login').className = `py-1.5 rounded-full text-xs ${isLogin ? 'btn-brand' : 'text-[#737373]'}`;
+            document.getElementById('tab-client-register').className = `py-1.5 rounded-full text-xs ${!isLogin ? 'btn-brand' : 'text-[#737373]'}`;
+            document.getElementById('form-client-login').classList.toggle('hidden', !isLogin);
+            document.getElementById('form-client-register').classList.toggle('hidden', isLogin);
+        }
 
-            state.appointments.push(newItem);
-            saveLocalState();
+        async function handleClientLogin(event) {
+            event.preventDefault();
+            const ident = document.getElementById('login-client-identifier').value.trim().toLowerCase();
+            const pin = document.getElementById('login-client-pin').value.trim();
 
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('agendamentos').insert({
-                    id: newItem.id,
-                    cliente_nome: newItem.clientName,
-                    cliente_whatsapp: newItem.clientPhone,
-                    profissional_id: newItem.proId,
-                    servico_id: newItem.serviceId,
-                    data_agendamento: newItem.date,
-                    hora_agendamento: newItem.time,
-                    valor: newItem.price,
-                    forma_pagamento: newItem.paymentMethod,
-                    status: 'pending'
-                });
-                if (error) {
-                    console.warn('Erro ao enviar agendamento para o Supabase:', error.message);
+                const { data } = await sbClient.from('clientes').select('*');
+                if (Array.isArray(data)) {
+                    const match = data.find(c =>
+                        ((c.usuario || '').toLowerCase() === ident || (c.whatsapp || '').replace(/\D/g, '') === ident.replace(/\D/g, '')) &&
+                        (c.senha_pin || '') === pin
+                    );
+                    if (match) {
+                        state.loggedClient = { id: match.id, name: match.nome_completo, username: match.usuario || '', phone: match.whatsapp || '' };
+                        localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
+                        document.getElementById('client-name').value = state.loggedClient.name;
+                        document.getElementById('client-phone').value = state.loggedClient.phone;
+                        closeClientAccountModal();
+                        renderClientView();
+                        showToast(`Bem-vindo(a), ${state.loggedClient.name}!`);
+                        return;
+                    }
                 }
             }
 
-            renderClientAppointmentsList();
-            showToast('Solicitação enviada! Aguardando aceite do estabelecimento.');
+            const localMatch = state.clientsRoster.find(c =>
+                ((c.username || '').toLowerCase() === ident || (c.phone || '').replace(/\D/g, '') === ident.replace(/\D/g, '')) &&
+                (!c.pin || c.pin === pin)
+            );
+            if (localMatch) {
+                state.loggedClient = { id: localMatch.id, name: localMatch.name, username: localMatch.username || '', phone: localMatch.phone || '' };
+                localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
+                document.getElementById('client-name').value = state.loggedClient.name;
+                document.getElementById('client-phone').value = state.loggedClient.phone;
+                closeClientAccountModal();
+                renderClientView();
+                showToast(`Bem-vindo(a), ${state.loggedClient.name}!`);
+                return;
+            }
+
+            showToast('Usuário/WhatsApp ou PIN não encontrado.');
         }
 
-        async function syncClientState(showMsg = false) {
-            await loadRemoteState();
-            applyClientThemeAndBranding();
-            populateClientFormOptions();
-            renderClientAppointmentsList();
-            if (showMsg) showToast('Dados atualizados.');
+        async function handleClientRegister(event) {
+            event.preventDefault();
+            const name = document.getElementById('reg-client-name').value.trim();
+            const username = document.getElementById('reg-client-username').value.trim();
+            const phone = document.getElementById('reg-client-phone').value.trim();
+            const pin = document.getElementById('reg-client-pin').value.trim();
+
+            const newClient = {
+                id: 'c-' + Date.now(),
+                name,
+                username,
+                phone,
+                pin,
+                notes: '',
+                visits: 0
+            };
+
+            state.clientsRoster.unshift(newClient);
+            state.loggedClient = { id: newClient.id, name, username, phone };
+            localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
+            saveLocalBackup();
+
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('clientes').insert({
+                    id: newClient.id,
+                    nome_completo: name,
+                    usuario: username,
+                    senha_pin: pin,
+                    whatsapp: phone,
+                    observacoes: '',
+                    visitas: 0
+                });
+                if (error) showToast('Erro ao salvar conta no banco: ' + error.message);
+            }
+
+            document.getElementById('client-name').value = name;
+            document.getElementById('client-phone').value = phone;
+            closeClientAccountModal();
+            renderClientView();
+            showToast('Conta criada com sucesso!');
+        }
+
+        function logoutClientAccount() {
+            state.loggedClient = null;
+            localStorage.removeItem(CLIENT_SESSION_KEY);
+            closeClientAccountModal();
+            renderClientView();
+            showToast('Você saiu da conta.');
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredClientPrompt = e;
+            deferredClientPwaPrompt = e;
         });
 
         async function installClientPwa() {
-            if (deferredClientPrompt) {
-                deferredClientPrompt.prompt();
-                await deferredClientPrompt.userChoice;
-                deferredClientPrompt = null;
+            if (deferredClientPwaPrompt) {
+                deferredClientPwaPrompt.prompt();
+                await deferredClientPwaPrompt.userChoice;
+                deferredClientPwaPrompt = null;
                 return;
             }
             const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -604,37 +1023,43 @@
             window._toastT = setTimeout(() => {
                 el.classList.remove('opacity-100');
                 el.classList.add('opacity-0');
-            }, 3000);
+            }, 3200);
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('client-date').value = TODAY_ISO;
-            document.getElementById('client-time').value = '10:00';
             initSupabase();
-            await syncClientState(false);
+            await loadFromSupabase();
+            renderClientView();
             subscribeClientRealtime();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
             lucide.createIcons();
 
-            setInterval(() => {
-                syncClientState(false);
-            }, 10000);
+            setInterval(async () => {
+                await loadFromSupabase();
+                renderClientView();
+            }, 8000);
 
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) syncClientState(false);
+            document.addEventListener('visibilitychange', async () => {
+                if (!document.hidden) {
+                    await loadFromSupabase();
+                    renderClientView();
+                }
             });
 
-            window.addEventListener('pageshow', () => {
-                syncClientState(false);
+            window.addEventListener('pageshow', async () => {
+                await loadFromSupabase();
+                renderClientView();
             });
 
-            window.addEventListener('focus', () => {
-                syncClientState(false);
+            window.addEventListener('focus', async () => {
+                await loadFromSupabase();
+                renderClientView();
             });
 
-            window.addEventListener('storage', (e) => {
+            window.addEventListener('storage', async (e) => {
                 if (e.key === LOCAL_CFG_KEY || e.key === LOCAL_DATA_KEY) {
-                    syncClientState(false);
+                    await loadFromSupabase();
+                    renderClientView();
                 }
             });
         });
