@@ -238,13 +238,14 @@
     <main class="max-w-5xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
         <section id="view-pro" class="fade-in space-y-6">
 
+            <!-- CAPA COLORIDA (SEM GRAYSCALE) -->
             <div class="max-w-3xl mx-auto">
                 <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden group">
                     <img id="studio-cover-img"
                          src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
                          alt="Foto de capa do estabelecimento"
                          onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
-                         class="w-full h-full object-cover grayscale contrast-[1.03]">
+                         class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent flex items-end justify-between p-4 sm:p-5 gap-2">
                         <div class="text-white flex items-center gap-3 min-w-0">
                             <span id="cover-logo-badge" class="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-sm font-normal overflow-hidden shrink-0">
@@ -292,6 +293,12 @@
                     </div>
 
                     <div class="flex items-center gap-2.5 self-start sm:self-auto">
+                        <button onclick="syncNow(true)"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs border border-[#EAEAEA] bg-white hover:border-[#111111] text-[#111111] transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                            <span>Atualizar</span>
+                        </button>
+
                         <div class="inline-flex rounded-full border border-[#EAEAEA] p-0.5 surface-brand">
                             <button id="btn-view-day" onclick="setScheduleMode('day')"
                                     class="px-3.5 py-1.5 rounded-full text-xs btn-brand transition-colors">
@@ -311,6 +318,15 @@
                     </div>
                 </div>
 
+                <!-- BANNER DE SOLICITAÇÕES PENDENTES DO CLIENTE -->
+                <div id="pending-requests-banner" class="hidden p-4 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#D97706] animate-pulse"></span>
+                        <p id="pending-requests-text" class="text-xs text-[#111111] font-normal"></p>
+                    </div>
+                    <span class="text-[11px] text-[#6B5B3E]">Aguardando seu aceite abaixo</span>
+                </div>
+
                 <div class="grid grid-cols-3 gap-3 sm:gap-5">
                     <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand">
                         <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Atendimentos</span>
@@ -326,7 +342,6 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="specialty-filters"></div>
                 <div id="day-schedule-container" class="space-y-2.5"></div>
                 <div id="week-schedule-container" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
             </div>
@@ -394,13 +409,8 @@
                         </div>
                         <div>
                             <label class="block text-[11px] text-[#737373] mb-1">Categoria / Especialidade</label>
-                            <select id="new-service-specialty"
-                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                                <option value="Barbeiro">Barbeiro</option>
-                                <option value="Manicure">Manicure</option>
-                                <option value="Cabeleireira">Cabeleireira</option>
-                                <option value="Esteticista">Esteticista</option>
-                            </select>
+                            <input id="new-service-specialty" type="text" value="Atendimento" placeholder="Ex: Atendimento"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -445,14 +455,9 @@
                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
                         <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Especialidade principal</label>
-                            <select id="pro-form-specialty"
-                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                                <option value="Barbeiro">Barbeiro</option>
-                                <option value="Manicure">Manicure</option>
-                                <option value="Cabeleireira">Cabeleireira</option>
-                                <option value="Esteticista">Esteticista</option>
-                            </select>
+                            <label class="block text-[11px] text-[#737373] mb-1">Cargo / Função</label>
+                            <input id="pro-form-specialty" type="text" value="Profissional" placeholder="Ex: Profissional"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
 
                         <div class="space-y-2">
@@ -613,14 +618,8 @@
 
                         <div>
                             <label class="block text-[11px] text-[#737373] mb-1">Tipo de negócio / Nicho</label>
-                            <select id="cfg-studio-niche"
-                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                                <option value="Salão de Beleza">Salão de Beleza</option>
-                                <option value="Barbearia">Barbearia</option>
-                                <option value="Manicure & Unhas">Manicure & Unhas</option>
-                                <option value="Estética & Facial">Estética & Facial</option>
-                                <option value="Studio Multiserviços">Studio Multiserviços</option>
-                            </select>
+                            <input id="cfg-studio-niche" type="text" required
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
 
                         <div>
@@ -833,13 +832,8 @@
                     <input id="edit-service-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
                 <div>
-                    <label class="block text-xs text-[#737373] mb-1">Categoria / Especialidade</label>
-                    <select id="edit-service-specialty" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs bg-white">
-                        <option value="Barbeiro">Barbeiro</option>
-                        <option value="Manicure">Manicure</option>
-                        <option value="Cabeleireira">Cabeleireira</option>
-                        <option value="Esteticista">Esteticista</option>
-                    </select>
+                    <label class="block text-xs text-[#737373] mb-1">Categoria / Observação</label>
+                    <input id="edit-service-specialty" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -876,13 +870,8 @@
                         <input id="edit-pro-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                     </div>
                     <div>
-                        <label class="block text-xs text-[#737373] mb-1">Especialidade principal</label>
-                        <select id="edit-pro-specialty" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs bg-white">
-                            <option value="Barbeiro">Barbeiro</option>
-                            <option value="Manicure">Manicure</option>
-                            <option value="Cabeleireira">Cabeleireira</option>
-                            <option value="Esteticista">Esteticista</option>
-                        </select>
+                        <label class="block text-xs text-[#737373] mb-1">Cargo / Função</label>
+                        <input id="edit-pro-specialty" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                     </div>
                 </div>
                 <div class="space-y-2">
@@ -963,17 +952,18 @@
     <script>
         const TODAY_ISO = '2026-11-25';
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
+        const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
         const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
         let sbClient = null;
         let dbConnected = false;
+        let knownPendingIds = new Set();
 
         const state = {
             scheduleMode: 'day',
             reportPeriod: 'day',
-            selectedSpecialty: 'Todos',
             studioOnline: true,
             studioName: 'Atelier Studio',
-            studioNiche: 'Estúdio Multiserviços',
+            studioNiche: 'Estúdio',
             studioHours: 'Seg – Sáb • 09h às 19h',
             studioCover: DEFAULT_COVER,
             studioLogo: '',
@@ -987,24 +977,18 @@
                 hourBefore: true
             },
             servicesCatalog: [
-                { id: 's1', name: 'Corte & Visagismo', specialty: 'Barbeiro', duration: 45, price: 120 },
-                { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Barbeiro', duration: 35, price: 70 },
-                { id: 's3', name: 'Manicure & Esmaltação em Gel', specialty: 'Manicure', duration: 60, price: 95 },
-                { id: 's4', name: 'Spa dos Pés & Cuticulagem', specialty: 'Manicure', duration: 50, price: 85 },
-                { id: 's5', name: 'Escova Modelada & Tratamento', specialty: 'Cabeleireira', duration: 60, price: 140 },
-                { id: 's6', name: 'Limpeza de Pele Profunda', specialty: 'Esteticista', duration: 75, price: 180 },
+                { id: 's1', name: 'Corte & Visagismo', specialty: 'Atendimento', duration: 45, price: 120 },
+                { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Atendimento', duration: 35, price: 70 },
+                { id: 's3', name: 'Manicure & Esmaltação em Gel', specialty: 'Atendimento', duration: 60, price: 95 },
             ],
             professionals: [
-                { id: 'p1', name: 'Rafael Mendes', specialty: 'Barbeiro', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
-                { id: 'p2', name: 'Camila Rocha', specialty: 'Manicure', serviceRates: { s3: { enabled: true, price: 100, duration: 60 }, s4: { enabled: true, price: 90, duration: 50 } } },
-                { id: 'p3', name: 'Juliana Freitas', specialty: 'Cabeleireira', serviceRates: { s5: { enabled: true, price: 150, duration: 65 } } },
-                { id: 'p4', name: 'Fernanda Lima', specialty: 'Esteticista', serviceRates: { s6: { enabled: true, price: 190, duration: 75 } } },
+                { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
+                { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
             ],
             expandedProCards: {},
             clientsRoster: [
                 { id: 'c1', name: 'Lucas Tavares', phone: '(11) 98111-2233', notes: 'Prefere degradê navalhado na lateral', visits: 8 },
                 { id: 'c2', name: 'Ana Beatriz', phone: '(11) 97222-3344', notes: 'Alergia a base com formol', visits: 12 },
-                { id: 'c3', name: 'Carla Menezes', phone: '(11) 96333-4455', notes: 'Cabelos finos, máscara nutritiva', visits: 5 },
             ],
             paymentMethods: [
                 { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
@@ -1014,8 +998,6 @@
             ],
             appointments: [
                 { id: 'a1', clientName: 'Lucas Tavares', clientPhone: '11981112233', proId: 'p1', serviceId: 's1', date: '2026-11-25', time: '09:00', price: 130, paymentMethod: 'Pix', status: 'confirmed', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null },
-                { id: 'a2', clientName: 'Ana Beatriz', clientPhone: '11972223344', proId: 'p2', serviceId: 's3', date: '2026-11-25', time: '10:30', price: 100, paymentMethod: 'Cartão de Crédito', status: 'pending', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null },
-                { id: 'a3', clientName: 'Carla Menezes', clientPhone: '11963334455', proId: 'p3', serviceId: 's5', date: '2026-11-25', time: '14:00', price: 150, paymentMethod: 'Cartão de Débito', status: 'confirmed', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null },
             ],
             latestConfirmationDataUrl: null
         };
@@ -1025,16 +1007,27 @@
         function loadLocalBackupConfig() {
             try {
                 const raw = localStorage.getItem(LOCAL_CFG_KEY);
-                if (!raw) return;
-                const saved = JSON.parse(raw);
-                if (saved.studioName) state.studioName = saved.studioName;
-                if (saved.studioNiche) state.studioNiche = saved.studioNiche;
-                if (typeof saved.studioOnline === 'boolean') state.studioOnline = saved.studioOnline;
-                if (saved.studioCover) state.studioCover = saved.studioCover;
-                if (typeof saved.studioLogo === 'string') state.studioLogo = saved.studioLogo;
-                if (saved.studioHours) state.studioHours = saved.studioHours;
-                if (saved.themeColors) state.themeColors = { ...state.themeColors, ...saved.themeColors };
-                if (saved.reminderRules) state.reminderRules = { ...state.reminderRules, ...saved.reminderRules };
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    if (saved.studioName) state.studioName = saved.studioName;
+                    if (saved.studioNiche) state.studioNiche = saved.studioNiche;
+                    if (typeof saved.studioOnline === 'boolean') state.studioOnline = saved.studioOnline;
+                    if (saved.studioCover) state.studioCover = saved.studioCover;
+                    if (typeof saved.studioLogo === 'string') state.studioLogo = saved.studioLogo;
+                    if (saved.studioHours) state.studioHours = saved.studioHours;
+                    if (saved.themeColors) state.themeColors = { ...state.themeColors, ...saved.themeColors };
+                    if (saved.reminderRules) state.reminderRules = { ...state.reminderRules, ...saved.reminderRules };
+                }
+
+                const rawData = localStorage.getItem(LOCAL_DATA_KEY);
+                if (rawData) {
+                    const d = JSON.parse(rawData);
+                    if (Array.isArray(d.servicesCatalog)) state.servicesCatalog = d.servicesCatalog;
+                    if (Array.isArray(d.professionals)) state.professionals = d.professionals;
+                    if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
+                    if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
+                    if (Array.isArray(d.appointments)) state.appointments = d.appointments;
+                }
             } catch (e) {}
         }
 
@@ -1050,6 +1043,13 @@
                     themeColors: state.themeColors,
                     reminderRules: state.reminderRules
                 }));
+                localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify({
+                    servicesCatalog: state.servicesCatalog,
+                    professionals: state.professionals,
+                    clientsRoster: state.clientsRoster,
+                    paymentMethods: state.paymentMethods,
+                    appointments: state.appointments
+                }));
             } catch (e) {}
         }
 
@@ -1061,7 +1061,7 @@
             dbConnected = true;
         }
 
-        async function loadFromSupabase() {
+        async function loadFromSupabase(notifyNewPending = false) {
             loadLocalBackupConfig();
             if (!dbConnected || !sbClient) return;
             const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
@@ -1082,49 +1082,95 @@
                     };
                     state.reminderRules.dayBefore = typeof est.lembrete_24h === 'boolean' ? est.lembrete_24h : true;
                     state.reminderRules.hourBefore = typeof est.lembrete_1h === 'boolean' ? est.lembrete_1h : true;
-                    saveLocalBackupConfig();
                 }
 
-                const { data: svcs } = await sbClient.from('servicos').select('*').eq('ativo', true);
-                if (svcs && svcs.length > 0) {
+                // Ao conectar no banco, respeita exatamente o que está no banco (inclusive lista vazia após exclusão)
+                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*').eq('ativo', true);
+                if (!svcErr && Array.isArray(svcs)) {
                     state.servicesCatalog = svcs.map(s => ({
-                        id: s.id, name: s.nome, specialty: s.categoria, duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
+                        id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
                     }));
                 }
 
-                const { data: pros } = await sbClient.from('profissionais').select('*').eq('ativo', true);
+                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*').eq('ativo', true);
                 const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
-                if (pros && pros.length > 0) {
+                if (!proErr && Array.isArray(pros)) {
                     state.professionals = pros.map(p => {
                         const rates = {};
                         (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
                             rates[ps.servico_id] = { enabled: true, price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
                         });
-                        return { id: p.id, name: p.nome, specialty: p.especialidade, serviceRates: rates };
+                        return { id: p.id, name: p.nome, specialty: p.especialidade || 'Profissional', serviceRates: rates };
                     });
                 }
 
-                const { data: pays } = await sbClient.from('formas_pagamento').select('*');
-                if (pays && pays.length > 0) {
+                const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
+                if (!payErr && Array.isArray(pays) && pays.length > 0) {
                     state.paymentMethods = pays.map(pm => ({ id: pm.id, label: pm.nome, detail: pm.descricao || '', enabled: !!pm.ativo }));
                 }
 
-                const { data: clis } = await sbClient.from('clientes').select('*');
-                if (clis && clis.length > 0) {
+                const { data: clis, error: cliErr } = await sbClient.from('clientes').select('*');
+                if (!cliErr && Array.isArray(clis)) {
                     state.clientsRoster = clis.map(c => ({ id: c.id, name: c.nome_completo, phone: c.whatsapp, notes: c.observacoes || '', visits: Number(c.visitas) || 0 }));
                 }
 
-                const { data: apps } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
-                if (apps && apps.length > 0) {
-                    state.appointments = apps.map(a => ({
-                        id: a.id, clientName: a.cliente_nome, clientPhone: a.cliente_whatsapp || '', proId: a.profissional_id, serviceId: a.servico_id,
-                        date: a.data_agendamento, time: a.hora_agendamento, price: Number(a.valor) || 0, paymentMethod: a.forma_pagamento || 'Pix',
-                        status: a.status || 'pending', remindersSent: { dayBefore: !!a.lembrete_24h_enviado, hourBefore: !!a.lembrete_1h_enviado }, confirmationImage: null
-                    }));
+                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
+                if (!appErr && Array.isArray(apps)) {
+                    const prevMap = new Map(state.appointments.map(a => [a.id, a]));
+                    state.appointments = apps.map(a => {
+                        const existing = prevMap.get(a.id);
+                        return {
+                            id: a.id,
+                            clientName: a.cliente_nome,
+                            clientPhone: a.cliente_whatsapp || '',
+                            proId: a.profissional_id,
+                            serviceId: a.servico_id,
+                            date: a.data_agendamento,
+                            time: a.hora_agendamento,
+                            price: Number(a.valor) || 0,
+                            paymentMethod: a.forma_pagamento || 'Pix',
+                            status: a.status || 'pending',
+                            remindersSent: { dayBefore: !!a.lembrete_24h_enviado, hourBefore: !!a.lembrete_1h_enviado },
+                            confirmationImage: existing ? existing.confirmationImage : null
+                        };
+                    });
+
+                    const currentPending = state.appointments.filter(a => a.status === 'pending');
+                    if (notifyNewPending) {
+                        const brandNew = currentPending.filter(p => !knownPendingIds.has(p.id));
+                        if (brandNew.length > 0) {
+                            showToast(`Novo agendamento de ${brandNew[0].clientName} aguardando seu aceite!`);
+                        }
+                    }
+                    knownPendingIds = new Set(currentPending.map(p => p.id));
                 }
+
+                saveLocalBackupConfig();
             } catch (err) {
                 console.warn('Erro ao carregar do Supabase:', err);
             }
+        }
+
+        function subscribeRealtimeAppointments() {
+            if (!dbConnected || !sbClient || !sbClient.channel) return;
+            try {
+                sbClient
+                    .channel('admin-agendamentos-realtime')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, async () => {
+                        await loadFromSupabase(true);
+                        renderProDashboard();
+                    })
+                    .subscribe();
+            } catch (e) {
+                console.warn('Realtime indisponível, usando atualização automática.', e);
+            }
+        }
+
+        async function syncNow(showMsg = false) {
+            await loadFromSupabase(false);
+            applyBrandingAndTheme();
+            renderProDashboard();
+            if (showMsg) showToast('Agenda sincronizada.');
         }
 
         async function saveEstablishmentToSupabase() {
@@ -1250,7 +1296,7 @@
         async function saveCustomizationSettings(event) {
             event.preventDefault();
             state.studioName = document.getElementById('cfg-studio-name').value.trim() || 'Atelier Studio';
-            state.studioNiche = document.getElementById('cfg-studio-niche').value;
+            state.studioNiche = document.getElementById('cfg-studio-niche').value.trim() || 'Estúdio';
             state.studioHours = document.getElementById('cfg-studio-hours').value.trim() || 'Seg – Sáb • 09h às 19h';
             state.themeColors = {
                 primary: document.getElementById('cfg-color-primary').value,
@@ -1371,36 +1417,40 @@
             applyBrandingAndTheme();
             updateOnlineStatusIndicators();
             updateDrawerReminderBadge();
-            renderSpecialtyFilters();
+            renderPendingBanner();
             updateProStats();
             if (state.scheduleMode === 'day') renderDaySchedule();
             else renderWeekSchedule();
             lucide.createIcons();
         }
 
-        function renderSpecialtyFilters() {
-            const container = document.getElementById('specialty-filters');
-            const specs = ['Todos', 'Barbeiro', 'Manicure', 'Cabeleireira', 'Esteticista'];
-            container.innerHTML = specs.map(spec => {
-                const active = state.selectedSpecialty === spec;
-                return `
-                    <button type="button" onclick="state.selectedSpecialty='${spec}'; renderProDashboard();"
-                            class="px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${active ? 'btn-brand border-transparent' : 'text-[#737373] border-[#EAEAEA] hover:border-[#111111]'}">
-                        ${spec}
-                    </button>
-                `;
-            }).join('');
+        function renderPendingBanner() {
+            const banner = document.getElementById('pending-requests-banner');
+            const textEl = document.getElementById('pending-requests-text');
+            const pendingList = state.appointments.filter(a => a.status === 'pending');
+            if (!pendingList.length) {
+                banner.classList.add('hidden');
+                return;
+            }
+            banner.classList.remove('hidden');
+            textEl.textContent = pendingList.length === 1
+                ? `1 solicitação de agendamento (${pendingList[0].clientName} às ${pendingList[0].time}) aguarda seu aceite.`
+                : `${pendingList.length} solicitações de agendamento aguardam seu aceite.`;
         }
 
         function getFilteredDayAppointments() {
-            return state.appointments
-                .filter(a => a.date === TODAY_ISO)
-                .filter(a => state.selectedSpecialty === 'Todos' || getProById(a.proId).specialty === state.selectedSpecialty)
-                .sort((a, b) => a.time.localeCompare(b.time));
+            // Mostra agendamentos pendentes de qualquer data no topo para não perder solicitações do cliente, mais os de hoje
+            const pendingAll = state.appointments.filter(a => a.status === 'pending');
+            const todayOthers = state.appointments.filter(a => a.date === TODAY_ISO && a.status !== 'pending');
+            return [...pendingAll, ...todayOthers].sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return a.time.localeCompare(b.time);
+            });
         }
 
         function updateProStats() {
-            const list = getFilteredDayAppointments();
+            const list = state.appointments.filter(a => a.date === TODAY_ISO || a.status === 'pending');
             const confirmed = list.filter(a => a.status === 'confirmed' || a.status === 'done').length;
             const revenue = list.reduce((sum, item) => sum + Number(item.price || 0), 0);
             document.getElementById('stat-count').textContent = list.length;
@@ -1430,23 +1480,24 @@
             const container = document.getElementById('day-schedule-container');
             const items = getFilteredDayAppointments();
             if (!items.length) {
-                container.innerHTML = `<div class="text-center py-14 border border-dashed border-[#EAEAEA] rounded-2xl"><p class="text-sm text-[#737373]">Nenhum atendimento para este filtro hoje.</p></div>`;
+                container.innerHTML = `<div class="text-center py-14 border border-dashed border-[#EAEAEA] rounded-2xl"><p class="text-sm text-[#737373]">Nenhum atendimento no momento.</p></div>`;
                 return;
             }
             container.innerHTML = items.map(app => {
                 const pro = getProById(app.proId);
                 const svc = getServiceById(app.serviceId);
-                const pendingClass = app.status === 'pending' ? 'border-[#E6DEC8] bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white';
+                const pendingClass = app.status === 'pending' ? 'border-[#D97706]/50 bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white';
                 return `
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${pendingClass}">
                         <div class="flex items-start sm:items-center gap-4">
-                            <div class="w-14 shrink-0">
+                            <div class="w-16 shrink-0">
                                 <span class="block text-sm font-normal text-[#111111]">${app.time}</span>
+                                <span class="block text-[10px] text-[#737373]">${app.date || ''}</span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <span class="text-sm font-normal text-[#111111]">${app.clientName}</span>
-                                    <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${pro.name} · ${pro.specialty}</span>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${pro.name}</span>
                                 </div>
                                 <p class="text-xs text-[#737373] mt-0.5">${svc.name} • ${app.paymentMethod}</p>
                             </div>
@@ -1508,6 +1559,7 @@
             app.status = 'confirmed';
             app.confirmationImage = generateConfirmationImageDataUrl(app);
             state.latestConfirmationDataUrl = app.confirmationImage;
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('agendamentos').update({ status: 'confirmed' }).eq('id', id);
             }
@@ -1518,6 +1570,7 @@
 
         async function declineAppointment(id) {
             state.appointments = state.appointments.filter(a => a.id !== id);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('agendamentos').delete().eq('id', id);
             }
@@ -1527,6 +1580,7 @@
 
         async function deleteAppointment(id) {
             state.appointments = state.appointments.filter(a => a.id !== id);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('agendamentos').delete().eq('id', id);
             }
@@ -1539,6 +1593,7 @@
             if (!app) return;
             if (!app.confirmationImage) app.confirmationImage = generateConfirmationImageDataUrl(app);
             app.status = app.status === 'done' ? 'confirmed' : 'done';
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('agendamentos').update({ status: app.status }).eq('id', id);
             }
@@ -1563,7 +1618,7 @@
             const rows = [
                 ['DATA E HORÁRIO', `${app.date} às ${app.time}`],
                 ['SERVIÇO', svc.name],
-                ['PROFISSIONAL', `${pro.name} (${pro.specialty})`],
+                ['PROFISSIONAL', pro.name],
                 ['VALOR', `R$ ${Number(app.price || 0).toFixed(2).replace('.', ',')}`],
                 ['PAGAMENTO', app.paymentMethod || 'Pix'],
                 ['CLIENTE', app.clientName]
@@ -1609,7 +1664,7 @@
             document.body.removeChild(a);
         }
 
-        /* ================= CLIENTES (EDITAR & EXCLUIR) ================= */
+        /* ================= CLIENTES ================= */
         function renderClientsRosterPage() {
             document.getElementById('clients-roster-cards').innerHTML = state.clientsRoster.map(c => `
                 <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1636,6 +1691,7 @@
                 visits: 0
             };
             state.clientsRoster.unshift(item);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('clientes').insert({
                     id: item.id, nome_completo: item.name, usuario: item.name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 99),
@@ -1676,6 +1732,7 @@
             c.phone = document.getElementById('edit-client-phone').value.trim();
             c.notes = document.getElementById('edit-client-notes').value.trim();
             c.visits = Number(document.getElementById('edit-client-visits').value) || 0;
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('clientes').update({
                     nome_completo: c.name, whatsapp: c.phone, observacoes: c.notes, visitas: c.visits
@@ -1688,6 +1745,7 @@
 
         async function deleteClientFromRoster(id) {
             state.clientsRoster = state.clientsRoster.filter(x => x.id !== id);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('clientes').delete().eq('id', id);
             }
@@ -1695,14 +1753,14 @@
             showToast('Cliente excluído.');
         }
 
-        /* ================= SERVIÇOS (EDITAR & EXCLUIR) ================= */
+        /* ================= SERVIÇOS ================= */
         function renderServicesCatalog() {
             document.getElementById('services-catalog-list').innerHTML = state.servicesCatalog.map(s => `
                 <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-normal text-[#111111]">${s.name}</span>
-                            <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${s.specialty}</span>
+                            ${s.specialty ? `<span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${s.specialty}</span>` : ''}
                         </div>
                         <p class="text-xs text-[#737373] mt-0.5">Duração base: ${s.duration} min</p>
                     </div>
@@ -1720,17 +1778,19 @@
             const item = {
                 id: 's-' + Date.now(),
                 name: document.getElementById('new-service-name').value.trim(),
-                specialty: document.getElementById('new-service-specialty').value,
+                specialty: document.getElementById('new-service-specialty').value.trim() || 'Atendimento',
                 price: Number(document.getElementById('new-service-price').value),
                 duration: Number(document.getElementById('new-service-duration').value)
             };
             state.servicesCatalog.push(item);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('servicos').insert({
                     id: item.id, nome: item.name, categoria: item.specialty, duracao_min: item.duration, preco: item.price, ativo: true
                 });
             }
             event.target.reset();
+            document.getElementById('new-service-specialty').value = 'Atendimento';
             renderServicesCatalog();
             renderProServicesMatrix();
             showToast(`Serviço "${item.name}" salvo.`);
@@ -1741,7 +1801,7 @@
             if (!s) return;
             document.getElementById('edit-service-id').value = s.id;
             document.getElementById('edit-service-name').value = s.name;
-            document.getElementById('edit-service-specialty').value = s.specialty;
+            document.getElementById('edit-service-specialty').value = s.specialty || '';
             document.getElementById('edit-service-price').value = s.price;
             document.getElementById('edit-service-duration').value = s.duration;
             const m = document.getElementById('modal-edit-service');
@@ -1762,9 +1822,10 @@
             const s = state.servicesCatalog.find(x => x.id === id);
             if (!s) return;
             s.name = document.getElementById('edit-service-name').value.trim();
-            s.specialty = document.getElementById('edit-service-specialty').value;
+            s.specialty = document.getElementById('edit-service-specialty').value.trim();
             s.price = Number(document.getElementById('edit-service-price').value) || 0;
             s.duration = Number(document.getElementById('edit-service-duration').value) || 45;
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('servicos').update({
                     nome: s.name, categoria: s.specialty, preco: s.price, duracao_min: s.duration
@@ -1781,6 +1842,7 @@
             state.professionals.forEach(p => {
                 if (p.serviceRates && p.serviceRates[id]) delete p.serviceRates[id];
             });
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('profissional_servicos').delete().eq('servico_id', id);
                 await sbClient.from('servicos').delete().eq('id', id);
@@ -1790,7 +1852,7 @@
             showToast('Serviço excluído.');
         }
 
-        /* ================= PROFISSIONAIS E TABELA (EDITAR & EXCLUIR) ================= */
+        /* ================= PROFISSIONAIS E TABELA ================= */
         function renderProfessionalsSection() {
             renderProServicesMatrix();
             document.getElementById('professionals-matrix-list').innerHTML = state.professionals.map(pro => {
@@ -1803,7 +1865,7 @@
                                     class="flex-1 text-left flex items-center justify-between gap-2">
                                 <div>
                                     <p class="text-sm font-normal text-[#111111]">${pro.name}</p>
-                                    <p class="text-[11px] text-[#737373]">${pro.specialty} • ${enabled.length} serviço(s)</p>
+                                    <p class="text-[11px] text-[#737373]">${enabled.length} serviço(s) na tabela</p>
                                 </div>
                                 <i data-lucide="chevron-down" class="w-4 h-4 text-[#737373] ${isExpanded ? 'rotate-180' : ''}"></i>
                             </button>
@@ -1826,7 +1888,7 @@
                 <div class="p-3 rounded-xl border border-[#EAEAEA] bg-white space-y-2">
                     <label class="flex items-center justify-between text-xs cursor-pointer">
                         <span class="flex items-center gap-2"><input type="checkbox" class="pro-svc-check accent-[#111111]" data-svc-id="${svc.id}" onchange="document.getElementById('pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)"><span>${svc.name}</span></span>
-                        <span class="text-[11px] text-[#737373]">${svc.specialty}</span>
+                        <span class="text-[11px] text-[#737373]">R$ ${svc.price}</span>
                     </label>
                     <div id="pro-svc-fields-${svc.id}" class="hidden grid grid-cols-2 gap-2">
                         <input type="number" min="1" value="${svc.price}" class="pro-svc-price px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] text-xs" data-svc-id="${svc.id}">
@@ -1839,7 +1901,7 @@
         async function addProfessionalWithServices(event) {
             event.preventDefault();
             const name = document.getElementById('pro-form-name').value.trim();
-            const specialty = document.getElementById('pro-form-specialty').value;
+            const specialty = document.getElementById('pro-form-specialty').value.trim() || 'Profissional';
             const proId = 'p-' + Date.now();
             const serviceRates = {};
 
@@ -1854,6 +1916,7 @@
 
             state.professionals.push({ id: proId, name, specialty, serviceRates });
             state.expandedProCards[proId] = true;
+            saveLocalBackupConfig();
 
             if (dbConnected && sbClient) {
                 await sbClient.from('profissionais').insert({ id: proId, nome: name, especialidade: specialty, ativo: true });
@@ -1864,6 +1927,7 @@
             }
 
             event.target.reset();
+            document.getElementById('pro-form-specialty').value = 'Profissional';
             renderProfessionalsSection();
             showToast(`${name} cadastrado.`);
         }
@@ -1873,7 +1937,7 @@
             if (!pro) return;
             document.getElementById('edit-pro-id').value = pro.id;
             document.getElementById('edit-pro-name').value = pro.name;
-            document.getElementById('edit-pro-specialty').value = pro.specialty;
+            document.getElementById('edit-pro-specialty').value = pro.specialty || '';
 
             document.getElementById('edit-pro-services-matrix').innerHTML = state.servicesCatalog.map(svc => {
                 const cur = pro.serviceRates && pro.serviceRates[svc.id];
@@ -1888,7 +1952,7 @@
                                        onchange="document.getElementById('edit-pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)">
                                 <span>${svc.name}</span>
                             </span>
-                            <span class="text-[11px] text-[#737373]">${svc.specialty}</span>
+                            <span class="text-[11px] text-[#737373]">R$ ${svc.price}</span>
                         </label>
                         <div id="edit-pro-svc-fields-${svc.id}" class="${checked ? 'grid' : 'hidden'} grid-cols-2 gap-2">
                             <input type="number" min="1" value="${price}" class="edit-pro-svc-price px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] bg-white text-xs" data-svc-id="${svc.id}">
@@ -1917,7 +1981,7 @@
             if (!pro) return;
 
             pro.name = document.getElementById('edit-pro-name').value.trim();
-            pro.specialty = document.getElementById('edit-pro-specialty').value;
+            pro.specialty = document.getElementById('edit-pro-specialty').value.trim();
             const serviceRates = {};
 
             document.querySelectorAll('.edit-pro-svc-check').forEach(chk => {
@@ -1929,6 +1993,7 @@
                 }
             });
             pro.serviceRates = serviceRates;
+            saveLocalBackupConfig();
 
             if (dbConnected && sbClient) {
                 await sbClient.from('profissionais').update({ nome: pro.name, especialidade: pro.specialty }).eq('id', proId);
@@ -1946,6 +2011,7 @@
 
         async function deleteProfessional(proId) {
             state.professionals = state.professionals.filter(p => p.id !== proId);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
                 await sbClient.from('profissionais').delete().eq('id', proId);
@@ -1954,7 +2020,7 @@
             showToast('Profissional excluído.');
         }
 
-        /* ================= FORMAS DE PAGAMENTO (CRIAR, EDITAR, ATIVAR & EXCLUIR) ================= */
+        /* ================= FORMAS DE PAGAMENTO ================= */
         function renderPaymentMethodsSection() {
             document.getElementById('payment-methods-grid').innerHTML = state.paymentMethods.map(pm => `
                 <div class="p-4 rounded-2xl border space-y-3 ${pm.enabled ? 'border-[#111111] bg-white' : 'border-[#EAEAEA] surface-brand opacity-70'}">
@@ -1985,6 +2051,7 @@
                 enabled: true
             };
             state.paymentMethods.push(item);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('formas_pagamento').insert({ id: item.id, nome: item.label, descricao: item.detail, ativo: true });
             }
@@ -2018,6 +2085,7 @@
             if (!pm) return;
             pm.label = document.getElementById('edit-pay-label').value.trim();
             pm.detail = document.getElementById('edit-pay-detail').value.trim();
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('formas_pagamento').update({ nome: pm.label, descricao: pm.detail }).eq('id', id);
             }
@@ -2028,6 +2096,7 @@
 
         async function deletePaymentMethod(id) {
             state.paymentMethods = state.paymentMethods.filter(p => p.id !== id);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('formas_pagamento').delete().eq('id', id);
             }
@@ -2039,6 +2108,7 @@
             const pm = state.paymentMethods.find(p => p.id === id);
             if (!pm) return;
             pm.enabled = !pm.enabled;
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('formas_pagamento').upsert({ id: pm.id, nome: pm.label, descricao: pm.detail, ativo: pm.enabled });
             }
@@ -2225,6 +2295,7 @@
                 if (app) {
                     Object.assign(app, payload);
                     app.confirmationImage = generateConfirmationImageDataUrl(app);
+                    saveLocalBackupConfig();
                     if (dbConnected && sbClient) {
                         await sbClient.from('agendamentos').update({
                             cliente_nome: app.clientName, cliente_whatsapp: app.clientPhone, profissional_id: app.proId,
@@ -2241,6 +2312,7 @@
                 };
                 item.confirmationImage = generateConfirmationImageDataUrl(item);
                 state.appointments.push(item);
+                saveLocalBackupConfig();
                 if (dbConnected && sbClient) {
                     await sbClient.from('agendamentos').insert({
                         id: item.id, cliente_nome: item.clientName, cliente_whatsapp: item.clientPhone, profissional_id: item.proId,
@@ -2283,17 +2355,30 @@
             window._toastT = setTimeout(() => {
                 el.classList.remove('opacity-100');
                 el.classList.add('opacity-0');
-            }, 2800);
+            }, 3200);
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
             initSupabase();
-            await loadFromSupabase();
+            await loadFromSupabase(false);
             applyBrandingAndTheme();
             renderProDashboard();
             evaluateWhatsAppReminders(false);
+            subscribeRealtimeAppointments();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
             lucide.createIcons();
+
+            setInterval(async () => {
+                await loadFromSupabase(true);
+                renderProDashboard();
+            }, 10000);
+
+            document.addEventListener('visibilitychange', async () => {
+                if (!document.hidden) {
+                    await loadFromSupabase(true);
+                    renderProDashboard();
+                }
+            });
         });
     </script>
 </body>
