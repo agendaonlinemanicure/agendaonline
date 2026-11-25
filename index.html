@@ -80,11 +80,9 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-0 sm:p-6">
 
-    <!-- MOLDURA MOBILE RESPONSIVA -->
     <div class="w-full sm:max-w-[412px] min-h-screen sm:min-h-[820px] sm:max-h-[860px] sm:rounded-[38px] sm:border sm:border-[#E4E4E7] sm:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden relative"
          style="background-color: var(--brand-bg);">
 
-        <!-- CABEÇALHO DO APP DO CLIENTE -->
         <header class="px-5 py-3.5 border-b border-[#EAEAEA] flex items-center justify-between shrink-0 z-20"
                 style="background-color: var(--brand-bg);">
             <div class="flex items-center gap-2.5">
@@ -105,10 +103,8 @@
             </div>
         </header>
 
-        <!-- ÁREA DE CONTEÚDO ROLÁVEL -->
         <main id="app-scroll-area" class="flex-1 overflow-y-auto no-scrollbar px-5 py-5 pb-28 space-y-5">
 
-            <!-- TELA 0: PRIMEIRO ACESSO -->
             <section id="screen-auth" class="hidden fade-in space-y-5 pt-2">
                 <div class="relative w-full h-36 rounded-2xl overflow-hidden border border-[#EAEAEA]">
                     <img id="auth-cover-img"
@@ -152,14 +148,12 @@
                         <input id="auth-whatsapp" type="tel" required placeholder="(11) 98888-7777"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                     </div>
-                    <button type="submit"
-                            class="w-full py-3 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                    <button type="submit" class="w-full py-3 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
                         Entrar no aplicativo
                     </button>
                 </form>
             </section>
 
-            <!-- TELA 1: INÍCIO & NOVO AGENDAMENTO -->
             <section id="screen-home" class="fade-in space-y-5">
                 <div class="relative w-full h-36 rounded-2xl overflow-hidden border border-[#EAEAEA]">
                     <img id="home-cover-img"
@@ -205,13 +199,11 @@
                         <div id="mob-step-ind-3" class="py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]">3. Data & Hora</div>
                     </div>
 
-                    <!-- ETAPA 1 -->
                     <div id="mob-step-1" class="space-y-3">
                         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1" id="mob-category-chips"></div>
                         <div id="mob-services-list" class="space-y-2.5"></div>
                     </div>
 
-                    <!-- ETAPA 2 -->
                     <div id="mob-step-2" class="hidden space-y-3">
                         <button onclick="setBookingStep(1)" class="inline-flex items-center gap-1 text-xs text-[#737373] hover:text-[#111111]">
                             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
@@ -220,7 +212,6 @@
                         <div id="mob-pros-list" class="space-y-2.5"></div>
                     </div>
 
-                    <!-- ETAPA 3 -->
                     <div id="mob-step-3" class="hidden space-y-4">
                         <button onclick="setBookingStep(2)" class="inline-flex items-center gap-1 text-xs text-[#737373] hover:text-[#111111]">
                             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
@@ -250,7 +241,6 @@
                         </button>
                     </div>
 
-                    <!-- ETAPA 4 -->
                     <div id="mob-step-pending" class="hidden p-5 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] text-center space-y-3.5">
                         <div class="w-11 h-11 rounded-full btn-brand flex items-center justify-center mx-auto">
                             <i data-lucide="clock" class="w-5 h-5 stroke-[1.75]"></i>
@@ -274,7 +264,6 @@
                 </div>
             </section>
 
-            <!-- TELA 2: MEUS AGENDAMENTOS -->
             <section id="screen-bookings" class="hidden fade-in space-y-4">
                 <div class="pb-3 border-b border-[#EAEAEA] flex items-end justify-between">
                     <div>
@@ -288,7 +277,6 @@
                 <div id="mob-bookings-list" class="space-y-3"></div>
             </section>
 
-            <!-- TELA 3: MEU PERFIL -->
             <section id="screen-profile" class="hidden fade-in space-y-4">
                 <div class="pb-3 border-b border-[#EAEAEA] flex items-end justify-between">
                     <div>
@@ -336,7 +324,6 @@
             </section>
         </main>
 
-        <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
         <nav id="bottom-nav" class="absolute bottom-0 inset-x-0 border-t border-[#EAEAEA] px-6 py-2.5 flex items-center justify-around z-20"
              style="background-color: var(--brand-bg);">
             <button onclick="switchBottomTab('home')" data-tab="home" class="nav-tab flex flex-col items-center gap-1 text-[#111111]">
@@ -354,7 +341,6 @@
             </button>
         </nav>
 
-        <!-- MODAL COMPROVANTE -->
         <div id="receipt-modal" class="hidden absolute inset-0 z-40 bg-black/45 backdrop-blur-[2px] p-4 items-center justify-center">
             <div class="bg-white rounded-3xl border border-[#EAEAEA] w-full max-w-[350px] p-4 space-y-3.5 fade-in">
                 <div class="flex items-center justify-between">
@@ -380,6 +366,7 @@
     </div>
 
     <script>
+        const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
         let sbClient = null;
         let dbConnected = false;
         let deferredPrompt = null;
@@ -433,6 +420,25 @@
             bookings: []
         };
 
+        function applyLocalBackupToStudio() {
+            try {
+                const raw = localStorage.getItem(LOCAL_CFG_KEY);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (saved.studioName) appState.studio.name = saved.studioName;
+                if (saved.studioNiche) appState.studio.niche = saved.studioNiche;
+                if (typeof saved.studioOnline === 'boolean') appState.studio.online = saved.studioOnline;
+                if (saved.studioCover) appState.studio.cover = saved.studioCover;
+                if (typeof saved.studioLogo === 'string') appState.studio.logo = saved.studioLogo;
+                if (saved.studioHours) appState.studio.hours = saved.studioHours;
+                if (saved.themeColors) {
+                    appState.studio.primary = saved.themeColors.primary || appState.studio.primary;
+                    appState.studio.bg = saved.themeColors.bg || appState.studio.bg;
+                    appState.studio.surface = saved.themeColors.surface || appState.studio.surface;
+                }
+            } catch (e) {}
+        }
+
         function initSupabase() {
             const cfg = window.SUPABASE_CONFIG;
             if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) return;
@@ -442,30 +448,27 @@
         }
 
         async function loadAppDataFromSupabase() {
+            applyLocalBackupToStudio();
             if (!dbConnected || !sbClient) return;
             const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
             try {
-                const { data: est } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
-                if (est) {
+                const { data: est, error: estErr } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
+                if (!estErr && est) {
                     appState.studio.name = est.nome || appState.studio.name;
                     appState.studio.niche = est.nicho || appState.studio.niche;
-                    appState.studio.online = typeof est.online === 'boolean' ? est.online : true;
+                    appState.studio.online = typeof est.online === 'boolean' ? est.online : appState.studio.online;
                     appState.studio.cover = est.capa_url || appState.studio.cover;
-                    appState.studio.logo = est.logo_url || '';
+                    appState.studio.logo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : appState.studio.logo;
                     appState.studio.hours = est.horario_funcionamento || appState.studio.hours;
-                    appState.studio.primary = est.cor_primaria || '#111111';
-                    appState.studio.bg = est.cor_fundo || '#FFFFFF';
-                    appState.studio.surface = est.cor_destaque || '#FAFAFA';
+                    appState.studio.primary = est.cor_primaria || appState.studio.primary || '#111111';
+                    appState.studio.bg = est.cor_fundo || appState.studio.bg || '#FFFFFF';
+                    appState.studio.surface = est.cor_destaque || appState.studio.surface || '#FAFAFA';
                 }
 
                 const { data: svcs } = await sbClient.from('servicos').select('*').eq('ativo', true);
                 if (svcs && svcs.length > 0) {
                     appState.services = svcs.map(s => ({
-                        id: s.id,
-                        name: s.nome,
-                        category: s.categoria,
-                        duration: Number(s.duracao_min) || 45,
-                        price: Number(s.preco) || 0
+                        id: s.id, name: s.nome, category: s.categoria, duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
                     }));
                 }
 
@@ -506,16 +509,9 @@
                     const svc = appState.services.find(s => s.id === a.servico_id);
                     const pro = appState.professionals.find(p => p.id === a.profissional_id);
                     return {
-                        id: a.id,
-                        serviceName: svc ? svc.name : 'Serviço',
-                        proName: pro ? pro.name : 'Profissional',
-                        proRole: pro ? pro.role : '',
-                        date: a.data_agendamento,
-                        time: a.hora_agendamento,
-                        price: Number(a.valor) || 0,
-                        payment: a.forma_pagamento || 'Pix',
-                        status: a.status || 'pending',
-                        receiptImage: null
+                        id: a.id, serviceName: svc ? svc.name : 'Serviço', proName: pro ? pro.name : 'Profissional',
+                        proRole: pro ? pro.role : '', date: a.data_agendamento, time: a.hora_agendamento,
+                        price: Number(a.valor) || 0, payment: a.forma_pagamento || 'Pix', status: a.status || 'pending', receiptImage: null
                     };
                 });
         }
@@ -719,16 +715,9 @@
             const rate = pro.services[svc.id];
 
             const newBooking = {
-                id: 'b-' + Date.now(),
-                serviceName: svc.name,
-                proName: pro.name,
-                proRole: pro.role,
-                date: appState.bookingDraft.date,
-                time: appState.bookingDraft.time,
-                price: rate.price,
-                payment: appState.bookingDraft.payment,
-                status: 'pending',
-                receiptImage: null
+                id: 'b-' + Date.now(), serviceName: svc.name, proName: pro.name, proRole: pro.role,
+                date: appState.bookingDraft.date, time: appState.bookingDraft.time, price: rate.price,
+                payment: appState.bookingDraft.payment, status: 'pending', receiptImage: null
             };
 
             appState.bookings.unshift(newBooking);
@@ -736,16 +725,9 @@
 
             if (dbConnected && sbClient) {
                 await sbClient.from('agendamentos').insert({
-                    id: newBooking.id,
-                    cliente_nome: appState.user.fullName,
-                    cliente_whatsapp: appState.user.whatsapp,
-                    profissional_id: pro.id,
-                    servico_id: svc.id,
-                    data_agendamento: newBooking.date,
-                    hora_agendamento: newBooking.time,
-                    valor: newBooking.price,
-                    forma_pagamento: newBooking.payment,
-                    status: 'pending'
+                    id: newBooking.id, cliente_nome: appState.user.fullName, cliente_whatsapp: appState.user.whatsapp,
+                    profissional_id: pro.id, servico_id: svc.id, data_agendamento: newBooking.date, hora_agendamento: newBooking.time,
+                    valor: newBooking.price, forma_pagamento: newBooking.payment, status: 'pending'
                 });
             }
 
@@ -897,11 +879,8 @@
             document.getElementById('home-user-name').textContent = appState.user.fullName;
             if (dbConnected && sbClient) {
                 await sbClient.from('clientes').upsert({
-                    id: appState.user.id,
-                    nome_completo: appState.user.fullName,
-                    usuario: appState.user.username,
-                    senha_pin: appState.user.pin,
-                    whatsapp: appState.user.whatsapp
+                    id: appState.user.id, nome_completo: appState.user.fullName, usuario: appState.user.username,
+                    senha_pin: appState.user.pin, whatsapp: appState.user.whatsapp
                 });
             }
             loadProfileFields();
@@ -917,20 +896,15 @@
         async function completeFirstAccess(event) {
             event.preventDefault();
             appState.user = {
-                id: 'cli-' + Date.now(),
-                fullName: document.getElementById('auth-fullname').value.trim(),
-                username: document.getElementById('auth-username').value.trim(),
-                pin: document.getElementById('auth-pin').value.trim(),
+                id: 'cli-' + Date.now(), fullName: document.getElementById('auth-fullname').value.trim(),
+                username: document.getElementById('auth-username').value.trim(), pin: document.getElementById('auth-pin').value.trim(),
                 whatsapp: document.getElementById('auth-whatsapp').value.trim()
             };
             document.getElementById('home-user-name').textContent = appState.user.fullName;
             if (dbConnected && sbClient) {
                 await sbClient.from('clientes').upsert({
-                    id: appState.user.id,
-                    nome_completo: appState.user.fullName,
-                    usuario: appState.user.username,
-                    senha_pin: appState.user.pin,
-                    whatsapp: appState.user.whatsapp
+                    id: appState.user.id, nome_completo: appState.user.fullName, usuario: appState.user.username,
+                    senha_pin: appState.user.pin, whatsapp: appState.user.whatsapp
                 });
                 await loadClientBookingsFromSupabase();
             }
