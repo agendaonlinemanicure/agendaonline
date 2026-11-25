@@ -245,26 +245,33 @@
                          alt="Foto de capa do estabelecimento"
                          onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
                          class="w-full h-full object-cover grayscale contrast-[1.03]">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent flex items-end justify-between p-4 sm:p-5">
-                        <div class="text-white flex items-center gap-3">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent flex items-end justify-between p-4 sm:p-5 gap-2">
+                        <div class="text-white flex items-center gap-3 min-w-0">
                             <span id="cover-logo-badge" class="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-sm font-normal overflow-hidden shrink-0">
                                 A
                             </span>
-                            <div>
-                                <p id="cover-niche-label" class="text-[10px] uppercase tracking-[0.16em] text-white/75">Estabelecimento</p>
-                                <h2 id="studio-display-name" class="text-base sm:text-lg font-normal tracking-tight">Atelier Studio</h2>
+                            <div class="min-w-0">
+                                <p id="cover-niche-label" class="text-[10px] uppercase tracking-[0.16em] text-white/75 truncate">Estabelecimento</p>
+                                <h2 id="studio-display-name" class="text-base sm:text-lg font-normal tracking-tight truncate">Atelier Studio</h2>
                             </div>
                         </div>
-                        <label for="cover-upload-input"
-                               class="cursor-pointer px-3 py-1.5 rounded-full bg-[#111111]/85 hover:bg-[#111111] text-white text-[11px] font-normal flex items-center gap-1.5 backdrop-blur-xs transition-colors">
-                            <i data-lucide="camera" class="w-3.5 h-3.5 stroke-[1.5]"></i>
-                            <span>Alterar capa</span>
-                        </label>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button type="button" onclick="resetDefaultCover()"
+                                    class="px-2.5 py-1.5 rounded-full bg-black/55 hover:bg-black/75 text-white text-[10px] backdrop-blur-xs transition-colors">
+                                Limpar
+                            </button>
+                            <label for="cover-upload-input"
+                                   class="cursor-pointer px-3 py-1.5 rounded-full bg-[#111111]/85 hover:bg-[#111111] text-white text-[11px] font-normal flex items-center gap-1.5 backdrop-blur-xs transition-colors">
+                                <i data-lucide="camera" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                                <span>Alterar capa</span>
+                            </label>
+                        </div>
                         <input id="cover-upload-input" type="file" accept="image/*" class="hidden" onchange="handleCoverUpload(event)">
                     </div>
                 </div>
             </div>
 
+            <!-- SEÇÃO 1: AGENDA -->
             <div id="pro-section-agenda" class="pro-section space-y-7">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div class="flex flex-wrap items-end justify-between sm:justify-start gap-3 sm:gap-4">
@@ -324,6 +331,7 @@
                 <div id="week-schedule-container" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
             </div>
 
+            <!-- SEÇÃO 2: CARTELA DE CLIENTES -->
             <div id="pro-section-clients" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -363,6 +371,7 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO 3: CADASTRO DE SERVIÇOS -->
             <div id="pro-section-services" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -414,6 +423,7 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO 4: PROFISSIONAIS E TABELA DE SERVIÇOS -->
             <div id="pro-section-professionals" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -459,6 +469,7 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO 5: FORMAS DE PAGAMENTO -->
             <div id="pro-section-payments" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -471,9 +482,20 @@
                     </button>
                 </div>
 
+                <form onsubmit="addPaymentMethod(event)" class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input id="new-pay-label" type="text" required placeholder="Nome (Ex: Link de Pagamento)"
+                           class="px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                    <input id="new-pay-detail" type="text" placeholder="Descrição (Ex: Parcelado em até 3x)"
+                           class="px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                    <button type="submit" class="py-2 px-4 rounded-xl btn-brand text-xs font-normal">
+                        + Adicionar meio de pagamento
+                    </button>
+                </form>
+
                 <div id="payment-methods-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
             </div>
 
+            <!-- SEÇÃO 6: LEMBRETES -->
             <div id="pro-section-reminders" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -514,6 +536,7 @@
                 <div id="reminders-queue-list" class="space-y-2.5"></div>
             </div>
 
+            <!-- SEÇÃO 7: RELATÓRIOS -->
             <div id="pro-section-reports" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -565,6 +588,7 @@
                 </div>
             </div>
 
+            <!-- SEÇÃO 8: PERSONALIZAÇÃO -->
             <div id="pro-section-customization" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
@@ -616,7 +640,7 @@
                                         Enviar imagem da logo
                                     </label>
                                     <button type="button" onclick="clearCustomLogo()" class="text-xs text-[#737373] hover:text-[#111111] underline underline-offset-4">
-                                        Usar inicial
+                                        Excluir logo / usar inicial
                                     </button>
                                 </div>
                                 <input id="cfg-logo-upload" type="file" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
@@ -672,19 +696,27 @@
         </section>
     </main>
 
+    <!-- MODAL CRIAR / EDITAR AGENDAMENTO -->
     <div id="modal-new-appointment" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
         <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-5 fade-in">
             <div class="flex items-center justify-between">
-                <h3 class="text-base font-normal text-[#111111]">Novo agendamento</h3>
+                <h3 id="modal-app-title" class="text-base font-normal text-[#111111]">Novo agendamento</h3>
                 <button onclick="closeNewAppointmentModal()" class="text-[#737373] hover:text-[#111111]">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <form onsubmit="createManualAppointment(event)" class="space-y-3.5">
+            <form onsubmit="saveAppointmentForm(event)" class="space-y-3.5">
+                <input id="input-app-id" type="hidden">
                 <div>
                     <label class="block text-xs text-[#737373] mb-1">Cliente</label>
                     <input id="input-client-name" type="text" required placeholder="Nome do cliente"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">WhatsApp do cliente</label>
+                    <input id="input-client-phone" type="tel" placeholder="(11) 99999-0000"
                            class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
                 </div>
 
@@ -709,12 +741,8 @@
                     </div>
                     <div>
                         <label class="block text-xs text-[#737373] mb-1">Horário</label>
-                        <select id="input-time"
-                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]">
-                            <option>09:00</option><option>10:00</option><option>11:00</option>
-                            <option>13:00</option><option>14:00</option><option>15:00</option>
-                            <option>16:00</option><option>17:00</option><option>18:00</option>
-                        </select>
+                        <input id="input-time" type="time" required
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
                     </div>
                 </div>
 
@@ -731,6 +759,16 @@
                     </div>
                 </div>
 
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Status</label>
+                    <select id="input-status"
+                            class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]">
+                        <option value="confirmed">Confirmado</option>
+                        <option value="pending">Aguardando aceite</option>
+                        <option value="done">Concluído</option>
+                    </select>
+                </div>
+
                 <div class="pt-2 flex items-center justify-end gap-2">
                     <button type="button" onclick="closeNewAppointmentModal()"
                             class="px-4 py-2 rounded-full text-xs text-[#737373] hover:text-[#111111]">
@@ -744,6 +782,149 @@
         </div>
     </div>
 
+    <!-- MODAL EDITAR CLIENTE -->
+    <div id="modal-edit-client" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar cliente</h3>
+                <button onclick="closeEditClientModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedClient(event)" class="space-y-3">
+                <input id="edit-client-id" type="hidden">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Nome completo</label>
+                    <input id="edit-client-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Telefone / WhatsApp</label>
+                    <input id="edit-client-phone" type="tel" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Observação de preferência</label>
+                    <input id="edit-client-notes" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Quantidade de atendimentos</label>
+                    <input id="edit-client-visits" type="number" min="0" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditClientModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR SERVIÇO -->
+    <div id="modal-edit-service" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar serviço</h3>
+                <button onclick="closeEditServiceModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedService(event)" class="space-y-3">
+                <input id="edit-service-id" type="hidden">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Nome do serviço</label>
+                    <input id="edit-service-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Categoria / Especialidade</label>
+                    <select id="edit-service-specialty" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs bg-white">
+                        <option value="Barbeiro">Barbeiro</option>
+                        <option value="Manicure">Manicure</option>
+                        <option value="Cabeleireira">Cabeleireira</option>
+                        <option value="Esteticista">Esteticista</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Valor base (R$)</label>
+                        <input id="edit-service-price" type="number" min="1" step="1" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Duração (min)</label>
+                        <input id="edit-service-duration" type="number" min="10" step="5" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditServiceModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PROFISSIONAL E TABELA -->
+    <div id="modal-edit-pro" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-lg p-6 space-y-4 fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar profissional e tabela</h3>
+                <button onclick="closeEditProModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedPro(event)" class="space-y-3">
+                <input id="edit-pro-id" type="hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Nome do profissional</label>
+                        <input id="edit-pro-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Especialidade principal</label>
+                        <select id="edit-pro-specialty" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs bg-white">
+                            <option value="Barbeiro">Barbeiro</option>
+                            <option value="Manicure">Manicure</option>
+                            <option value="Cabeleireira">Cabeleireira</option>
+                            <option value="Esteticista">Esteticista</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <span class="block text-xs text-[#737373]">Serviços habilitados, valor (R$) e duração (min)</span>
+                    <div id="edit-pro-services-matrix" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditProModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR FORMA DE PAGAMENTO -->
+    <div id="modal-edit-payment" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-sm p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar meio de pagamento</h3>
+                <button onclick="closeEditPaymentModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedPayment(event)" class="space-y-3">
+                <input id="edit-pay-id" type="hidden">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Nome</label>
+                    <input id="edit-pay-label" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Descrição</label>
+                    <input id="edit-pay-detail" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditPaymentModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL IMAGEM DE CONFIRMAÇÃO -->
     <div id="modal-confirmation-card" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/35 backdrop-blur-[2px] p-4">
         <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-4 fade-in">
             <div class="flex items-center justify-between">
@@ -782,6 +963,7 @@
     <script>
         const TODAY_ISO = '2026-11-25';
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
+        const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
         let sbClient = null;
         let dbConnected = false;
 
@@ -793,7 +975,7 @@
             studioName: 'Atelier Studio',
             studioNiche: 'Estúdio Multiserviços',
             studioHours: 'Seg – Sáb • 09h às 19h',
-            studioCover: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80',
+            studioCover: DEFAULT_COVER,
             studioLogo: '',
             themeColors: {
                 primary: '#111111',
@@ -1042,7 +1224,7 @@
             state.studioLogo = '';
             applyBrandingAndTheme();
             await saveEstablishmentToSupabase();
-            showToast('Logo redefinida para inicial.');
+            showToast('Logo removida.');
         }
 
         async function handleCoverUpload(event) {
@@ -1056,6 +1238,13 @@
                 showToast('Foto de capa atualizada e salva.');
             };
             reader.readAsDataURL(file);
+        }
+
+        async function resetDefaultCover() {
+            state.studioCover = DEFAULT_COVER;
+            applyBrandingAndTheme();
+            await saveEstablishmentToSupabase();
+            showToast('Capa restaurada para o padrão.');
         }
 
         async function saveCustomizationSettings(event) {
@@ -1262,16 +1451,18 @@
                                 <p class="text-xs text-[#737373] mt-0.5">${svc.name} • ${app.paymentMethod}</p>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between sm:justify-end gap-2.5 flex-wrap">
+                        <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
                             <span class="text-sm font-normal text-[#111111]">R$ ${app.price}</span>
                             ${getStatusBadgeHtml(app.status)}
                             ${app.status === 'pending' ? `
                                 <button onclick="acceptAppointment('${app.id}')" class="px-3 py-1 rounded-full text-[11px] btn-brand">Aceitar</button>
                                 <button onclick="declineAppointment('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373]">Recusar</button>
                             ` : `
-                                <button onclick="openConfirmationModal('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111]">Ver imagem</button>
+                                <button onclick="openConfirmationModal('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111]">Imagem</button>
                                 <button onclick="cycleAppointmentStatus('${app.id}')" class="text-[11px] text-[#737373] underline underline-offset-4">${app.status === 'done' ? 'Reabrir' : 'Concluir'}</button>
                             `}
+                            <button onclick="openEditAppointmentModal('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111] hover:border-[#111111]">Editar</button>
+                            <button onclick="deleteAppointment('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
                         </div>
                     </div>
                 `;
@@ -1295,7 +1486,16 @@
                             <span class="text-[11px] text-[#A3A3A3]">${apps.length}</span>
                         </div>
                         <div class="space-y-2">
-                            ${apps.length ? apps.map(a => `<div class="p-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs"><p class="font-normal">${a.time} · ${a.clientName}</p><p class="text-[11px] text-[#737373]">${getServiceById(a.serviceId).name}</p></div>`).join('') : `<p class="text-xs text-[#A3A3A3] py-4 text-center">Livre</p>`}
+                            ${apps.length ? apps.map(a => `
+                                <div class="p-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs space-y-1.5">
+                                    <p class="font-normal">${a.time} · ${a.clientName}</p>
+                                    <p class="text-[11px] text-[#737373]">${getServiceById(a.serviceId).name}</p>
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <button onclick="openEditAppointmentModal('${a.id}')" class="text-[10px] underline text-[#111111]">Editar</button>
+                                        <button onclick="deleteAppointment('${a.id}')" class="text-[10px] underline text-[#737373]">Excluir</button>
+                                    </div>
+                                </div>
+                            `).join('') : `<p class="text-xs text-[#A3A3A3] py-4 text-center">Livre</p>`}
                         </div>
                     </div>
                 `;
@@ -1323,6 +1523,15 @@
             }
             renderProDashboard();
             showToast('Solicitação recusada.');
+        }
+
+        async function deleteAppointment(id) {
+            state.appointments = state.appointments.filter(a => a.id !== id);
+            if (dbConnected && sbClient) {
+                await sbClient.from('agendamentos').delete().eq('id', id);
+            }
+            renderProDashboard();
+            showToast('Agendamento excluído.');
         }
 
         async function cycleAppointmentStatus(id) {
@@ -1400,14 +1609,19 @@
             document.body.removeChild(a);
         }
 
+        /* ================= CLIENTES (EDITAR & EXCLUIR) ================= */
         function renderClientsRosterPage() {
             document.getElementById('clients-roster-cards').innerHTML = state.clientsRoster.map(c => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="text-sm font-normal text-[#111111]">${c.name}</p>
                         <p class="text-xs text-[#737373]">${c.phone}${c.notes ? ` • ${c.notes}` : ''}</p>
                     </div>
-                    <span class="text-xs px-3 py-1 rounded-full surface-brand border border-[#EAEAEA]">${c.visits} atendimento(s)</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs px-3 py-1 rounded-full surface-brand border border-[#EAEAEA]">${c.visits} atendimento(s)</span>
+                        <button onclick="openEditClientModal('${c.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#111111] hover:border-[#111111]">Editar</button>
+                        <button onclick="deleteClientFromRoster('${c.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -1433,9 +1647,58 @@
             showToast(`${item.name} adicionado à cartela.`);
         }
 
+        function openEditClientModal(id) {
+            const c = state.clientsRoster.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('edit-client-id').value = c.id;
+            document.getElementById('edit-client-name').value = c.name;
+            document.getElementById('edit-client-phone').value = c.phone;
+            document.getElementById('edit-client-notes').value = c.notes || '';
+            document.getElementById('edit-client-visits').value = c.visits || 0;
+            const m = document.getElementById('modal-edit-client');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditClientModal() {
+            const m = document.getElementById('modal-edit-client');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedClient(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-client-id').value;
+            const c = state.clientsRoster.find(x => x.id === id);
+            if (!c) return;
+            c.name = document.getElementById('edit-client-name').value.trim();
+            c.phone = document.getElementById('edit-client-phone').value.trim();
+            c.notes = document.getElementById('edit-client-notes').value.trim();
+            c.visits = Number(document.getElementById('edit-client-visits').value) || 0;
+            if (dbConnected && sbClient) {
+                await sbClient.from('clientes').update({
+                    nome_completo: c.name, whatsapp: c.phone, observacoes: c.notes, visitas: c.visits
+                }).eq('id', id);
+            }
+            closeEditClientModal();
+            renderClientsRosterPage();
+            showToast('Cliente atualizado.');
+        }
+
+        async function deleteClientFromRoster(id) {
+            state.clientsRoster = state.clientsRoster.filter(x => x.id !== id);
+            if (dbConnected && sbClient) {
+                await sbClient.from('clientes').delete().eq('id', id);
+            }
+            renderClientsRosterPage();
+            showToast('Cliente excluído.');
+        }
+
+        /* ================= SERVIÇOS (EDITAR & EXCLUIR) ================= */
         function renderServicesCatalog() {
             document.getElementById('services-catalog-list').innerHTML = state.servicesCatalog.map(s => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-normal text-[#111111]">${s.name}</span>
@@ -1443,7 +1706,11 @@
                         </div>
                         <p class="text-xs text-[#737373] mt-0.5">Duração base: ${s.duration} min</p>
                     </div>
-                    <span class="text-sm font-normal text-[#111111]">R$ ${s.price}</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-normal text-[#111111] mr-1">R$ ${s.price}</span>
+                        <button onclick="openEditServiceModal('${s.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#111111] hover:border-[#111111]">Editar</button>
+                        <button onclick="deleteServiceCatalogItem('${s.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -1469,6 +1736,61 @@
             showToast(`Serviço "${item.name}" salvo.`);
         }
 
+        function openEditServiceModal(id) {
+            const s = state.servicesCatalog.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('edit-service-id').value = s.id;
+            document.getElementById('edit-service-name').value = s.name;
+            document.getElementById('edit-service-specialty').value = s.specialty;
+            document.getElementById('edit-service-price').value = s.price;
+            document.getElementById('edit-service-duration').value = s.duration;
+            const m = document.getElementById('modal-edit-service');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditServiceModal() {
+            const m = document.getElementById('modal-edit-service');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedService(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-service-id').value;
+            const s = state.servicesCatalog.find(x => x.id === id);
+            if (!s) return;
+            s.name = document.getElementById('edit-service-name').value.trim();
+            s.specialty = document.getElementById('edit-service-specialty').value;
+            s.price = Number(document.getElementById('edit-service-price').value) || 0;
+            s.duration = Number(document.getElementById('edit-service-duration').value) || 45;
+            if (dbConnected && sbClient) {
+                await sbClient.from('servicos').update({
+                    nome: s.name, categoria: s.specialty, preco: s.price, duracao_min: s.duration
+                }).eq('id', id);
+            }
+            closeEditServiceModal();
+            renderServicesCatalog();
+            renderProServicesMatrix();
+            showToast('Serviço atualizado.');
+        }
+
+        async function deleteServiceCatalogItem(id) {
+            state.servicesCatalog = state.servicesCatalog.filter(x => x.id !== id);
+            state.professionals.forEach(p => {
+                if (p.serviceRates && p.serviceRates[id]) delete p.serviceRates[id];
+            });
+            if (dbConnected && sbClient) {
+                await sbClient.from('profissional_servicos').delete().eq('servico_id', id);
+                await sbClient.from('servicos').delete().eq('id', id);
+            }
+            renderServicesCatalog();
+            renderProServicesMatrix();
+            showToast('Serviço excluído.');
+        }
+
+        /* ================= PROFISSIONAIS E TABELA (EDITAR & EXCLUIR) ================= */
         function renderProfessionalsSection() {
             renderProServicesMatrix();
             document.getElementById('professionals-matrix-list').innerHTML = state.professionals.map(pro => {
@@ -1476,14 +1798,20 @@
                 const enabled = Object.entries(pro.serviceRates || {}).filter(([, c]) => c && c.enabled);
                 return `
                     <div class="rounded-2xl border border-[#EAEAEA] bg-white overflow-hidden">
-                        <button type="button" onclick="state.expandedProCards['${pro.id}']=!state.expandedProCards['${pro.id}']; renderProfessionalsSection();"
-                                class="w-full p-4 flex items-center justify-between gap-3 text-left">
-                            <div>
-                                <p class="text-sm font-normal text-[#111111]">${pro.name}</p>
-                                <p class="text-[11px] text-[#737373]">${pro.specialty} • ${enabled.length} serviço(s)</p>
+                        <div class="p-4 flex items-center justify-between gap-3">
+                            <button type="button" onclick="state.expandedProCards['${pro.id}']=!state.expandedProCards['${pro.id}']; renderProfessionalsSection();"
+                                    class="flex-1 text-left flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="text-sm font-normal text-[#111111]">${pro.name}</p>
+                                    <p class="text-[11px] text-[#737373]">${pro.specialty} • ${enabled.length} serviço(s)</p>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-[#737373] ${isExpanded ? 'rotate-180' : ''}"></i>
+                            </button>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button onclick="openEditProModal('${pro.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#111111] hover:border-[#111111]">Editar</button>
+                                <button onclick="deleteProfessional('${pro.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
                             </div>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#737373] ${isExpanded ? 'rotate-180' : ''}"></i>
-                        </button>
+                        </div>
                         <div class="${isExpanded ? 'block' : 'hidden'} px-4 pb-4 pt-2 border-t border-[#EAEAEA] surface-brand space-y-1.5">
                             ${enabled.map(([svcId, cfg]) => `<div class="flex justify-between text-xs"><span>${getServiceById(svcId).name}</span><span>R$ ${cfg.price} · ${cfg.duration}m</span></div>`).join('') || `<p class="text-xs text-[#737373]">Sem serviços vinculados.</p>`}
                         </div>
@@ -1540,17 +1868,171 @@
             showToast(`${name} cadastrado.`);
         }
 
+        function openEditProModal(proId) {
+            const pro = state.professionals.find(p => p.id === proId);
+            if (!pro) return;
+            document.getElementById('edit-pro-id').value = pro.id;
+            document.getElementById('edit-pro-name').value = pro.name;
+            document.getElementById('edit-pro-specialty').value = pro.specialty;
+
+            document.getElementById('edit-pro-services-matrix').innerHTML = state.servicesCatalog.map(svc => {
+                const cur = pro.serviceRates && pro.serviceRates[svc.id];
+                const checked = !!(cur && cur.enabled);
+                const price = cur && cur.price !== undefined ? cur.price : svc.price;
+                const dur = cur && cur.duration !== undefined ? cur.duration : svc.duration;
+                return `
+                    <div class="p-3 rounded-xl border border-[#EAEAEA] bg-[#FAFAFA] space-y-2">
+                        <label class="flex items-center justify-between text-xs cursor-pointer">
+                            <span class="flex items-center gap-2">
+                                <input type="checkbox" ${checked ? 'checked' : ''} class="edit-pro-svc-check accent-[#111111]" data-svc-id="${svc.id}"
+                                       onchange="document.getElementById('edit-pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)">
+                                <span>${svc.name}</span>
+                            </span>
+                            <span class="text-[11px] text-[#737373]">${svc.specialty}</span>
+                        </label>
+                        <div id="edit-pro-svc-fields-${svc.id}" class="${checked ? 'grid' : 'hidden'} grid-cols-2 gap-2">
+                            <input type="number" min="1" value="${price}" class="edit-pro-svc-price px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] bg-white text-xs" data-svc-id="${svc.id}">
+                            <input type="number" min="10" step="5" value="${dur}" class="edit-pro-svc-duration px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] bg-white text-xs" data-svc-id="${svc.id}">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const m = document.getElementById('modal-edit-pro');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditProModal() {
+            const m = document.getElementById('modal-edit-pro');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedPro(event) {
+            event.preventDefault();
+            const proId = document.getElementById('edit-pro-id').value;
+            const pro = state.professionals.find(p => p.id === proId);
+            if (!pro) return;
+
+            pro.name = document.getElementById('edit-pro-name').value.trim();
+            pro.specialty = document.getElementById('edit-pro-specialty').value;
+            const serviceRates = {};
+
+            document.querySelectorAll('.edit-pro-svc-check').forEach(chk => {
+                if (chk.checked) {
+                    const svcId = chk.getAttribute('data-svc-id');
+                    const price = Number(document.querySelector(`.edit-pro-svc-price[data-svc-id="${svcId}"]`).value) || 0;
+                    const duration = Number(document.querySelector(`.edit-pro-svc-duration[data-svc-id="${svcId}"]`).value) || 45;
+                    serviceRates[svcId] = { enabled: true, price, duration };
+                }
+            });
+            pro.serviceRates = serviceRates;
+
+            if (dbConnected && sbClient) {
+                await sbClient.from('profissionais').update({ nome: pro.name, especialidade: pro.specialty }).eq('id', proId);
+                await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
+                const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
+                    id: `ps-${Date.now()}-${idx}`, profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
+                }));
+                if (rows.length) await sbClient.from('profissional_servicos').insert(rows);
+            }
+
+            closeEditProModal();
+            renderProfessionalsSection();
+            showToast('Profissional atualizado.');
+        }
+
+        async function deleteProfessional(proId) {
+            state.professionals = state.professionals.filter(p => p.id !== proId);
+            if (dbConnected && sbClient) {
+                await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
+                await sbClient.from('profissionais').delete().eq('id', proId);
+            }
+            renderProfessionalsSection();
+            showToast('Profissional excluído.');
+        }
+
+        /* ================= FORMAS DE PAGAMENTO (CRIAR, EDITAR, ATIVAR & EXCLUIR) ================= */
         function renderPaymentMethodsSection() {
             document.getElementById('payment-methods-grid').innerHTML = state.paymentMethods.map(pm => `
-                <button type="button" onclick="togglePaymentMethod('${pm.id}')"
-                        class="p-4 rounded-2xl border text-left flex items-center justify-between gap-3 ${pm.enabled ? 'border-[#111111] bg-white' : 'border-[#EAEAEA] surface-brand opacity-65'}">
-                    <div>
-                        <p class="text-sm font-normal text-[#111111]">${pm.label}</p>
-                        <p class="text-xs text-[#737373]">${pm.detail}</p>
+                <div class="p-4 rounded-2xl border space-y-3 ${pm.enabled ? 'border-[#111111] bg-white' : 'border-[#EAEAEA] surface-brand opacity-70'}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="text-sm font-normal text-[#111111]">${pm.label}</p>
+                            <p class="text-xs text-[#737373]">${pm.detail || ''}</p>
+                        </div>
+                        <button type="button" onclick="togglePaymentMethod('${pm.id}')"
+                                class="text-[11px] px-2.5 py-1 rounded-full ${pm.enabled ? 'btn-brand' : 'bg-[#EAEAEA] text-[#737373]'}">
+                            ${pm.enabled ? 'Aceito' : 'Inativo'}
+                        </button>
                     </div>
-                    <span class="text-[11px] px-2.5 py-1 rounded-full ${pm.enabled ? 'btn-brand' : 'bg-[#EAEAEA] text-[#737373]'}">${pm.enabled ? 'Aceito' : 'Inativo'}</span>
-                </button>
+                    <div class="flex items-center gap-2 pt-2 border-t border-[#EAEAEA]">
+                        <button type="button" onclick="openEditPaymentModal('${pm.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111]">Editar</button>
+                        <button type="button" onclick="deletePaymentMethod('${pm.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373] hover:text-red-600">Excluir</button>
+                    </div>
+                </div>
             `).join('');
+        }
+
+        async function addPaymentMethod(event) {
+            event.preventDefault();
+            const item = {
+                id: 'pay-' + Date.now(),
+                label: document.getElementById('new-pay-label').value.trim(),
+                detail: document.getElementById('new-pay-detail').value.trim(),
+                enabled: true
+            };
+            state.paymentMethods.push(item);
+            if (dbConnected && sbClient) {
+                await sbClient.from('formas_pagamento').insert({ id: item.id, nome: item.label, descricao: item.detail, ativo: true });
+            }
+            event.target.reset();
+            renderPaymentMethodsSection();
+            showToast('Meio de pagamento adicionado.');
+        }
+
+        function openEditPaymentModal(id) {
+            const pm = state.paymentMethods.find(p => p.id === id);
+            if (!pm) return;
+            document.getElementById('edit-pay-id').value = pm.id;
+            document.getElementById('edit-pay-label').value = pm.label;
+            document.getElementById('edit-pay-detail').value = pm.detail || '';
+            const m = document.getElementById('modal-edit-payment');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditPaymentModal() {
+            const m = document.getElementById('modal-edit-payment');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedPayment(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-pay-id').value;
+            const pm = state.paymentMethods.find(p => p.id === id);
+            if (!pm) return;
+            pm.label = document.getElementById('edit-pay-label').value.trim();
+            pm.detail = document.getElementById('edit-pay-detail').value.trim();
+            if (dbConnected && sbClient) {
+                await sbClient.from('formas_pagamento').update({ nome: pm.label, descricao: pm.detail }).eq('id', id);
+            }
+            closeEditPaymentModal();
+            renderPaymentMethodsSection();
+            showToast('Meio de pagamento atualizado.');
+        }
+
+        async function deletePaymentMethod(id) {
+            state.paymentMethods = state.paymentMethods.filter(p => p.id !== id);
+            if (dbConnected && sbClient) {
+                await sbClient.from('formas_pagamento').delete().eq('id', id);
+            }
+            renderPaymentMethodsSection();
+            showToast('Meio de pagamento excluído.');
         }
 
         async function togglePaymentMethod(id) {
@@ -1563,6 +2045,7 @@
             renderPaymentMethodsSection();
         }
 
+        /* ================= LEMBRETES E RELATÓRIOS ================= */
         function getDueRemindersList() {
             const now = new Date();
             const due = [];
@@ -1664,12 +2147,23 @@
             }).join('');
         }
 
-        function openNewAppointmentModal() {
+        /* ================= MODAL CRIAR / EDITAR AGENDAMENTO ================= */
+        function populateAppointmentSelects() {
             document.getElementById('input-pro-select').innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
             document.getElementById('input-service-select').innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             const activePay = state.paymentMethods.filter(m => m.enabled);
             document.getElementById('input-payment').innerHTML = (activePay.length ? activePay : state.paymentMethods).map(m => `<option value="${m.label}">${m.label}</option>`).join('');
+        }
+
+        function openNewAppointmentModal() {
+            populateAppointmentSelects();
+            document.getElementById('modal-app-title').textContent = 'Novo agendamento';
+            document.getElementById('input-app-id').value = '';
+            document.getElementById('input-client-name').value = '';
+            document.getElementById('input-client-phone').value = '';
             document.getElementById('input-date').value = TODAY_ISO;
+            document.getElementById('input-time').value = '09:00';
+            document.getElementById('input-status').value = 'confirmed';
             syncManualServicePrice();
             const m = document.getElementById('modal-new-appointment');
             m.classList.remove('hidden');
@@ -1677,7 +2171,29 @@
             lucide.createIcons();
         }
 
+        function openEditAppointmentModal(appId) {
+            const app = state.appointments.find(a => a.id === appId);
+            if (!app) return;
+            populateAppointmentSelects();
+            document.getElementById('modal-app-title').textContent = 'Editar agendamento';
+            document.getElementById('input-app-id').value = app.id;
+            document.getElementById('input-client-name').value = app.clientName;
+            document.getElementById('input-client-phone').value = app.clientPhone || '';
+            document.getElementById('input-pro-select').value = app.proId;
+            document.getElementById('input-service-select').value = app.serviceId;
+            document.getElementById('input-date').value = app.date;
+            document.getElementById('input-time').value = app.time;
+            document.getElementById('input-price').value = app.price;
+            document.getElementById('input-payment').value = app.paymentMethod || 'Pix';
+            document.getElementById('input-status').value = app.status || 'confirmed';
+            const m = document.getElementById('modal-new-appointment');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
         function syncManualServicePrice() {
+            if (document.getElementById('input-app-id').value) return;
             const pro = getProById(document.getElementById('input-pro-select').value);
             const svcId = document.getElementById('input-service-select').value;
             document.getElementById('input-price').value = getProServiceInfo(pro, svcId).price;
@@ -1689,28 +2205,55 @@
             m.classList.remove('flex');
         }
 
-        async function createManualAppointment(event) {
+        async function saveAppointmentForm(event) {
             event.preventDefault();
-            const item = {
-                id: 'a-' + Date.now(), clientName: document.getElementById('input-client-name').value.trim(), clientPhone: '11999990000',
-                proId: document.getElementById('input-pro-select').value, serviceId: document.getElementById('input-service-select').value,
-                date: document.getElementById('input-date').value, time: document.getElementById('input-time').value,
-                price: Number(document.getElementById('input-price').value) || 0, paymentMethod: document.getElementById('input-payment').value || 'Pix',
-                status: 'confirmed', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null
+            const existingId = document.getElementById('input-app-id').value;
+            const payload = {
+                clientName: document.getElementById('input-client-name').value.trim(),
+                clientPhone: document.getElementById('input-client-phone').value.trim() || '11999990000',
+                proId: document.getElementById('input-pro-select').value,
+                serviceId: document.getElementById('input-service-select').value,
+                date: document.getElementById('input-date').value,
+                time: document.getElementById('input-time').value,
+                price: Number(document.getElementById('input-price').value) || 0,
+                paymentMethod: document.getElementById('input-payment').value || 'Pix',
+                status: document.getElementById('input-status').value || 'confirmed'
             };
-            item.confirmationImage = generateConfirmationImageDataUrl(item);
-            state.appointments.push(item);
-            if (dbConnected && sbClient) {
-                await sbClient.from('agendamentos').insert({
-                    id: item.id, cliente_nome: item.clientName, cliente_whatsapp: item.clientPhone, profissional_id: item.proId,
-                    servico_id: item.serviceId, data_agendamento: item.date, hora_agendamento: item.time, valor: item.price,
-                    forma_pagamento: item.paymentMethod, status: item.status
-                });
+
+            if (existingId) {
+                const app = state.appointments.find(a => a.id === existingId);
+                if (app) {
+                    Object.assign(app, payload);
+                    app.confirmationImage = generateConfirmationImageDataUrl(app);
+                    if (dbConnected && sbClient) {
+                        await sbClient.from('agendamentos').update({
+                            cliente_nome: app.clientName, cliente_whatsapp: app.clientPhone, profissional_id: app.proId,
+                            servico_id: app.serviceId, data_agendamento: app.date, hora_agendamento: app.time,
+                            valor: app.price, forma_pagamento: app.paymentMethod, status: app.status
+                        }).eq('id', existingId);
+                    }
+                }
+                showToast('Agendamento atualizado.');
+            } else {
+                const item = {
+                    id: 'a-' + Date.now(), ...payload,
+                    remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null
+                };
+                item.confirmationImage = generateConfirmationImageDataUrl(item);
+                state.appointments.push(item);
+                if (dbConnected && sbClient) {
+                    await sbClient.from('agendamentos').insert({
+                        id: item.id, cliente_nome: item.clientName, cliente_whatsapp: item.clientPhone, profissional_id: item.proId,
+                        servico_id: item.serviceId, data_agendamento: item.date, hora_agendamento: item.time, valor: item.price,
+                        forma_pagamento: item.paymentMethod, status: item.status
+                    });
+                }
+                showToast('Agendamento adicionado.');
             }
+
             closeNewAppointmentModal();
             event.target.reset();
             renderProDashboard();
-            showToast('Agendamento adicionado.');
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
