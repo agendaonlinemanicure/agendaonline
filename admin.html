@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier Agenda — Painel do Profissional</title>
+    <meta name="theme-color" content="#111111">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Atelier Pro">
+    <link rel="manifest" href="./manifest.webmanifest">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --brand-primary: #111111;
+            --brand-bg: #FFFFFF;
+            --brand-surface: #FAFAFA;
+        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: var(--brand-bg);
+            color: #111111;
+            font-weight: 300;
+            letter-spacing: -0.01em;
+            overflow-x: hidden;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .drawer-transition {
+            transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .fade-in {
+            animation: fadeIn 0.22s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-dot-online {
+            background-color: #39FF14;
+            box-shadow: 0 0 8px #39FF14, 0 0 14px rgba(57, 255, 20, 0.55);
+        }
+        .status-dot-offline {
+            background-color: #FF2A2A;
+            box-shadow: 0 0 8px #FF2A2A, 0 0 14px rgba(255, 42, 42, 0.55);
+        }
+        .btn-brand {
+            background-color: var(--brand-primary);
+            color: #FFFFFF;
+        }
+        .surface-brand {
+            background-color: var(--brand-surface);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-[#111111] antialiased selection:bg-[#111111] selection:text-white">
+
+    <!-- BARRA SUPERIOR FIXA -->
+    <header class="sticky top-0 z-30 backdrop-blur-sm border-b border-[#EAEAEA]" style="background-color: color-mix(in srgb, var(--brand-bg) 95%, transparent);">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <button onclick="openProDrawer()"
+                        aria-label="Abrir menu recolhível"
+                        class="w-9 h-9 rounded-full border border-[#EAEAEA] hover:border-[#111111] flex items-center justify-center transition-colors">
+                    <i data-lucide="menu" class="w-4 h-4 stroke-[1.5]"></i>
+                </button>
+
+                <button onclick="navigateProSection('agenda')" class="flex items-center gap-2.5 text-left group">
+                    <span id="header-brand-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal tracking-wider overflow-hidden shrink-0">
+                        A
+                    </span>
+                    <div class="hidden sm:block">
+                        <span id="header-brand-name" class="text-sm font-normal tracking-tight text-[#111111] block leading-none">
+                            Atelier Studio
+                        </span>
+                        <span id="header-brand-niche" class="text-[10px] text-[#737373] leading-tight">
+                            Estúdio
+                        </span>
+                    </div>
+                </button>
+            </div>
+
+            <div class="flex items-center surface-brand px-3.5 py-1.5 rounded-full border border-[#EAEAEA]">
+                <span class="text-xs tracking-wide text-[#111111] font-normal">
+                    Painel do Profissional
+                </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span id="db-sync-badge" class="hidden lg:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border border-[#EAEAEA] surface-brand text-[#737373]">
+                    Local
+                </span>
+
+                <button id="header-online-toggle" onclick="toggleStudioOnline()"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] surface-brand hover:border-[#111111] transition-colors"
+                        title="Alternar status de agendamento online">
+                    <span id="header-online-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
+                    <span id="header-online-label" class="hidden sm:inline text-[#111111] font-normal">Online</span>
+                </button>
+
+                <button id="install-pwa-btn" onclick="installPwaApp()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs btn-brand hover:opacity-90 transition-opacity"
+                        title="Instalar aplicativo no aparelho">
+                    <i data-lucide="download" class="w-3.5 h-3.5 stroke-[1.75]"></i>
+                    <span class="hidden sm:inline font-normal">App Pro</span>
+                </button>
+
+                <button onclick="copyClientAppLink()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] surface-brand hover:border-[#111111] text-[#111111] transition-colors"
+                        title="Copiar link do App do Cliente">
+                    <i data-lucide="link-2" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                    <span class="hidden md:inline font-light">Link Cliente</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MENU RECOLHÍVEL DO PAINEL PROFISSIONAL -->
+    <div id="pro-drawer-backdrop" onclick="closeProDrawer()"
+         class="fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] hidden transition-opacity"></div>
+
+    <aside id="pro-drawer"
+           class="fixed top-0 left-0 z-50 h-full w-80 max-w-[88vw] border-r border-[#EAEAEA] -translate-x-full drawer-transition flex flex-col"
+           style="background-color: var(--brand-bg);">
+        <div class="px-5 h-16 border-b border-[#EAEAEA] flex items-center justify-between">
+            <div>
+                <p class="text-[11px] uppercase tracking-[0.14em] text-[#A3A3A3]">Gestão</p>
+                <h2 class="text-sm font-normal text-[#111111]">Menu do Profissional</h2>
+            </div>
+            <button onclick="closeProDrawer()"
+                    class="w-8 h-8 rounded-full border border-[#EAEAEA] hover:border-[#111111] flex items-center justify-center">
+                <i data-lucide="x" class="w-4 h-4 stroke-[1.5]"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+            <button onclick="navigateProSection('agenda')" data-nav="agenda"
+                    class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors btn-brand">
+                <span class="flex items-center gap-2.5">
+                    <i data-lucide="calendar" class="w-4 h-4 stroke-[1.5]"></i>
+                    <span>Agenda do Dia / Semana</span>
+                </span>
+            </button>
+
+            <div>
+                <button onclick="toggleClientsDropdown()" data-nav="clients"
+                        class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                    <span class="flex items-center gap-2.5">
+                        <i data-lucide="users" class="w-4 h-4 stroke-[1.5]"></i>
+                        <span>Cartela de Clientes</span>
+                    </span>
+                    <i id="clients-dropdown-chevron" data-lucide="chevron-down"
+                       class="w-3.5 h-3.5 stroke-[1.5] text-[#737373] transition-transform duration-200"></i>
+                </button>
+                <div id="clients-dropdown-list" class="hidden mt-1 ml-3 pl-3 border-l border-[#EAEAEA] space-y-1 max-h-48 overflow-y-auto"></div>
+            </div>
+
+            <button onclick="navigateProSection('services')" data-nav="services"
+                    class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                <span class="flex items-center gap-2.5">
+                    <i data-lucide="sparkles" class="w-4 h-4 stroke-[1.5]"></i>
+                    <span>Cadastro de Serviços</span>
+                </span>
+            </button>
+
+            <button onclick="navigateProSection('professionals')" data-nav="professionals"
+                    class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                <span class="flex items-center gap-2.5">
+                    <i data-lucide="scissors" class="w-4 h-4 stroke-[1.5]"></i>
+                    <span>Profissionais & Tabela</span>
+                </span>
+            </button>
+
+            <button onclick="navigateProSection('payments')" data-nav="payments"
+                    class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                <span class="flex items-center gap-2.5">
+                    <i data-lucide="credit-card" class="w-4 h-4 stroke-[1.5]"></i>
+                    <span>Formas de Pagamento</span>
+                </span>
+            </button>
+
+            <button onclick="navigateProSection('reminders')" data-nav="reminders"
+                    class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                <span class="flex items-center gap-2.5">
+                    <i data-lucide="bell-ring" class="w-4 h-4 stroke-[1.5]"></i>
+                    <span>Lembretes WhatsApp</span>
+                </span>
+                <span id="drawer-reminder-badge" class="text-[10px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">0</span>
+            </button>
+
+            <button onclick="navigateProSection('reports')" data-nav="reports"
+                    class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                <span class="flex items-center gap-2.5">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 stroke-[1.5]"></i>
+                    <span>Relatórios (Dia / Sem / Mês)</span>
+                </span>
+            </button>
+
+            <div class="pt-2 mt-2 border-t border-[#EAEAEA]">
+                <button onclick="navigateProSection('customization')" data-nav="customization"
+                        class="pro-nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs text-left transition-colors text-[#111111] hover:opacity-80">
+                    <span class="flex items-center gap-2.5">
+                        <i data-lucide="palette" class="w-4 h-4 stroke-[1.5]"></i>
+                        <span>Personalização & Config</span>
+                    </span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-[#EAEAEA] surface-brand space-y-2">
+            <a href="./index.html" target="_blank" rel="noopener noreferrer"
+               class="w-full py-2.5 px-3.5 rounded-xl border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111] flex items-center justify-between transition-colors">
+                <span>Abrir App do Cliente (PWA)</span>
+                <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+            </a>
+            <p class="text-[11px] text-[#737373] font-light">
+                Sincronização via Supabase
+            </p>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
+        <section id="view-pro" class="fade-in space-y-6">
+
+            <!-- CAPA DO ESTABELECIMENTO -->
+            <div class="max-w-3xl mx-auto">
+                <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden group">
+                    <img id="studio-cover-img"
+                         src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
+                         alt="Foto de capa do estabelecimento"
+                         onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
+                         class="w-full h-full object-cover grayscale contrast-[1.03]">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent flex items-end justify-between p-4 sm:p-5">
+                        <div class="text-white flex items-center gap-3">
+                            <span id="cover-logo-badge" class="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-sm font-normal overflow-hidden shrink-0">
+                                A
+                            </span>
+                            <div>
+                                <p id="cover-niche-label" class="text-[10px] uppercase tracking-[0.16em] text-white/75">Estabelecimento</p>
+                                <h2 id="studio-display-name" class="text-base sm:text-lg font-normal tracking-tight">Atelier Studio</h2>
+                            </div>
+                        </div>
+                        <label for="cover-upload-input"
+                               class="cursor-pointer px-3 py-1.5 rounded-full bg-[#111111]/85 hover:bg-[#111111] text-white text-[11px] font-normal flex items-center gap-1.5 backdrop-blur-xs transition-colors">
+                            <i data-lucide="camera" class="w-3.5 h-3.5 stroke-[1.5]"></i>
+                            <span>Alterar capa</span>
+                        </label>
+                        <input id="cover-upload-input" type="file" accept="image/*" class="hidden" onchange="handleCoverUpload(event)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBSEÇÃO A: AGENDA DO DIA / SEMANA -->
+            <div id="pro-section-agenda" class="pro-section space-y-7">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div class="flex flex-wrap items-end justify-between sm:justify-start gap-3 sm:gap-4">
+                        <div>
+                            <p id="current-date-label" class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">
+                                Quarta, 25 de Novembro
+                            </p>
+                            <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-[#111111]">
+                                Agenda do dia
+                            </h1>
+                        </div>
+
+                        <button id="pro-online-pill" onclick="toggleStudioOnline()"
+                                class="mb-0.5 px-3.5 py-1.5 rounded-full border border-[#EAEAEA] surface-brand hover:border-[#111111] text-[#111111] text-xs font-normal inline-flex items-center gap-2 transition-colors whitespace-nowrap">
+                            <span id="pro-cover-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
+                            <span id="pro-cover-status-text">Agendamento Online: ON</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 self-start sm:self-auto">
+                        <div class="inline-flex rounded-full border border-[#EAEAEA] p-0.5 surface-brand">
+                            <button id="btn-view-day" onclick="setScheduleMode('day')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs btn-brand transition-colors">
+                                Dia
+                            </button>
+                            <button id="btn-view-week" onclick="setScheduleMode('week')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors">
+                                Semana
+                            </button>
+                        </div>
+
+                        <button onclick="openNewAppointmentModal()"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs btn-brand hover:opacity-90 transition-opacity">
+                            <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[1.75]"></i>
+                            <span>Novo horário</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 sm:gap-5">
+                    <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Atendimentos</span>
+                        <span id="stat-count" class="mt-1 block text-xl sm:text-2xl font-light text-[#111111]">0</span>
+                    </div>
+                    <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Confirmados</span>
+                        <span id="stat-confirmed" class="mt-1 block text-xl sm:text-2xl font-light text-[#111111]">0</span>
+                    </div>
+                    <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Previsão</span>
+                        <span id="stat-revenue" class="mt-1 block text-xl sm:text-2xl font-light text-[#111111]">R$ 0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1" id="specialty-filters"></div>
+                <div id="day-schedule-container" class="space-y-2.5"></div>
+                <div id="week-schedule-container" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            </div>
+
+            <!-- SUBSEÇÃO B: CARTELA DE CLIENTES -->
+            <div id="pro-section-clients" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Relacionamento</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Cartela de clientes</h2>
+                    </div>
+                    <button onclick="navigateProSection('agenda')"
+                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                        Voltar à agenda
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <form onsubmit="addClientToRoster(event)" class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-3.5 h-fit">
+                        <h3 class="text-sm font-normal text-[#111111]">Novo cliente</h3>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Nome completo</label>
+                            <input id="roster-client-name" type="text" required placeholder="Ex: Beatriz Almeida"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Telefone / WhatsApp</label>
+                            <input id="roster-client-phone" type="tel" required placeholder="(11) 99999-0000"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Observação de preferência</label>
+                            <input id="roster-client-notes" type="text" placeholder="Ex: Prefere esmalte nude ou corte social"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+                        <button type="submit"
+                                class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                            Adicionar à cartela
+                        </button>
+                    </form>
+
+                    <div id="clients-roster-cards" class="lg:col-span-2 space-y-2.5"></div>
+                </div>
+            </div>
+
+            <!-- SUBSEÇÃO C: CADASTRO DE SERVIÇOS -->
+            <div id="pro-section-services" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Catálogo Base</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Cadastro de serviços</h2>
+                    </div>
+                    <button onclick="navigateProSection('agenda')"
+                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                        Voltar à agenda
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <form onsubmit="addServiceCatalogItem(event)" class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-3.5 h-fit">
+                        <h3 class="text-sm font-normal text-[#111111]">Novo serviço</h3>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Nome do serviço</label>
+                            <input id="new-service-name" type="text" required placeholder="Ex: Blindagem de Unhas"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Categoria / Especialidade</label>
+                            <select id="new-service-specialty"
+                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                                <option value="Barbeiro">Barbeiro</option>
+                                <option value="Manicure">Manicure</option>
+                                <option value="Cabeleireira">Cabeleireira</option>
+                                <option value="Esteticista">Esteticista</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Valor base (R$)</label>
+                                <input id="new-service-price" type="number" min="1" step="1" required placeholder="90"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Duração (min)</label>
+                                <input id="new-service-duration" type="number" min="10" step="5" required placeholder="45"
+                                       class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                            </div>
+                        </div>
+                        <button type="submit"
+                                class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                            Salvar serviço
+                        </button>
+                    </form>
+
+                    <div id="services-catalog-list" class="lg:col-span-2 space-y-2.5"></div>
+                </div>
+            </div>
+
+            <!-- SUBSEÇÃO D: PROFISSIONAIS & TABELA INDIVIDUAL -->
+            <div id="pro-section-professionals" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Equipe & Preços Individuais</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Profissionais e tabela de serviços</h2>
+                    </div>
+                    <button onclick="navigateProSection('agenda')"
+                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                        Voltar à agenda
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <form onsubmit="addProfessionalWithServices(event)" class="lg:col-span-5 p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4 h-fit">
+                        <h3 class="text-sm font-normal text-[#111111]">Cadastrar profissional</h3>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Nome do profissional</label>
+                            <input id="pro-form-name" type="text" required placeholder="Ex: Lucas Andrade"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Especialidade principal</label>
+                            <select id="pro-form-specialty"
+                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                                <option value="Barbeiro">Barbeiro</option>
+                                <option value="Manicure">Manicure</option>
+                                <option value="Cabeleireira">Cabeleireira</option>
+                                <option value="Esteticista">Esteticista</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-2">
+                            <span class="block text-[11px] text-[#737373]">Serviços que realiza, valor (R$) e tempo médio (min)</span>
+                            <div id="pro-services-matrix" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                            Salvar profissional
+                        </button>
+                    </form>
+
+                    <div id="professionals-matrix-list" class="lg:col-span-7 space-y-2.5"></div>
+                </div>
+            </div>
+
+            <!-- SUBSEÇÃO E: FORMAS DE PAGAMENTO ACEITAS -->
+            <div id="pro-section-payments" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Caixa & Recebimentos</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Tipos de pagamento aceitos</h2>
+                    </div>
+                    <button onclick="navigateProSection('agenda')"
+                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                        Voltar à agenda
+                    </button>
+                </div>
+
+                <div id="payment-methods-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+            </div>
+
+            <!-- SUBSEÇÃO F: LEMBRETES WHATSAPP -->
+            <div id="pro-section-reminders" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Notificações • 24h e 1h antes</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Lembretes via WhatsApp</h2>
+                    </div>
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                        <button onclick="evaluateWhatsAppReminders(true)"
+                                class="px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#111111] hover:border-[#111111] transition-colors">
+                            Verificar agora
+                        </button>
+                        <button onclick="navigateProSection('agenda')"
+                                class="px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                            Voltar à agenda
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <p class="text-xs font-normal text-[#111111]">Regras de lembrete ativas</p>
+                        <p class="text-[11px] text-[#737373] font-light">
+                            Dispara alerta na janela de <strong>1 dia antes (até 24h)</strong> e na janela de <strong>1 hora antes (até 60min)</strong>.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input id="rule-24h" type="checkbox" checked onchange="updateReminderRules()" class="accent-[#111111]">
+                            <span>1 dia antes</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input id="rule-1h" type="checkbox" checked onchange="updateReminderRules()" class="accent-[#111111]">
+                            <span>1 hora antes</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="reminders-queue-list" class="space-y-2.5"></div>
+            </div>
+
+            <!-- SUBSEÇÃO G: RELATÓRIOS -->
+            <div id="pro-section-reports" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Desempenho</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Relatório de atendimentos</h2>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                        <div class="inline-flex rounded-full border border-[#EAEAEA] p-0.5 surface-brand">
+                            <button id="report-period-day" onclick="setReportPeriod('day')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs btn-brand transition-colors">
+                                Dia
+                            </button>
+                            <button id="report-period-week" onclick="setReportPeriod('week')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors">
+                                Semana
+                            </button>
+                            <button id="report-period-month" onclick="setReportPeriod('month')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors">
+                                Mês
+                            </button>
+                        </div>
+
+                        <button onclick="navigateProSection('agenda')"
+                                class="px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                            Voltar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Total de atendimentos</span>
+                        <span id="report-total-count" class="mt-1.5 block text-2xl font-light text-[#111111]">0</span>
+                    </div>
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Faturamento no período</span>
+                        <span id="report-total-revenue" class="mt-1.5 block text-2xl font-light text-[#111111]">R$ 0</span>
+                    </div>
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Ticket médio</span>
+                        <span id="report-avg-ticket" class="mt-1.5 block text-2xl font-light text-[#111111]">R$ 0</span>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl border border-[#EAEAEA] space-y-4">
+                    <h3 class="text-sm font-normal text-[#111111]">Atendimentos por profissional</h3>
+                    <div id="report-by-pro" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- SUBSEÇÃO H: PERSONALIZAÇÃO & CONFIGURAÇÕES DO ESTABELECIMENTO -->
+            <div id="pro-section-customization" class="pro-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Identidade Visual & Regras</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Personalização do painel e app</h2>
+                    </div>
+                    <button onclick="navigateProSection('agenda')"
+                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                        Voltar à agenda
+                    </button>
+                </div>
+
+                <form onsubmit="saveCustomizationSettings(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Coluna 1: Identidade, Logo e Nicho -->
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
+                        <h3 class="text-sm font-normal text-[#111111]">Identidade do negócio</h3>
+
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Nome do estabelecimento</label>
+                            <input id="cfg-studio-name" type="text" required
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Tipo de negócio / Nicho</label>
+                            <select id="cfg-studio-niche"
+                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                                <option value="Salão de Beleza">Salão de Beleza</option>
+                                <option value="Barbearia">Barbearia</option>
+                                <option value="Manicure & Unhas">Manicure & Unhas</option>
+                                <option value="Estética & Facial">Estética & Facial</option>
+                                <option value="Studio Multiserviços">Studio Multiserviços</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Horário de funcionamento exibido ao cliente</label>
+                            <input id="cfg-studio-hours" type="text" required placeholder="Ex: Ter – Sáb • 09h às 19h"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+
+                        <div class="space-y-2 pt-1">
+                            <label class="block text-[11px] text-[#737373]">Logo do estabelecimento</label>
+                            <div class="flex items-center gap-3">
+                                <div id="cfg-logo-preview" class="w-12 h-12 rounded-full border border-[#EAEAEA] bg-white flex items-center justify-center text-sm overflow-hidden shrink-0">
+                                    A
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <label for="cfg-logo-upload" class="cursor-pointer px-3.5 py-2 rounded-full border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111]">
+                                        Enviar imagem da logo
+                                    </label>
+                                    <button type="button" onclick="clearCustomLogo()" class="text-xs text-[#737373] hover:text-[#111111] underline underline-offset-4">
+                                        Usar inicial
+                                    </button>
+                                </div>
+                                <input id="cfg-logo-upload" type="file" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna 2: Cores e Aparência -->
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
+                        <h3 class="text-sm font-normal text-[#111111]">Cores do painel e do app do cliente</h3>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Cor principal</label>
+                                <input id="cfg-color-primary" type="color" value="#111111"
+                                       oninput="previewColorsLive()"
+                                       class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Cor de fundo</label>
+                                <input id="cfg-color-bg" type="color" value="#FFFFFF"
+                                       oninput="previewColorsLive()"
+                                       class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Cor de cartão</label>
+                                <input id="cfg-color-surface" type="color" value="#FAFAFA"
+                                       oninput="previewColorsLive()"
+                                       class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white space-y-2">
+                            <p class="text-[11px] text-[#737373]">Prévia rápida</p>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-normal text-[#111111]">Botão principal e destaques</span>
+                                <span id="cfg-preview-pill" class="px-3 py-1 rounded-full text-xs btn-brand">Confirmar</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 gap-2">
+                            <button type="button" onclick="resetDefaultTheme()"
+                                    class="px-4 py-2.5 rounded-full border border-[#EAEAEA] bg-white text-xs text-[#737373] hover:text-[#111111]">
+                                Restaurar padrão
+                            </button>
+                            <button type="submit"
+                                    class="px-6 py-2.5 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                                Salvar personalização
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL: NOVO AGENDAMENTO MANUAL -->
+    <div id="modal-new-appointment" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-5 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Novo agendamento</h3>
+                <button onclick="closeNewAppointmentModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form onsubmit="createManualAppointment(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Cliente</label>
+                    <input id="input-client-name" type="text" required placeholder="Nome do cliente"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Profissional</label>
+                        <select id="input-pro-select" onchange="syncManualServicePrice()"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Serviço</label>
+                        <select id="input-service-select" onchange="syncManualServicePrice()"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]"></select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Data</label>
+                        <input id="input-date" type="date" required
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Horário</label>
+                        <select id="input-time"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]">
+                            <option>09:00</option><option>10:00</option><option>11:00</option>
+                            <option>13:00</option><option>14:00</option><option>15:00</option>
+                            <option>16:00</option><option>17:00</option><option>18:00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Valor (R$)</label>
+                        <input id="input-price" type="number" min="0" step="1" required
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Meio de pagamento</label>
+                        <select id="input-payment"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]"></select>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeNewAppointmentModal()"
+                            class="px-4 py-2 rounded-full text-xs text-[#737373] hover:text-[#111111]">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 rounded-full text-xs btn-brand hover:opacity-90">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: IMAGEM DE CONFIRMAÇÃO -->
+    <div id="modal-confirmation-card" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/35 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.14em] text-[#737373]">Agendamento Aceito</p>
+                    <h3 class="text-base font-normal text-[#111111]">Imagem de confirmação</h3>
+                </div>
+                <button onclick="closeConfirmationModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="rounded-2xl border border-[#EAEAEA] surface-brand p-3 flex justify-center">
+                <img id="confirmation-card-preview" src="" alt="Imagem de confirmação do agendamento"
+                     class="w-full max-w-[340px] rounded-xl border border-[#EAEAEA] bg-white">
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+                <button onclick="closeConfirmationModal()"
+                        class="px-4 py-2 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-[#111111]">
+                    Fechar
+                </button>
+                <button onclick="downloadCurrentConfirmationCard()"
+                        class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-xs btn-brand hover:opacity-90">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Baixar imagem</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"
+         class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200 bg-[#111111] text-white text-xs px-4 py-2.5 rounded-full shadow-sm max-w-[92vw] text-center">
+    </div>
+
+    <script>
+        const TODAY_ISO = '2026-11-25';
+        let sbClient = null;
+        let dbConnected = false;
+
+        const state = {
+            scheduleMode: 'day',
+            reportPeriod: 'day',
+            selectedSpecialty: 'Todos',
+            studioOnline: true,
+            studioName: 'Atelier Studio',
+            studioNiche: 'Estúdio Multiserviços',
+            studioHours: 'Seg – Sáb • 09h às 19h',
+            studioCover: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80',
+            studioLogo: '',
+            themeColors: {
+                primary: '#111111',
+                bg: '#FFFFFF',
+                surface: '#FAFAFA'
+            },
+            reminderRules: {
+                dayBefore: true,
+                hourBefore: true
+            },
+            servicesCatalog: [
+                { id: 's1', name: 'Corte & Visagismo', specialty: 'Barbeiro', duration: 45, price: 120 },
+                { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Barbeiro', duration: 35, price: 70 },
+                { id: 's3', name: 'Manicure & Esmaltação em Gel', specialty: 'Manicure', duration: 60, price: 95 },
+                { id: 's4', name: 'Spa dos Pés & Cuticulagem', specialty: 'Manicure', duration: 50, price: 85 },
+                { id: 's5', name: 'Escova Modelada & Tratamento', specialty: 'Cabeleireira', duration: 60, price: 140 },
+                { id: 's6', name: 'Limpeza de Pele Profunda', specialty: 'Esteticista', duration: 75, price: 180 },
+            ],
+            professionals: [
+                { id: 'p1', name: 'Rafael Mendes', specialty: 'Barbeiro', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
+                { id: 'p2', name: 'Camila Rocha', specialty: 'Manicure', serviceRates: { s3: { enabled: true, price: 100, duration: 60 }, s4: { enabled: true, price: 90, duration: 50 } } },
+                { id: 'p3', name: 'Juliana Freitas', specialty: 'Cabeleireira', serviceRates: { s5: { enabled: true, price: 150, duration: 65 } } },
+                { id: 'p4', name: 'Fernanda Lima', specialty: 'Esteticista', serviceRates: { s6: { enabled: true, price: 190, duration: 75 } } },
+            ],
+            expandedProCards: {},
+            clientsRoster: [
+                { id: 'c1', name: 'Lucas Tavares', phone: '(11) 98111-2233', notes: 'Prefere degradê navalhado na lateral', visits: 8 },
+                { id: 'c2', name: 'Ana Beatriz', phone: '(11) 97222-3344', notes: 'Alergia a base com formol', visits: 12 },
+                { id: 'c3', name: 'Carla Menezes', phone: '(11) 96333-4455', notes: 'Cabelos finos, máscara nutritiva', visits: 5 },
+            ],
+            paymentMethods: [
+                { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
+                { id: 'pay-credit', label: 'Cartão de Crédito', detail: 'À vista ou parcelado', enabled: true },
+                { id: 'pay-debit', label: 'Cartão de Débito', detail: 'Débito na maquininha', enabled: true },
+                { id: 'pay-cash', label: 'Dinheiro', detail: 'Pagamento presencial', enabled: true },
+            ],
+            appointments: [
+                { id: 'a1', clientName: 'Lucas Tavares', clientPhone: '11981112233', proId: 'p1', serviceId: 's1', date: '2026-11-25', time: '09:00', price: 130, paymentMethod: 'Pix', status: 'confirmed', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null },
+                { id: 'a2', clientName: 'Ana Beatriz', clientPhone: '11972223344', proId: 'p2', serviceId: 's3', date: '2026-11-25', time: '10:30', price: 100, paymentMethod: 'Cartão de Crédito', status: 'pending', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null },
+                { id: 'a3', clientName: 'Carla Menezes', clientPhone: '11963334455', proId: 'p3', serviceId: 's5', date: '2026-11-25', time: '14:00', price: 150, paymentMethod: 'Cartão de Débito', status: 'confirmed', remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null },
+            ],
+            latestConfirmationDataUrl: null
+        };
+
+        let deferredPwaPrompt = null;
+
+        // SUPABASE INIT & SYNC
+        function initSupabase() {
+            const cfg = window.SUPABASE_CONFIG;
+            if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) {
+                setSyncBadge(false);
+                return;
+            }
+            if (!window.supabase || !window.supabase.createClient) {
+                setSyncBadge(false);
+                return;
+            }
+            sbClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+            dbConnected = true;
+            setSyncBadge(true);
+        }
+
+        function setSyncBadge(online) {
+            const el = document.getElementById('db-sync-badge');
+            if (!el) return;
+            el.textContent = online ? 'Supabase ON' : 'Modo Local';
+        }
+
+        async function loadFromSupabase() {
+            if (!dbConnected || !sbClient) return;
+            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+
+            try {
+                const { data: est } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
+                if (est) {
+                    state.studioName = est.nome || state.studioName;
+                    state.studioNiche = est.nicho || state.studioNiche;
+                    state.studioOnline = typeof est.online === 'boolean' ? est.online : true;
+                    state.studioCover = est.capa_url || state.studioCover;
+                    state.studioLogo = est.logo_url || '';
+                    state.studioHours = est.horario_funcionamento || state.studioHours;
+                    state.themeColors = {
+                        primary: est.cor_primaria || '#111111',
+                        bg: est.cor_fundo || '#FFFFFF',
+                        surface: est.cor_destaque || '#FAFAFA'
+                    };
+                    state.reminderRules.dayBefore = typeof est.lembrete_24h === 'boolean' ? est.lembrete_24h : true;
+                    state.reminderRules.hourBefore = typeof est.lembrete_1h === 'boolean' ? est.lembrete_1h : true;
+                }
+
+                const { data: svcs } = await sbClient.from('servicos').select('*').eq('ativo', true);
+                if (svcs && svcs.length > 0) {
+                    state.servicesCatalog = svcs.map(s => ({
+                        id: s.id,
+                        name: s.nome,
+                        specialty: s.categoria,
+                        duration: Number(s.duracao_min) || 45,
+                        price: Number(s.preco) || 0
+                    }));
+                }
+
+                const { data: pros } = await sbClient.from('profissionais').select('*').eq('ativo', true);
+                const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
+                if (pros && pros.length > 0) {
+                    state.professionals = pros.map(p => {
+                        const rates = {};
+                        (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
+                            rates[ps.servico_id] = {
+                                enabled: true,
+                                price: Number(ps.preco) || 0,
+                                duration: Number(ps.duracao_min) || 45
+                            };
+                        });
+                        return {
+                            id: p.id,
+                            name: p.nome,
+                            specialty: p.especialidade,
+                            serviceRates: rates
+                        };
+                    });
+                }
+
+                const { data: pays } = await sbClient.from('formas_pagamento').select('*');
+                if (pays && pays.length > 0) {
+                    state.paymentMethods = pays.map(pm => ({
+                        id: pm.id,
+                        label: pm.nome,
+                        detail: pm.descricao || '',
+                        enabled: !!pm.ativo
+                    }));
+                }
+
+                const { data: clis } = await sbClient.from('clientes').select('*');
+                if (clis && clis.length > 0) {
+                    state.clientsRoster = clis.map(c => ({
+                        id: c.id,
+                        name: c.nome_completo,
+                        phone: c.whatsapp,
+                        notes: c.observacoes || '',
+                        visits: Number(c.visitas) || 0
+                    }));
+                }
+
+                const { data: apps } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
+                if (apps && apps.length > 0) {
+                    state.appointments = apps.map(a => ({
+                        id: a.id,
+                        clientName: a.cliente_nome,
+                        clientPhone: a.cliente_whatsapp || '',
+                        proId: a.profissional_id,
+                        serviceId: a.servico_id,
+                        date: a.data_agendamento,
+                        time: a.hora_agendamento,
+                        price: Number(a.valor) || 0,
+                        paymentMethod: a.forma_pagamento || 'Pix',
+                        status: a.status || 'pending',
+                        remindersSent: {
+                            dayBefore: !!a.lembrete_24h_enviado,
+                            hourBefore: !!a.lembrete_1h_enviado
+                        },
+                        confirmationImage: null
+                    }));
+                }
+            } catch (err) {
+                console.warn('Falha ao carregar dados do Supabase:', err);
+            }
+        }
+
+        async function saveEstablishmentToSupabase() {
+            if (!dbConnected || !sbClient) return;
+            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+            await sbClient.from('estabelecimentos').upsert({
+                id: estId,
+                nome: state.studioName,
+                nicho: state.studioNiche,
+                online: state.studioOnline,
+                capa_url: state.studioCover,
+                logo_url: state.studioLogo,
+                cor_primaria: state.themeColors.primary,
+                cor_fundo: state.themeColors.bg,
+                cor_destaque: state.themeColors.surface,
+                horario_funcionamento: state.studioHours,
+                lembrete_24h: state.reminderRules.dayBefore,
+                lembrete_1h: state.reminderRules.hourBefore,
+                atualizado_em: new Date().toISOString()
+            });
+        }
+
+        // PERSONALIZAÇÃO & IDENTIDADE VISUAL
+        function applyBrandingAndTheme() {
+            document.documentElement.style.setProperty('--brand-primary', state.themeColors.primary);
+            document.documentElement.style.setProperty('--brand-bg', state.themeColors.bg);
+            document.documentElement.style.setProperty('--brand-surface', state.themeColors.surface);
+
+            document.getElementById('studio-display-name').textContent = state.studioName;
+            document.getElementById('header-brand-name').textContent = state.studioName;
+            document.getElementById('header-brand-niche').textContent = state.studioNiche;
+            document.getElementById('cover-niche-label').textContent = state.studioNiche;
+            document.getElementById('studio-cover-img').src = state.studioCover;
+
+            const initial = (state.studioName || 'A').trim().charAt(0).toUpperCase() || 'A';
+            const headerLogo = document.getElementById('header-brand-logo');
+            const coverLogo = document.getElementById('cover-logo-badge');
+            const cfgLogo = document.getElementById('cfg-logo-preview');
+
+            if (state.studioLogo) {
+                const imgHtml = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                headerLogo.innerHTML = imgHtml;
+                coverLogo.innerHTML = imgHtml;
+                if (cfgLogo) cfgLogo.innerHTML = imgHtml;
+            } else {
+                headerLogo.textContent = initial;
+                coverLogo.textContent = initial;
+                if (cfgLogo) cfgLogo.textContent = initial;
+            }
+        }
+
+        function loadCustomizationForm() {
+            document.getElementById('cfg-studio-name').value = state.studioName;
+            document.getElementById('cfg-studio-niche').value = state.studioNiche;
+            document.getElementById('cfg-studio-hours').value = state.studioHours;
+            document.getElementById('cfg-color-primary').value = state.themeColors.primary;
+            document.getElementById('cfg-color-bg').value = state.themeColors.bg;
+            document.getElementById('cfg-color-surface').value = state.themeColors.surface;
+            applyBrandingAndTheme();
+        }
+
+        function previewColorsLive() {
+            state.themeColors.primary = document.getElementById('cfg-color-primary').value;
+            state.themeColors.bg = document.getElementById('cfg-color-bg').value;
+            state.themeColors.surface = document.getElementById('cfg-color-surface').value;
+            applyBrandingAndTheme();
+        }
+
+        function resetDefaultTheme() {
+            state.themeColors = { primary: '#111111', bg: '#FFFFFF', surface: '#FAFAFA' };
+            document.getElementById('cfg-color-primary').value = '#111111';
+            document.getElementById('cfg-color-bg').value = '#FFFFFF';
+            document.getElementById('cfg-color-surface').value = '#FAFAFA';
+            applyBrandingAndTheme();
+            showToast('Cores padrão restauradas.');
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.studioLogo = e.target.result;
+                applyBrandingAndTheme();
+                showToast('Logo carregada.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearCustomLogo() {
+            state.studioLogo = '';
+            applyBrandingAndTheme();
+            showToast('Logo redefinida para inicial.');
+        }
+
+        function handleCoverUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                state.studioCover = e.target.result;
+                applyBrandingAndTheme();
+                await saveEstablishmentToSupabase();
+                showToast('Foto de capa atualizada.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveCustomizationSettings(event) {
+            event.preventDefault();
+            state.studioName = document.getElementById('cfg-studio-name').value.trim() || 'Atelier Studio';
+            state.studioNiche = document.getElementById('cfg-studio-niche').value;
+            state.studioHours = document.getElementById('cfg-studio-hours').value.trim() || 'Seg – Sáb • 09h às 19h';
+            state.themeColors = {
+                primary: document.getElementById('cfg-color-primary').value,
+                bg: document.getElementById('cfg-color-bg').value,
+                surface: document.getElementById('cfg-color-surface').value
+            };
+            applyBrandingAndTheme();
+            await saveEstablishmentToSupabase();
+            showToast('Personalização salva!');
+        }
+
+        // NAVEGAÇÃO & DRAWER
+        function openProDrawer() {
+            renderClientsDropdown();
+            updateDrawerReminderBadge();
+            document.getElementById('pro-drawer-backdrop').classList.remove('hidden');
+            document.getElementById('pro-drawer').classList.remove('-translate-x-full');
+            lucide.createIcons();
+        }
+
+        function closeProDrawer() {
+            document.getElementById('pro-drawer-backdrop').classList.add('hidden');
+            document.getElementById('pro-drawer').classList.add('-translate-x-full');
+        }
+
+        function toggleClientsDropdown() {
+            const list = document.getElementById('clients-dropdown-list');
+            const chevron = document.getElementById('clients-dropdown-chevron');
+            const hidden = list.classList.contains('hidden');
+            if (hidden) {
+                renderClientsDropdown();
+                list.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                list.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
+        function renderClientsDropdown() {
+            const container = document.getElementById('clients-dropdown-list');
+            container.innerHTML = state.clientsRoster.map(c => `
+                <button type="button" onclick="closeProDrawer(); navigateProSection('clients');"
+                        class="w-full text-left px-2.5 py-2 rounded-lg hover:opacity-80 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-xs text-[#111111] truncate">${c.name}</p>
+                        <p class="text-[10px] text-[#737373] truncate">${c.phone}</p>
+                    </div>
+                    <span class="text-[10px] text-[#737373] shrink-0">${c.visits}x</span>
+                </button>
+            `).join('');
+        }
+
+        function navigateProSection(sectionKey) {
+            closeProDrawer();
+            document.querySelectorAll('.pro-section').forEach(sec => sec.classList.add('hidden'));
+            const target = document.getElementById(`pro-section-${sectionKey}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.pro-nav-item').forEach(btn => {
+                const active = btn.getAttribute('data-nav') === sectionKey;
+                btn.classList.toggle('btn-brand', active);
+                btn.classList.toggle('text-[#111111]', !active);
+            });
+
+            if (sectionKey === 'agenda') renderProDashboard();
+            if (sectionKey === 'clients') renderClientsRosterPage();
+            if (sectionKey === 'services') renderServicesCatalog();
+            if (sectionKey === 'professionals') renderProfessionalsSection();
+            if (sectionKey === 'payments') renderPaymentMethodsSection();
+            if (sectionKey === 'reminders') renderRemindersSection();
+            if (sectionKey === 'reports') renderReportsSection();
+            if (sectionKey === 'customization') loadCustomizationForm();
+
+            lucide.createIcons();
+        }
+
+        async function toggleStudioOnline() {
+            state.studioOnline = !state.studioOnline;
+            updateOnlineStatusIndicators();
+            await saveEstablishmentToSupabase();
+            showToast(state.studioOnline ? 'Agendamento online ativado (ON)' : 'Agendamento online pausado (OFF)');
+        }
+
+        function updateOnlineStatusIndicators() {
+            const isOnline = state.studioOnline;
+            ['header-online-dot', 'pro-cover-dot'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.remove(isOnline ? 'status-dot-offline' : 'status-dot-online');
+                el.classList.add(isOnline ? 'status-dot-online' : 'status-dot-offline');
+            });
+            document.getElementById('header-online-label').textContent = isOnline ? 'Online' : 'Offline';
+            document.getElementById('pro-cover-status-text').textContent = `Agendamento Online: ${isOnline ? 'ON' : 'OFF'}`;
+        }
+
+        function copyClientAppLink() {
+            const clientUrl = new URL('./index.html', window.location.href).toString();
+            navigator.clipboard?.writeText(clientUrl).catch(() => {});
+            showToast(`Link do App do Cliente: ${clientUrl}`);
+        }
+
+        // AGENDA, ACEITE E COMPROVANTE
+        function getProById(id) {
+            return state.professionals.find(p => p.id === id) || { name: 'Profissional', specialty: '', serviceRates: {} };
+        }
+        function getServiceById(id) {
+            return state.servicesCatalog.find(s => s.id === id) || { name: 'Serviço', specialty: '', duration: 45, price: 0 };
+        }
+        function getProServiceInfo(pro, serviceId) {
+            const base = getServiceById(serviceId);
+            const custom = pro.serviceRates && pro.serviceRates[serviceId];
+            if (custom && custom.enabled) {
+                return { available: true, price: Number(custom.price) || base.price, duration: Number(custom.duration) || base.duration };
+            }
+            return { available: false, price: base.price, duration: base.duration };
+        }
+
+        function renderProDashboard() {
+            applyBrandingAndTheme();
+            updateOnlineStatusIndicators();
+            updateDrawerReminderBadge();
+            renderSpecialtyFilters();
+            updateProStats();
+            if (state.scheduleMode === 'day') renderDaySchedule();
+            else renderWeekSchedule();
+            lucide.createIcons();
+        }
+
+        function renderSpecialtyFilters() {
+            const container = document.getElementById('specialty-filters');
+            const specs = ['Todos', 'Barbeiro', 'Manicure', 'Cabeleireira', 'Esteticista'];
+            container.innerHTML = specs.map(spec => {
+                const active = state.selectedSpecialty === spec;
+                return `
+                    <button type="button" onclick="state.selectedSpecialty='${spec}'; renderProDashboard();"
+                            class="px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${active ? 'btn-brand border-transparent' : 'text-[#737373] border-[#EAEAEA] hover:border-[#111111]'}">
+                        ${spec}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function getFilteredDayAppointments() {
+            return state.appointments
+                .filter(a => a.date === TODAY_ISO)
+                .filter(a => state.selectedSpecialty === 'Todos' || getProById(a.proId).specialty === state.selectedSpecialty)
+                .sort((a, b) => a.time.localeCompare(b.time));
+        }
+
+        function updateProStats() {
+            const list = getFilteredDayAppointments();
+            const confirmed = list.filter(a => a.status === 'confirmed' || a.status === 'done').length;
+            const revenue = list.reduce((sum, item) => sum + Number(item.price || 0), 0);
+            document.getElementById('stat-count').textContent = list.length;
+            document.getElementById('stat-confirmed').textContent = confirmed;
+            document.getElementById('stat-revenue').textContent = `R$ ${revenue}`;
+        }
+
+        function setScheduleMode(mode) {
+            state.scheduleMode = mode;
+            const dayBox = document.getElementById('day-schedule-container');
+            const weekBox = document.getElementById('week-schedule-container');
+            document.getElementById('btn-view-day').className = `px-3.5 py-1.5 rounded-full text-xs transition-colors ${mode === 'day' ? 'btn-brand' : 'text-[#737373]'}`;
+            document.getElementById('btn-view-week').className = `px-3.5 py-1.5 rounded-full text-xs transition-colors ${mode === 'week' ? 'btn-brand' : 'text-[#737373]'}`;
+            dayBox.classList.toggle('hidden', mode !== 'day');
+            weekBox.classList.toggle('hidden', mode !== 'week');
+            weekBox.classList.toggle('grid', mode === 'week');
+            renderProDashboard();
+        }
+
+        function getStatusBadgeHtml(status) {
+            if (status === 'pending') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">Aguardando aceite</span>';
+            if (status === 'done') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full btn-brand">Concluído</span>';
+            return '<span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#111111]">Confirmado</span>';
+        }
+
+        function renderDaySchedule() {
+            const container = document.getElementById('day-schedule-container');
+            const items = getFilteredDayAppointments();
+            if (!items.length) {
+                container.innerHTML = `<div class="text-center py-14 border border-dashed border-[#EAEAEA] rounded-2xl"><p class="text-sm text-[#737373]">Nenhum atendimento para este filtro hoje.</p></div>`;
+                return;
+            }
+            container.innerHTML = items.map(app => {
+                const pro = getProById(app.proId);
+                const svc = getServiceById(app.serviceId);
+                const pendingClass = app.status === 'pending' ? 'border-[#E6DEC8] bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white';
+                return `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${pendingClass}">
+                        <div class="flex items-start sm:items-center gap-4">
+                            <div class="w-14 shrink-0">
+                                <span class="block text-sm font-normal text-[#111111]">${app.time}</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-sm font-normal text-[#111111]">${app.clientName}</span>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${pro.name} · ${pro.specialty}</span>
+                                </div>
+                                <p class="text-xs text-[#737373] mt-0.5">${svc.name} • ${app.paymentMethod}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between sm:justify-end gap-2.5 flex-wrap">
+                            <span class="text-sm font-normal text-[#111111]">R$ ${app.price}</span>
+                            ${getStatusBadgeHtml(app.status)}
+                            ${app.status === 'pending' ? `
+                                <button onclick="acceptAppointment('${app.id}')" class="px-3 py-1 rounded-full text-[11px] btn-brand">Aceitar</button>
+                                <button onclick="declineAppointment('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373]">Recusar</button>
+                            ` : `
+                                <button onclick="openConfirmationModal('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111]">Ver imagem</button>
+                                <button onclick="cycleAppointmentStatus('${app.id}')" class="text-[11px] text-[#737373] underline underline-offset-4">${app.status === 'done' ? 'Reabrir' : 'Concluir'}</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderWeekSchedule() {
+            const container = document.getElementById('week-schedule-container');
+            const days = [
+                { label: 'Qua, 25 Nov', date: '2026-11-25' },
+                { label: 'Qui, 26 Nov', date: '2026-11-26' },
+                { label: 'Sex, 27 Nov', date: '2026-11-27' },
+                { label: 'Sáb, 28 Nov', date: '2026-11-28' },
+            ];
+            container.innerHTML = days.map(d => {
+                const apps = state.appointments.filter(a => a.date === d.date);
+                return `
+                    <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-[#EAEAEA]">
+                            <span class="text-xs font-normal text-[#111111]">${d.label}</span>
+                            <span class="text-[11px] text-[#A3A3A3]">${apps.length}</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${apps.length ? apps.map(a => `<div class="p-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs"><p class="font-normal">${a.time} · ${a.clientName}</p><p class="text-[11px] text-[#737373]">${getServiceById(a.serviceId).name}</p></div>`).join('') : `<p class="text-xs text-[#A3A3A3] py-4 text-center">Livre</p>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function acceptAppointment(id) {
+            const app = state.appointments.find(a => a.id === id);
+            if (!app) return;
+            app.status = 'confirmed';
+            app.confirmationImage = generateConfirmationImageDataUrl(app);
+            state.latestConfirmationDataUrl = app.confirmationImage;
+            if (dbConnected && sbClient) {
+                await sbClient.from('agendamentos').update({ status: 'confirmed' }).eq('id', id);
+            }
+            renderProDashboard();
+            openConfirmationModal(app.id);
+            showToast(`Agendamento de ${app.clientName} aceito.`);
+        }
+
+        async function declineAppointment(id) {
+            state.appointments = state.appointments.filter(a => a.id !== id);
+            if (dbConnected && sbClient) {
+                await sbClient.from('agendamentos').delete().eq('id', id);
+            }
+            renderProDashboard();
+            showToast('Solicitação recusada.');
+        }
+
+        async function cycleAppointmentStatus(id) {
+            const app = state.appointments.find(a => a.id === id);
+            if (!app) return;
+            if (!app.confirmationImage) app.confirmationImage = generateConfirmationImageDataUrl(app);
+            app.status = app.status === 'done' ? 'confirmed' : 'done';
+            if (dbConnected && sbClient) {
+                await sbClient.from('agendamentos').update({ status: app.status }).eq('id', id);
+            }
+            renderProDashboard();
+        }
+
+        function generateConfirmationImageDataUrl(app) {
+            const pro = getProById(app.proId);
+            const svc = getServiceById(app.serviceId);
+            const canvas = document.createElement('canvas');
+            canvas.width = 680;
+            canvas.height = 880;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = state.themeColors.primary || '#111111';
+            ctx.fillRect(24, 24, canvas.width - 48, 136);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '400 28px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(`${state.studioName} • Confirmado`, 54, 102);
+
+            const rows = [
+                ['DATA E HORÁRIO', `${app.date} às ${app.time}`],
+                ['SERVIÇO', svc.name],
+                ['PROFISSIONAL', `${pro.name} (${pro.specialty})`],
+                ['VALOR', `R$ ${Number(app.price || 0).toFixed(2).replace('.', ',')}`],
+                ['PAGAMENTO', app.paymentMethod || 'Pix'],
+                ['CLIENTE', app.clientName]
+            ];
+            let y = 225;
+            rows.forEach(([k, v]) => {
+                ctx.fillStyle = '#737373';
+                ctx.font = '400 13px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(k, 54, y);
+                ctx.fillStyle = '#111111';
+                ctx.font = '400 22px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(v, 54, y + 30);
+                y += 96;
+            });
+            return canvas.toDataURL('image/png');
+        }
+
+        function openConfirmationModal(appId) {
+            const app = state.appointments.find(a => a.id === appId);
+            const url = (app && app.confirmationImage) || state.latestConfirmationDataUrl;
+            if (!url) return;
+            state.latestConfirmationDataUrl = url;
+            document.getElementById('confirmation-card-preview').src = url;
+            const m = document.getElementById('modal-confirmation-card');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeConfirmationModal() {
+            const m = document.getElementById('modal-confirmation-card');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function downloadCurrentConfirmationCard() {
+            if (!state.latestConfirmationDataUrl) return;
+            const a = document.createElement('a');
+            a.download = 'confirmacao-agendamento.png';
+            a.href = state.latestConfirmationDataUrl;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // CLIENTES, SERVIÇOS, PROFISSIONAIS, PAGAMENTOS, LEMBRETES & RELATÓRIOS
+        function renderClientsRosterPage() {
+            document.getElementById('clients-roster-cards').innerHTML = state.clientsRoster.map(c => `
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <p class="text-sm font-normal text-[#111111]">${c.name}</p>
+                        <p class="text-xs text-[#737373]">${c.phone}${c.notes ? ` • ${c.notes}` : ''}</p>
+                    </div>
+                    <span class="text-xs px-3 py-1 rounded-full surface-brand border border-[#EAEAEA]">${c.visits} atendimento(s)</span>
+                </div>
+            `).join('');
+        }
+
+        async function addClientToRoster(event) {
+            event.preventDefault();
+            const item = {
+                id: 'c-' + Date.now(),
+                name: document.getElementById('roster-client-name').value.trim(),
+                phone: document.getElementById('roster-client-phone').value.trim(),
+                notes: document.getElementById('roster-client-notes').value.trim(),
+                visits: 0
+            };
+            state.clientsRoster.unshift(item);
+            if (dbConnected && sbClient) {
+                await sbClient.from('clientes').insert({
+                    id: item.id,
+                    nome_completo: item.name,
+                    usuario: item.name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 99),
+                    senha_pin: '1234',
+                    whatsapp: item.phone,
+                    observacoes: item.notes,
+                    visitas: 0
+                });
+            }
+            event.target.reset();
+            renderClientsRosterPage();
+            showToast(`${item.name} adicionado à cartela.`);
+        }
+
+        function renderServicesCatalog() {
+            document.getElementById('services-catalog-list').innerHTML = state.servicesCatalog.map(s => `
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-normal text-[#111111]">${s.name}</span>
+                            <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${s.specialty}</span>
+                        </div>
+                        <p class="text-xs text-[#737373] mt-0.5">Duração base: ${s.duration} min</p>
+                    </div>
+                    <span class="text-sm font-normal text-[#111111]">R$ ${s.price}</span>
+                </div>
+            `).join('');
+        }
+
+        async function addServiceCatalogItem(event) {
+            event.preventDefault();
+            const item = {
+                id: 's-' + Date.now(),
+                name: document.getElementById('new-service-name').value.trim(),
+                specialty: document.getElementById('new-service-specialty').value,
+                price: Number(document.getElementById('new-service-price').value),
+                duration: Number(document.getElementById('new-service-duration').value)
+            };
+            state.servicesCatalog.push(item);
+            if (dbConnected && sbClient) {
+                await sbClient.from('servicos').insert({
+                    id: item.id,
+                    nome: item.name,
+                    categoria: item.specialty,
+                    duracao_min: item.duration,
+                    preco: item.price,
+                    ativo: true
+                });
+            }
+            event.target.reset();
+            renderServicesCatalog();
+            renderProServicesMatrix();
+            showToast(`Serviço "${item.name}" salvo.`);
+        }
+
+        function renderProfessionalsSection() {
+            renderProServicesMatrix();
+            document.getElementById('professionals-matrix-list').innerHTML = state.professionals.map(pro => {
+                const isExpanded = !!state.expandedProCards[pro.id];
+                const enabled = Object.entries(pro.serviceRates || {}).filter(([, c]) => c && c.enabled);
+                return `
+                    <div class="rounded-2xl border border-[#EAEAEA] bg-white overflow-hidden">
+                        <button type="button" onclick="state.expandedProCards['${pro.id}']=!state.expandedProCards['${pro.id}']; renderProfessionalsSection();"
+                                class="w-full p-4 flex items-center justify-between gap-3 text-left">
+                            <div>
+                                <p class="text-sm font-normal text-[#111111]">${pro.name}</p>
+                                <p class="text-[11px] text-[#737373]">${pro.specialty} • ${enabled.length} serviço(s)</p>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-[#737373] ${isExpanded ? 'rotate-180' : ''}"></i>
+                        </button>
+                        <div class="${isExpanded ? 'block' : 'hidden'} px-4 pb-4 pt-2 border-t border-[#EAEAEA] surface-brand space-y-1.5">
+                            ${enabled.map(([svcId, cfg]) => `<div class="flex justify-between text-xs"><span>${getServiceById(svcId).name}</span><span>R$ ${cfg.price} · ${cfg.duration}m</span></div>`).join('') || `<p class="text-xs text-[#737373]">Sem serviços vinculados.</p>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderProServicesMatrix() {
+            document.getElementById('pro-services-matrix').innerHTML = state.servicesCatalog.map(svc => `
+                <div class="p-3 rounded-xl border border-[#EAEAEA] bg-white space-y-2">
+                    <label class="flex items-center justify-between text-xs cursor-pointer">
+                        <span class="flex items-center gap-2"><input type="checkbox" class="pro-svc-check accent-[#111111]" data-svc-id="${svc.id}" onchange="document.getElementById('pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)"><span>${svc.name}</span></span>
+                        <span class="text-[11px] text-[#737373]">${svc.specialty}</span>
+                    </label>
+                    <div id="pro-svc-fields-${svc.id}" class="hidden grid grid-cols-2 gap-2">
+                        <input type="number" min="1" value="${svc.price}" class="pro-svc-price px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] text-xs" data-svc-id="${svc.id}">
+                        <input type="number" min="10" step="5" value="${svc.duration}" class="pro-svc-duration px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] text-xs" data-svc-id="${svc.id}">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addProfessionalWithServices(event) {
+            event.preventDefault();
+            const name = document.getElementById('pro-form-name').value.trim();
+            const specialty = document.getElementById('pro-form-specialty').value;
+            const proId = 'p-' + Date.now();
+            const serviceRates = {};
+
+            document.querySelectorAll('.pro-svc-check').forEach(chk => {
+                if (chk.checked) {
+                    const svcId = chk.getAttribute('data-svc-id');
+                    const price = Number(document.querySelector(`.pro-svc-price[data-svc-id="${svcId}"]`).value) || 0;
+                    const duration = Number(document.querySelector(`.pro-svc-duration[data-svc-id="${svcId}"]`).value) || 45;
+                    serviceRates[svcId] = { enabled: true, price, duration };
+                }
+            });
+
+            state.professionals.push({ id: proId, name, specialty, serviceRates });
+            state.expandedProCards[proId] = true;
+
+            if (dbConnected && sbClient) {
+                await sbClient.from('profissionais').insert({ id: proId, nome: name, especialidade: specialty, ativo: true });
+                const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
+                    id: `ps-${Date.now()}-${idx}`,
+                    profissional_id: proId,
+                    servico_id: svcId,
+                    preco: cfg.price,
+                    duracao_min: cfg.duration,
+                    habilitado: true
+                }));
+                if (rows.length) await sbClient.from('profissional_servicos').insert(rows);
+            }
+
+            event.target.reset();
+            renderProfessionalsSection();
+            showToast(`${name} cadastrado.`);
+        }
+
+        function renderPaymentMethodsSection() {
+            document.getElementById('payment-methods-grid').innerHTML = state.paymentMethods.map(pm => `
+                <button type="button" onclick="togglePaymentMethod('${pm.id}')"
+                        class="p-4 rounded-2xl border text-left flex items-center justify-between gap-3 ${pm.enabled ? 'border-[#111111] bg-white' : 'border-[#EAEAEA] surface-brand opacity-65'}">
+                    <div>
+                        <p class="text-sm font-normal text-[#111111]">${pm.label}</p>
+                        <p class="text-xs text-[#737373]">${pm.detail}</p>
+                    </div>
+                    <span class="text-[11px] px-2.5 py-1 rounded-full ${pm.enabled ? 'btn-brand' : 'bg-[#EAEAEA] text-[#737373]'}">${pm.enabled ? 'Aceito' : 'Inativo'}</span>
+                </button>
+            `).join('');
+        }
+
+        async function togglePaymentMethod(id) {
+            const pm = state.paymentMethods.find(p => p.id === id);
+            if (!pm) return;
+            pm.enabled = !pm.enabled;
+            if (dbConnected && sbClient) {
+                await sbClient.from('formas_pagamento').upsert({ id: pm.id, nome: pm.label, descricao: pm.detail, ativo: pm.enabled });
+            }
+            renderPaymentMethodsSection();
+        }
+
+        function getDueRemindersList() {
+            const now = new Date();
+            const due = [];
+            state.appointments.forEach(app => {
+                if (app.status === 'done') return;
+                const [y, m, d] = (app.date || TODAY_ISO).split('-').map(Number);
+                const [hh, mm] = (app.time || '09:00').split(':').map(Number);
+                const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
+                const diffH = (dt.getTime() - now.getTime()) / 3600000;
+                if (state.reminderRules.dayBefore && diffH > 1.5 && diffH <= 24) {
+                    due.push({ appId: app.id, windowKey: 'dayBefore', label: '1 dia antes (até 24h)', sent: !!app.remindersSent?.dayBefore, app });
+                }
+                if (state.reminderRules.hourBefore && diffH >= -0.25 && diffH <= 1.5) {
+                    due.push({ appId: app.id, windowKey: 'hourBefore', label: '1 hora antes (até 60min)', sent: !!app.remindersSent?.hourBefore, app });
+                }
+            });
+            return due;
+        }
+
+        function updateDrawerReminderBadge() {
+            const el = document.getElementById('drawer-reminder-badge');
+            if (el) el.textContent = getDueRemindersList().filter(i => !i.sent).length;
+        }
+
+        function updateReminderRules() {
+            state.reminderRules.dayBefore = document.getElementById('rule-24h').checked;
+            state.reminderRules.hourBefore = document.getElementById('rule-1h').checked;
+            renderRemindersSection();
+        }
+
+        function evaluateWhatsAppReminders(notify = false) {
+            updateDrawerReminderBadge();
+            if (!document.getElementById('pro-section-reminders').classList.contains('hidden')) renderRemindersSection();
+            if (notify) showToast(`${getDueRemindersList().filter(i => !i.sent).length} lembrete(s) pendente(s).`);
+        }
+
+        function renderRemindersSection() {
+            const list = getDueRemindersList();
+            updateDrawerReminderBadge();
+            document.getElementById('reminders-queue-list').innerHTML = list.length ? list.map(item => `
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA]">${item.label}</span>
+                        <p class="text-sm font-normal text-[#111111] mt-1">${item.app.clientName} • ${item.app.time}</p>
+                        <p class="text-xs text-[#737373]">${getServiceById(item.app.serviceId).name} com ${getProById(item.app.proId).name}</p>
+                    </div>
+                    <button onclick="sendWhatsAppReminder('${item.appId}','${item.windowKey}')" class="px-3.5 py-1.5 rounded-full text-xs btn-brand">
+                        ${item.sent ? 'Reenviar WhatsApp' : 'Enviar WhatsApp'}
+                    </button>
+                </div>
+            `).join('') : `<div class="p-8 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum lembrete na janela de 24h ou 1h agora.</div>`;
+        }
+
+        function sendWhatsAppReminder(appId, windowKey) {
+            const app = state.appointments.find(a => a.id === appId);
+            if (!app) return;
+            const momento = windowKey === 'dayBefore' ? 'amanhã (1 dia antes)' : 'em 1 hora';
+            const msg = `Olá, ${app.clientName}! Lembrando do seu agendamento ${momento}: ${getServiceById(app.serviceId).name} com ${getProById(app.proId).name} às ${app.time} (${state.studioName}).`;
+            const digits = String(app.clientPhone || '').replace(/\D/g, '');
+            const wa = digits ? (digits.startsWith('55') ? digits : `55${digits}`) : '';
+            window.open(wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+            app.remindersSent[windowKey] = true;
+            renderRemindersSection();
+        }
+
+        function setReportPeriod(period) {
+            state.reportPeriod = period;
+            ['day', 'week', 'month'].forEach(p => {
+                document.getElementById(`report-period-${p}`).className = `px-3.5 py-1.5 rounded-full text-xs transition-colors ${p === period ? 'btn-brand' : 'text-[#737373]'}`;
+            });
+            renderReportsSection();
+        }
+
+        function renderReportsSection() {
+            const apps = state.reportPeriod === 'day'
+                ? state.appointments.filter(a => a.date === TODAY_ISO)
+                : state.reportPeriod === 'week'
+                    ? state.appointments.filter(a => a.date >= '2026-11-22' && a.date <= '2026-11-29')
+                    : state.appointments.filter(a => (a.date || '').startsWith('2026-11'));
+
+            const total = apps.length;
+            const rev = apps.reduce((s, a) => s + Number(a.price || 0), 0);
+            const avg = total ? Math.round(rev / total) : 0;
+
+            document.getElementById('report-total-count').textContent = total;
+            document.getElementById('report-total-revenue').textContent = `R$ ${rev}`;
+            document.getElementById('report-avg-ticket').textContent = `R$ ${avg}`;
+
+            document.getElementById('report-by-pro').innerHTML = state.professionals.map(pro => {
+                const pApps = apps.filter(a => a.proId === pro.id);
+                const pRev = pApps.reduce((s, a) => s + Number(a.price || 0), 0);
+                const pct = rev ? Math.round((pRev / rev) * 100) : 0;
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs"><span>${pro.name}</span><span>${pApps.length} atend. • R$ ${pRev}</span></div>
+                        <div class="w-full h-1.5 rounded-full bg-[#F2F2F2] overflow-hidden"><div class="h-full btn-brand" style="width:${pct}%"></div></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // MODAL NOVO AGENDAMENTO
+        function openNewAppointmentModal() {
+            document.getElementById('input-pro-select').innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            document.getElementById('input-service-select').innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            const activePay = state.paymentMethods.filter(m => m.enabled);
+            document.getElementById('input-payment').innerHTML = (activePay.length ? activePay : state.paymentMethods).map(m => `<option value="${m.label}">${m.label}</option>`).join('');
+            document.getElementById('input-date').value = TODAY_ISO;
+            syncManualServicePrice();
+            const m = document.getElementById('modal-new-appointment');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function syncManualServicePrice() {
+            const pro = getProById(document.getElementById('input-pro-select').value);
+            const svcId = document.getElementById('input-service-select').value;
+            document.getElementById('input-price').value = getProServiceInfo(pro, svcId).price;
+        }
+
+        function closeNewAppointmentModal() {
+            const m = document.getElementById('modal-new-appointment');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function createManualAppointment(event) {
+            event.preventDefault();
+            const item = {
+                id: 'a-' + Date.now(),
+                clientName: document.getElementById('input-client-name').value.trim(),
+                clientPhone: '11999990000',
+                proId: document.getElementById('input-pro-select').value,
+                serviceId: document.getElementById('input-service-select').value,
+                date: document.getElementById('input-date').value,
+                time: document.getElementById('input-time').value,
+                price: Number(document.getElementById('input-price').value) || 0,
+                paymentMethod: document.getElementById('input-payment').value || 'Pix',
+                status: 'confirmed',
+                remindersSent: { dayBefore: false, hourBefore: false },
+                confirmationImage: null
+            };
+            item.confirmationImage = generateConfirmationImageDataUrl(item);
+            state.appointments.push(item);
+            if (dbConnected && sbClient) {
+                await sbClient.from('agendamentos').insert({
+                    id: item.id,
+                    cliente_nome: item.clientName,
+                    cliente_whatsapp: item.clientPhone,
+                    profissional_id: item.proId,
+                    servico_id: item.serviceId,
+                    data_agendamento: item.date,
+                    hora_agendamento: item.time,
+                    valor: item.price,
+                    forma_pagamento: item.paymentMethod,
+                    status: item.status
+                });
+            }
+            closeNewAppointmentModal();
+            event.target.reset();
+            renderProDashboard();
+            showToast('Agendamento adicionado.');
+        }
+
+        // PWA & TOAST
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+        });
+
+        async function installPwaApp() {
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                await deferredPwaPrompt.userChoice;
+                deferredPwaPrompt = null;
+                return;
+            }
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            showToast(isIos
+                ? 'No iPhone (Safari), toque em Compartilhar e depois "Adicionar à Tela de Início".'
+                : 'No menu do navegador (⋮), toque em "Instalar aplicativo" ou "Adicionar à tela inicial".');
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.remove('opacity-0');
+            el.classList.add('opacity-100');
+            clearTimeout(window._toastT);
+            window._toastT = setTimeout(() => {
+                el.classList.remove('opacity-100');
+                el.classList.add('opacity-0');
+            }, 2800);
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            initSupabase();
+            await loadFromSupabase();
+            applyBrandingAndTheme();
+            renderProDashboard();
+            evaluateWhatsAppReminders(false);
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
