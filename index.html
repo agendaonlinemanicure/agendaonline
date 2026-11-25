@@ -2,13 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Agendamento — App do Cliente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier Agenda — Agendamento do Cliente</title>
     <meta name="theme-color" content="#111111">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Agendar">
+    <meta name="apple-mobile-web-app-title" content="Atelier Cliente">
     <link rel="manifest" href="./manifest.webmanifest">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,23 +42,17 @@
             -webkit-tap-highlight-color: transparent;
         }
         body {
-            background-color: #F4F4F5;
+            background-color: var(--brand-bg);
             color: #111111;
             font-weight: 300;
             letter-spacing: -0.01em;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            overflow-x: hidden;
         }
         .fade-in {
             animation: fadeIn 0.22s ease-out;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
+            from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .status-dot-online {
@@ -78,364 +72,231 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-0 sm:p-6">
+<body class="min-h-screen text-[#111111] antialiased selection:bg-[#111111] selection:text-white">
 
-    <div class="w-full sm:max-w-[412px] min-h-screen sm:min-h-[820px] sm:max-h-[860px] sm:rounded-[38px] sm:border sm:border-[#E4E4E7] sm:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden relative"
-         style="background-color: var(--brand-bg);">
-
-        <header class="px-5 py-3.5 border-b border-[#EAEAEA] flex items-center justify-between shrink-0 z-20"
-                style="background-color: var(--brand-bg);">
-            <div class="flex items-center gap-2.5">
-                <span id="app-header-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal tracking-wider overflow-hidden shrink-0">
+    <header class="sticky top-0 z-30 backdrop-blur-sm border-b border-[#EAEAEA]" style="background-color: color-mix(in srgb, var(--brand-bg) 95%, transparent);">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span id="client-header-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal overflow-hidden shrink-0">
                     A
                 </span>
-                <div>
-                    <p id="app-header-studio" class="text-[10px] uppercase tracking-[0.15em] text-[#737373]">Atelier Studio</p>
-                    <h1 id="app-header-niche" class="text-sm font-normal text-[#111111] leading-tight">App do Cliente</h1>
+                <div class="min-w-0">
+                    <span id="client-header-name" class="text-sm font-normal text-[#111111] block truncate leading-none">
+                        Atelier Studio
+                    </span>
+                    <span id="client-header-hours" class="text-[10px] text-[#737373] block truncate mt-0.5">
+                        Seg – Sáb • 09h às 19h
+                    </span>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-1 rounded-full border border-[#EAEAEA] surface-brand text-[11px] text-[#111111] inline-flex items-center gap-1.5">
-                    <span id="app-header-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
-                    <span id="app-header-status-label">Online</span>
+            <div class="flex items-center gap-2 shrink-0">
+                <span id="client-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] border border-[#EAEAEA] surface-brand">
+                    <span id="client-status-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
+                    <span id="client-status-text">Disponível</span>
                 </span>
-            </div>
-        </header>
 
-        <main id="app-scroll-area" class="flex-1 overflow-y-auto no-scrollbar px-5 py-5 pb-28 space-y-5">
-
-            <section id="screen-auth" class="hidden fade-in space-y-5 pt-2">
-                <div class="relative w-full h-36 rounded-2xl overflow-hidden border border-[#EAEAEA]">
-                    <img id="auth-cover-img"
-                         src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80"
-                         alt="Estabelecimento"
-                         onerror="this.onerror=null;this.src='https://placehold.co/800x360/F5F5F5/111111?text=ESTABELECIMENTO';"
-                         class="w-full h-full object-cover grayscale contrast-[1.03]">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent p-4 flex flex-col justify-end text-white">
-                        <span class="text-[10px] uppercase tracking-[0.16em] text-white/75">Bem-vinda(o)</span>
-                        <h2 id="auth-studio-name" class="text-lg font-normal">Atelier Studio</h2>
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <h3 class="text-xl font-light text-[#111111]">Crie seu acesso</h3>
-                    <p class="text-xs text-[#737373]">
-                        Cadastre seus dados uma única vez para agendar horários e receber confirmações.
-                    </p>
-                </div>
-
-                <form onsubmit="completeFirstAccess(event)" class="space-y-3.5">
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">Nome completo</label>
-                        <input id="auth-fullname" type="text" required placeholder="Ex: Mariana Costa"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Usuário</label>
-                            <input id="auth-username" type="text" required placeholder="marianacosta"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Senha (até 6 dígitos)</label>
-                            <input id="auth-pin" type="password" maxlength="6" required placeholder="••••••"
-                                   class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs tracking-widest focus:outline-none focus:border-[#111111]">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">WhatsApp</label>
-                        <input id="auth-whatsapp" type="tel" required placeholder="(11) 98888-7777"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                    </div>
-                    <button type="submit" class="w-full py-3 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
-                        Entrar no aplicativo
-                    </button>
-                </form>
-            </section>
-
-            <section id="screen-home" class="fade-in space-y-5">
-                <div class="relative w-full h-36 rounded-2xl overflow-hidden border border-[#EAEAEA]">
-                    <img id="home-cover-img"
-                         src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80"
-                         alt="Capa do Estabelecimento"
-                         onerror="this.onerror=null;this.src='https://placehold.co/800x360/F5F5F5/111111?text=ESTABELECIMENTO';"
-                         class="w-full h-full object-cover grayscale contrast-[1.03]">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent p-4 flex items-end justify-between text-white gap-2">
-                        <div>
-                            <p id="home-studio-niche" class="text-[10px] uppercase tracking-[0.16em] text-white/75">Estabelecimento</p>
-                            <h2 id="home-studio-name" class="text-base font-normal">Atelier Studio</h2>
-                        </div>
-                        <span id="home-studio-hours" class="text-[10px] px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-xs border border-white/20 shrink-0">
-                            Seg – Sáb • 09h às 19h
-                        </span>
-                    </div>
-                </div>
-
-                <div class="flex items-end justify-between gap-2 pb-3 border-b border-[#EAEAEA]">
-                    <div>
-                        <p class="text-[11px] uppercase tracking-[0.12em] text-[#737373]">
-                            Olá, <span id="home-user-name" class="text-[#111111] font-normal">Mariana Costa</span>
-                        </p>
-                        <h2 class="text-2xl font-light tracking-tight text-[#111111] mt-0.5">
-                            Agendar horário
-                        </h2>
-                    </div>
-
-                    <div class="mb-0.5 px-2.5 py-1 rounded-full border border-[#EAEAEA] surface-brand text-[11px] text-[#111111] inline-flex items-center gap-1.5 shrink-0">
-                        <span id="home-online-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
-                        <span id="home-online-label">Agendamento: ON</span>
-                    </div>
-                </div>
-
-                <div id="home-offline-alert" class="hidden p-4 rounded-2xl border border-[#FF2A2A]/35 bg-[#FFF8F8] text-xs text-[#111111]">
-                    O agendamento online está pausado no momento. Você ainda pode consultar seus agendamentos na aba <strong>Agenda</strong>.
-                </div>
-
-                <div id="mob-booking-wrapper" class="space-y-4">
-                    <div class="grid grid-cols-3 gap-1.5 text-center text-[11px]">
-                        <div id="mob-step-ind-1" class="py-1.5 border-b-2 border-[#111111] text-[#111111] font-normal">1. Serviço</div>
-                        <div id="mob-step-ind-2" class="py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]">2. Profissional</div>
-                        <div id="mob-step-ind-3" class="py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]">3. Data & Hora</div>
-                    </div>
-
-                    <div id="mob-step-1" class="space-y-3">
-                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1" id="mob-category-chips"></div>
-                        <div id="mob-services-list" class="space-y-2.5"></div>
-                    </div>
-
-                    <div id="mob-step-2" class="hidden space-y-3">
-                        <button onclick="setBookingStep(1)" class="inline-flex items-center gap-1 text-xs text-[#737373] hover:text-[#111111]">
-                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-                            <span>Trocar serviço</span>
-                        </button>
-                        <div id="mob-pros-list" class="space-y-2.5"></div>
-                    </div>
-
-                    <div id="mob-step-3" class="hidden space-y-4">
-                        <button onclick="setBookingStep(2)" class="inline-flex items-center gap-1 text-xs text-[#737373] hover:text-[#111111]">
-                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-                            <span>Trocar profissional</span>
-                        </button>
-
-                        <div id="mob-selected-summary" class="p-3.5 rounded-2xl surface-brand border border-[#EAEAEA] flex items-center justify-between text-xs"></div>
-
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-2">Selecione o dia</label>
-                            <div id="mob-dates-row" class="grid grid-cols-4 gap-2"></div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-2">Horários disponíveis</label>
-                            <div id="mob-times-grid" class="grid grid-cols-3 gap-2"></div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-2">Meio de pagamento</label>
-                            <div id="mob-payments-grid" class="grid grid-cols-2 gap-2"></div>
-                        </div>
-
-                        <button id="mob-submit-booking" onclick="submitMobileBooking()" disabled
-                                class="w-full py-3.5 rounded-full btn-brand text-xs font-normal disabled:bg-[#EAEAEA] disabled:text-[#A3A3A3] transition-colors">
-                            Solicitar agendamento
-                        </button>
-                    </div>
-
-                    <div id="mob-step-pending" class="hidden p-5 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] text-center space-y-3.5">
-                        <div class="w-11 h-11 rounded-full btn-brand flex items-center justify-center mx-auto">
-                            <i data-lucide="clock" class="w-5 h-5 stroke-[1.75]"></i>
-                        </div>
-                        <div class="space-y-1">
-                            <h3 class="text-lg font-light text-[#111111]">Aguardando aceite</h3>
-                            <p id="mob-pending-desc" class="text-xs text-[#737373] leading-relaxed"></p>
-                        </div>
-                        <p class="text-[11px] text-[#737373]">
-                            Assim que o profissional aceitar, seu comprovante em imagem aparecerá na aba <strong>Agenda</strong>.
-                        </p>
-                        <div class="pt-1 flex flex-col gap-2">
-                            <button onclick="switchBottomTab('bookings')" class="w-full py-2.5 rounded-full btn-brand text-xs font-normal">
-                                Acompanhar na minha agenda
-                            </button>
-                            <button onclick="resetMobileBooking()" class="w-full py-2.5 rounded-full border border-[#111111] text-xs text-[#111111]">
-                                Fazer outro agendamento
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="screen-bookings" class="hidden fade-in space-y-4">
-                <div class="pb-3 border-b border-[#EAEAEA] flex items-end justify-between">
-                    <div>
-                        <p class="text-[11px] uppercase tracking-[0.12em] text-[#737373]">Histórico & Status</p>
-                        <h2 class="text-2xl font-light text-[#111111]">Meus agendamentos</h2>
-                    </div>
-                    <button onclick="refreshFromCloud()" class="px-2.5 py-1 rounded-full border border-[#EAEAEA] surface-brand text-[10px] text-[#737373] hover:text-[#111111]">
-                        Atualizar
-                    </button>
-                </div>
-                <div id="mob-bookings-list" class="space-y-3"></div>
-            </section>
-
-            <section id="screen-profile" class="hidden fade-in space-y-4">
-                <div class="pb-3 border-b border-[#EAEAEA] flex items-end justify-between">
-                    <div>
-                        <p class="text-[11px] uppercase tracking-[0.12em] text-[#737373]">Conta do Cliente</p>
-                        <h2 class="text-2xl font-light text-[#111111]">Meus dados</h2>
-                    </div>
-                    <button id="profile-edit-btn" onclick="toggleProfileEdit()" class="text-xs underline underline-offset-4 text-[#111111]">
-                        Editar
-                    </button>
-                </div>
-
-                <form onsubmit="saveProfileChanges(event)" class="space-y-3.5">
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">Nome completo</label>
-                        <input id="prof-fullname" type="text" required disabled
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111]">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">Usuário para login</label>
-                        <input id="prof-username" type="text" required disabled
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111]">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">Senha (até 6 dígitos)</label>
-                        <input id="prof-pin" type="password" maxlength="6" required disabled
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs tracking-widest text-[#111111]">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">WhatsApp para lembretes (24h e 1h antes)</label>
-                        <input id="prof-whatsapp" type="tel" required disabled
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111]">
-                    </div>
-                    <button id="prof-save-btn" type="submit" class="hidden w-full py-3 rounded-full btn-brand text-xs font-normal">
-                        Salvar alterações
-                    </button>
-                </form>
-
-                <button onclick="installClientPwa()" class="w-full py-2.5 rounded-full border border-[#111111] text-xs text-[#111111]">
-                    Instalar aplicativo no celular
-                </button>
-
-                <button onclick="resetToFirstAccess()" class="w-full py-2.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111]">
-                    Trocar conta / primeiro acesso
-                </button>
-            </section>
-        </main>
-
-        <nav id="bottom-nav" class="absolute bottom-0 inset-x-0 border-t border-[#EAEAEA] px-6 py-2.5 flex items-center justify-around z-20"
-             style="background-color: var(--brand-bg);">
-            <button onclick="switchBottomTab('home')" data-tab="home" class="nav-tab flex flex-col items-center gap-1 text-[#111111]">
-                <i data-lucide="calendar-plus" class="w-5 h-5 stroke-[1.6]"></i>
-                <span class="text-[10px] font-normal">Agendar</span>
-            </button>
-            <button onclick="switchBottomTab('bookings')" data-tab="bookings" class="nav-tab flex flex-col items-center gap-1 text-[#A3A3A3] relative">
-                <i data-lucide="calendar-check" class="w-5 h-5 stroke-[1.6]"></i>
-                <span class="text-[10px] font-normal">Agenda</span>
-                <span id="nav-bookings-dot" class="hidden absolute top-0 right-1 w-2 h-2 rounded-full btn-brand"></span>
-            </button>
-            <button onclick="switchBottomTab('profile')" data-tab="profile" class="nav-tab flex flex-col items-center gap-1 text-[#A3A3A3]">
-                <i data-lucide="user" class="w-5 h-5 stroke-[1.6]"></i>
-                <span class="text-[10px] font-normal">Perfil</span>
-            </button>
-        </nav>
-
-        <div id="receipt-modal" class="hidden absolute inset-0 z-40 bg-black/45 backdrop-blur-[2px] p-4 items-center justify-center">
-            <div class="bg-white rounded-3xl border border-[#EAEAEA] w-full max-w-[350px] p-4 space-y-3.5 fade-in">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] uppercase tracking-[0.14em] text-[#737373]">Confirmado pelo profissional</p>
-                        <h3 class="text-sm font-normal text-[#111111]">Comprovante de agendamento</h3>
-                    </div>
-                    <button onclick="closeReceiptModal()" class="w-8 h-8 rounded-full border border-[#EAEAEA] flex items-center justify-center text-[#737373]">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <div class="p-2.5 rounded-2xl surface-brand border border-[#EAEAEA] flex justify-center">
-                    <img id="receipt-preview-img" src="" alt="Comprovante" class="w-full rounded-xl border border-[#EAEAEA] bg-white">
-                </div>
-                <button onclick="downloadReceiptImage()" class="w-full py-3 rounded-full btn-brand text-xs font-normal inline-flex items-center justify-center gap-1.5">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span>Salvar imagem no celular</span>
+                <button id="install-client-pwa-btn" onclick="installClientPwa()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs btn-brand hover:opacity-90 transition-opacity">
+                    <i data-lucide="download" class="w-3.5 h-3.5 stroke-[1.75]"></i>
+                    <span class="hidden sm:inline font-normal">Instalar App</span>
                 </button>
             </div>
         </div>
+    </header>
 
-        <div id="app-toast" class="pointer-events-none opacity-0 transition-opacity duration-200 absolute bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#111111] text-white text-[11px] px-4 py-2 rounded-full whitespace-nowrap shadow-sm"></div>
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-7 space-y-6 fade-in">
+
+        <!-- CAPA COLORIDA DO ESTABELECIMENTO -->
+        <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden">
+            <img id="client-cover-img"
+                 src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
+                 alt="Foto de capa do estabelecimento"
+                 onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
+                 class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent flex items-end justify-between p-4 sm:p-5 gap-3">
+                <div class="text-white flex items-center gap-3 min-w-0">
+                    <span id="client-cover-logo" class="w-10 h-10 rounded-full bg-white text-[#111111] flex items-center justify-center text-sm font-normal overflow-hidden shrink-0">
+                        A
+                    </span>
+                    <div class="min-w-0">
+                        <p id="client-cover-niche" class="text-[10px] uppercase tracking-[0.16em] text-white/75 truncate">Estúdio</p>
+                        <h1 id="client-cover-name" class="text-base sm:text-lg font-normal tracking-tight truncate">Atelier Studio</h1>
+                    </div>
+                </div>
+                <span id="client-cover-hours" class="text-[11px] text-white/85 hidden sm:inline shrink-0">
+                    Seg – Sáb • 09h às 19h
+                </span>
+            </div>
+        </div>
+
+        <div id="client-offline-notice" class="hidden p-4 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] text-xs text-[#6B5B3E]">
+            O agendamento online está temporariamente pausado pelo estabelecimento.
+        </div>
+
+        <!-- FORMULÁRIO DE AGENDAMENTO DO CLIENTE -->
+        <form id="client-booking-form" onsubmit="submitClientBooking(event)" class="p-5 sm:p-6 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
+            <div class="flex items-center justify-between gap-2">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.14em] text-[#737373]">Agendar Horário</p>
+                    <h2 class="text-lg font-light text-[#111111]">Reserve seu atendimento</h2>
+                </div>
+                <button type="button" onclick="syncClientState(true)" class="text-xs text-[#737373] hover:text-[#111111] underline underline-offset-4">
+                    Atualizar tabela
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Seu nome</label>
+                    <input id="client-name" type="text" required placeholder="Ex: Mariana Souza"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Seu WhatsApp</label>
+                    <input id="client-phone" type="tel" required placeholder="(11) 99999-0000"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Profissional</label>
+                    <select id="client-pro-select" onchange="handleClientProOrServiceChange()"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]"></select>
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Serviço</label>
+                    <select id="client-service-select" onchange="handleClientProOrServiceChange()"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]"></select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Data</label>
+                    <input id="client-date" type="date" required
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Horário</label>
+                    <input id="client-time" type="time" required
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-xs text-[#737373] mb-1">Forma de pagamento</label>
+                    <select id="client-payment-select"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]"></select>
+                </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl border border-[#EAEAEA] bg-white flex items-center justify-between">
+                <div>
+                    <span class="block text-[11px] text-[#737373]">Resumo estimado</span>
+                    <span id="client-summary-meta" class="text-xs text-[#111111]">Duração: 45 min</span>
+                </div>
+                <span id="client-summary-price" class="text-base font-normal text-[#111111]">R$ 120</span>
+            </div>
+
+            <button id="client-submit-btn" type="submit"
+                    class="w-full py-3 rounded-xl btn-brand text-xs font-normal tracking-wide hover:opacity-90 transition-opacity">
+                Solicitar agendamento
+            </button>
+        </form>
+
+        <!-- MEUS AGENDAMENTOS -->
+        <div class="space-y-3">
+            <h3 class="text-sm font-normal text-[#111111]">Meus agendamentos</h3>
+            <div id="client-my-appointments" class="space-y-2.5"></div>
+        </div>
+    </main>
+
+    <div id="toast"
+         class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200 bg-[#111111] text-white text-xs px-4 py-2.5 rounded-full shadow-sm max-w-[92vw] text-center">
     </div>
 
     <script>
+        const TODAY_ISO = '2026-11-25';
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
+        const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
+        const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
+
         let sbClient = null;
         let dbConnected = false;
-        let deferredPrompt = null;
+        let deferredClientPrompt = null;
 
-        const appState = {
-            activeTab: 'home',
-            selectedCategory: 'Todos',
-            profileEditing: false,
-            activeReceiptDataUrl: null,
-            studio: {
-                name: 'Atelier Studio',
-                niche: 'Estúdio Multiserviços',
-                online: true,
-                cover: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80',
-                logo: '',
-                hours: 'Seg – Sáb • 09h às 19h',
+        const state = {
+            studioOnline: true,
+            studioName: 'Atelier Studio',
+            studioNiche: 'Estúdio',
+            studioHours: 'Seg – Sáb • 09h às 19h',
+            studioCover: DEFAULT_COVER,
+            studioLogo: '',
+            themeColors: {
                 primary: '#111111',
                 bg: '#FFFFFF',
                 surface: '#FAFAFA'
             },
-            user: {
-                id: 'cli-local-1',
-                fullName: 'Mariana Costa',
-                username: 'marianacosta',
-                pin: '123456',
-                whatsapp: '(11) 98888-7777'
-            },
-            services: [
-                { id: 's1', name: 'Corte & Visagismo', category: 'Barbeiro', duration: 45, price: 120 },
-                { id: 's2', name: 'Barba Terapia & Toalha Quente', category: 'Barbeiro', duration: 35, price: 70 },
-                { id: 's3', name: 'Manicure & Esmaltação em Gel', category: 'Manicure', duration: 60, price: 95 },
-                { id: 's4', name: 'Spa dos Pés & Cuticulagem', category: 'Manicure', duration: 50, price: 85 },
-                { id: 's5', name: 'Escova Modelada & Tratamento', category: 'Cabeleireira', duration: 60, price: 140 },
-                { id: 's6', name: 'Limpeza de Pele Profunda', category: 'Esteticista', duration: 75, price: 180 },
+            servicesCatalog: [
+                { id: 's1', name: 'Corte & Visagismo', specialty: 'Atendimento', duration: 45, price: 120 },
+                { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Atendimento', duration: 35, price: 70 },
+                { id: 's3', name: 'Manicure & Esmaltação em Gel', specialty: 'Atendimento', duration: 60, price: 95 },
             ],
             professionals: [
-                { id: 'p1', name: 'Rafael Mendes', role: 'Barbeiro', services: { s1: { price: 130, duration: 50 }, s2: { price: 75, duration: 40 } } },
-                { id: 'p2', name: 'Camila Rocha', role: 'Manicure', services: { s3: { price: 100, duration: 60 }, s4: { price: 90, duration: 50 } } },
-                { id: 'p3', name: 'Juliana Freitas', role: 'Cabeleireira', services: { s5: { price: 150, duration: 65 } } },
-                { id: 'p4', name: 'Fernanda Lima', role: 'Esteticista', services: { s6: { price: 190, duration: 75 } } },
+                { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
+                { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
             ],
-            payments: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro'],
-            bookingDraft: {
-                step: 1,
-                serviceId: null,
-                proId: null,
-                date: '2026-11-26',
-                time: null,
-                payment: 'Pix'
-            },
-            bookings: []
+            paymentMethods: [
+                { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
+                { id: 'pay-credit', label: 'Cartão de Crédito', detail: 'À vista ou parcelado', enabled: true },
+                { id: 'pay-debit', label: 'Cartão de Débito', detail: 'Débito na maquininha', enabled: true },
+                { id: 'pay-cash', label: 'Dinheiro', detail: 'Pagamento presencial', enabled: true },
+            ],
+            appointments: []
         };
 
-        function applyLocalBackupToStudio() {
+        function loadLocalState() {
             try {
-                const raw = localStorage.getItem(LOCAL_CFG_KEY);
-                if (!raw) return;
-                const saved = JSON.parse(raw);
-                if (saved.studioName) appState.studio.name = saved.studioName;
-                if (saved.studioNiche) appState.studio.niche = saved.studioNiche;
-                if (typeof saved.studioOnline === 'boolean') appState.studio.online = saved.studioOnline;
-                if (saved.studioCover) appState.studio.cover = saved.studioCover;
-                if (typeof saved.studioLogo === 'string') appState.studio.logo = saved.studioLogo;
-                if (saved.studioHours) appState.studio.hours = saved.studioHours;
-                if (saved.themeColors) {
-                    appState.studio.primary = saved.themeColors.primary || appState.studio.primary;
-                    appState.studio.bg = saved.themeColors.bg || appState.studio.bg;
-                    appState.studio.surface = saved.themeColors.surface || appState.studio.surface;
+                const rawCfg = localStorage.getItem(LOCAL_CFG_KEY);
+                if (rawCfg) {
+                    const cfg = JSON.parse(rawCfg);
+                    if (cfg.studioName) state.studioName = cfg.studioName;
+                    if (cfg.studioNiche) state.studioNiche = cfg.studioNiche;
+                    if (typeof cfg.studioOnline === 'boolean') state.studioOnline = cfg.studioOnline;
+                    if (cfg.studioCover) state.studioCover = cfg.studioCover;
+                    if (typeof cfg.studioLogo === 'string') state.studioLogo = cfg.studioLogo;
+                    if (cfg.studioHours) state.studioHours = cfg.studioHours;
+                    if (cfg.themeColors) state.themeColors = { ...state.themeColors, ...cfg.themeColors };
                 }
+
+                const rawData = localStorage.getItem(LOCAL_DATA_KEY);
+                if (rawData) {
+                    const d = JSON.parse(rawData);
+                    if (Array.isArray(d.servicesCatalog)) state.servicesCatalog = d.servicesCatalog;
+                    if (Array.isArray(d.professionals)) state.professionals = d.professionals;
+                    if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
+                    if (Array.isArray(d.appointments)) state.appointments = d.appointments;
+                }
+            } catch (e) {}
+        }
+
+        function saveLocalState() {
+            try {
+                localStorage.setItem(LOCAL_CFG_KEY, JSON.stringify({
+                    studioName: state.studioName,
+                    studioNiche: state.studioNiche,
+                    studioOnline: state.studioOnline,
+                    studioCover: state.studioCover,
+                    studioLogo: state.studioLogo,
+                    studioHours: state.studioHours,
+                    themeColors: state.themeColors
+                }));
+                localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify({
+                    servicesCatalog: state.servicesCatalog,
+                    professionals: state.professionals,
+                    paymentMethods: state.paymentMethods,
+                    appointments: state.appointments
+                }));
             } catch (e) {}
         }
 
@@ -447,508 +308,335 @@
             dbConnected = true;
         }
 
-        async function loadAppDataFromSupabase() {
-            applyLocalBackupToStudio();
+        async function loadRemoteState() {
+            loadLocalState();
             if (!dbConnected || !sbClient) return;
             const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+
             try {
                 const { data: est, error: estErr } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
                 if (!estErr && est) {
-                    appState.studio.name = est.nome || appState.studio.name;
-                    appState.studio.niche = est.nicho || appState.studio.niche;
-                    appState.studio.online = typeof est.online === 'boolean' ? est.online : appState.studio.online;
-                    appState.studio.cover = est.capa_url || appState.studio.cover;
-                    appState.studio.logo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : appState.studio.logo;
-                    appState.studio.hours = est.horario_funcionamento || appState.studio.hours;
-                    appState.studio.primary = est.cor_primaria || appState.studio.primary || '#111111';
-                    appState.studio.bg = est.cor_fundo || appState.studio.bg || '#FFFFFF';
-                    appState.studio.surface = est.cor_destaque || appState.studio.surface || '#FAFAFA';
+                    state.studioName = est.nome || state.studioName;
+                    state.studioNiche = est.nicho || state.studioNiche;
+                    state.studioOnline = typeof est.online === 'boolean' ? est.online : state.studioOnline;
+                    state.studioCover = est.capa_url || state.studioCover;
+                    state.studioLogo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : state.studioLogo;
+                    state.studioHours = est.horario_funcionamento || state.studioHours;
+                    state.themeColors = {
+                        primary: est.cor_primaria || state.themeColors.primary || '#111111',
+                        bg: est.cor_fundo || state.themeColors.bg || '#FFFFFF',
+                        surface: est.cor_destaque || state.themeColors.surface || '#FAFAFA'
+                    };
                 }
 
-                const { data: svcs } = await sbClient.from('servicos').select('*').eq('ativo', true);
-                if (svcs && svcs.length > 0) {
-                    appState.services = svcs.map(s => ({
-                        id: s.id, name: s.nome, category: s.categoria, duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
+                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*').eq('ativo', true);
+                if (!svcErr && Array.isArray(svcs)) {
+                    state.servicesCatalog = svcs.map(s => ({
+                        id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
                     }));
                 }
 
-                const { data: pros } = await sbClient.from('profissionais').select('*').eq('ativo', true);
+                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*').eq('ativo', true);
                 const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
-                if (pros && pros.length > 0) {
-                    appState.professionals = pros.map(p => {
-                        const map = {};
+                if (!proErr && Array.isArray(pros)) {
+                    state.professionals = pros.map(p => {
+                        const rates = {};
                         (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
-                            map[ps.servico_id] = { price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
+                            rates[ps.servico_id] = { enabled: true, price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
                         });
-                        return { id: p.id, name: p.nome, role: p.especialidade, services: map };
+                        return { id: p.id, name: p.nome, specialty: p.especialidade || 'Profissional', serviceRates: rates };
                     });
                 }
 
-                const { data: pays } = await sbClient.from('formas_pagamento').select('*').eq('ativo', true);
-                if (pays && pays.length > 0) {
-                    appState.payments = pays.map(pm => pm.nome);
-                    if (!appState.payments.includes(appState.bookingDraft.payment)) {
-                        appState.bookingDraft.payment = appState.payments[0];
-                    }
+                const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
+                if (!payErr && Array.isArray(pays) && pays.length > 0) {
+                    state.paymentMethods = pays.map(pm => ({ id: pm.id, label: pm.nome, detail: pm.descricao || '', enabled: !!pm.ativo }));
                 }
 
-                await loadClientBookingsFromSupabase();
-            } catch (err) {
-                console.warn('Erro ao carregar dados do Supabase:', err);
+                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
+                if (!appErr && Array.isArray(apps)) {
+                    state.appointments = apps.map(a => ({
+                        id: a.id,
+                        clientName: a.cliente_nome,
+                        clientPhone: a.cliente_whatsapp || '',
+                        proId: a.profissional_id,
+                        serviceId: a.servico_id,
+                        date: a.data_agendamento,
+                        time: a.hora_agendamento,
+                        price: Number(a.valor) || 0,
+                        paymentMethod: a.forma_pagamento || 'Pix',
+                        status: a.status || 'pending'
+                    }));
+                }
+
+                saveLocalState();
+            } catch (e) {
+                console.warn('Erro ao sincronizar no app do cliente:', e);
             }
         }
 
-        async function loadClientBookingsFromSupabase() {
-            if (!dbConnected || !sbClient) return;
-            const { data: apps } = await sbClient.from('agendamentos').select('*').order('criado_em', { ascending: false });
-            if (!apps) return;
-
-            appState.bookings = apps
-                .filter(a => a.cliente_nome && a.cliente_nome.toLowerCase() === appState.user.fullName.toLowerCase())
-                .map(a => {
-                    const svc = appState.services.find(s => s.id === a.servico_id);
-                    const pro = appState.professionals.find(p => p.id === a.profissional_id);
-                    return {
-                        id: a.id, serviceName: svc ? svc.name : 'Serviço', proName: pro ? pro.name : 'Profissional',
-                        proRole: pro ? pro.role : '', date: a.data_agendamento, time: a.hora_agendamento,
-                        price: Number(a.valor) || 0, payment: a.forma_pagamento || 'Pix', status: a.status || 'pending', receiptImage: null
-                    };
-                });
+        function subscribeClientRealtime() {
+            if (!dbConnected || !sbClient || !sbClient.channel) return;
+            try {
+                sbClient
+                    .channel('client-live-updates')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'estabelecimentos' }, () => syncClientState(false))
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'servicos' }, () => syncClientState(false))
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'profissionais' }, () => syncClientState(false))
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'profissional_servicos' }, () => syncClientState(false))
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'formas_pagamento' }, () => syncClientState(false))
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, () => syncClientState(false))
+                    .subscribe();
+            } catch (e) {
+                console.warn('Realtime indisponível no cliente, mantendo sincronização automática.', e);
+            }
         }
 
-        function applyStudioAppearance() {
-            document.documentElement.style.setProperty('--brand-primary', appState.studio.primary);
-            document.documentElement.style.setProperty('--brand-bg', appState.studio.bg);
-            document.documentElement.style.setProperty('--brand-surface', appState.studio.surface);
+        function applyClientThemeAndBranding() {
+            document.documentElement.style.setProperty('--brand-primary', state.themeColors.primary);
+            document.documentElement.style.setProperty('--brand-bg', state.themeColors.bg);
+            document.documentElement.style.setProperty('--brand-surface', state.themeColors.surface);
 
-            document.getElementById('app-header-studio').textContent = appState.studio.name;
-            document.getElementById('app-header-niche').textContent = appState.studio.niche;
-            document.getElementById('home-studio-name').textContent = appState.studio.name;
-            document.getElementById('home-studio-niche').textContent = appState.studio.niche;
-            document.getElementById('home-studio-hours').textContent = appState.studio.hours;
-            document.getElementById('auth-studio-name').textContent = appState.studio.name;
-            document.getElementById('home-cover-img').src = appState.studio.cover;
-            document.getElementById('auth-cover-img').src = appState.studio.cover;
+            document.getElementById('client-header-name').textContent = state.studioName;
+            document.getElementById('client-header-hours').textContent = state.studioHours;
+            document.getElementById('client-cover-name').textContent = state.studioName;
+            document.getElementById('client-cover-niche').textContent = state.studioNiche;
+            document.getElementById('client-cover-hours').textContent = state.studioHours;
+            document.getElementById('client-cover-img').src = state.studioCover;
 
-            const initial = (appState.studio.name || 'A').trim().charAt(0).toUpperCase() || 'A';
-            const logoEl = document.getElementById('app-header-logo');
-            if (appState.studio.logo) {
-                logoEl.innerHTML = `<img src="${appState.studio.logo}" alt="Logo" class="w-full h-full object-cover">`;
+            const initial = (state.studioName || 'A').trim().charAt(0).toUpperCase() || 'A';
+            const headerLogo = document.getElementById('client-header-logo');
+            const coverLogo = document.getElementById('client-cover-logo');
+
+            if (state.studioLogo) {
+                const imgHtml = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                headerLogo.innerHTML = imgHtml;
+                coverLogo.innerHTML = imgHtml;
             } else {
-                logoEl.textContent = initial;
+                headerLogo.textContent = initial;
+                coverLogo.textContent = initial;
             }
 
-            const isOnline = appState.studio.online;
-            ['app-header-dot', 'home-online-dot'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.classList.remove(isOnline ? 'status-dot-offline' : 'status-dot-online');
-                el.classList.add(isOnline ? 'status-dot-online' : 'status-dot-offline');
-            });
-            document.getElementById('app-header-status-label').textContent = isOnline ? 'Online' : 'Offline';
-            document.getElementById('home-online-label').textContent = isOnline ? 'Agendamento: ON' : 'Agendamento: OFF';
-            document.getElementById('home-offline-alert').classList.toggle('hidden', isOnline);
-            document.getElementById('mob-booking-wrapper').classList.toggle('hidden', !isOnline);
-        }
+            const dot = document.getElementById('client-status-dot');
+            const label = document.getElementById('client-status-text');
+            const notice = document.getElementById('client-offline-notice');
+            const submitBtn = document.getElementById('client-submit-btn');
 
-        function switchBottomTab(tab) {
-            appState.activeTab = tab;
-            ['home', 'bookings', 'profile'].forEach(t => {
-                document.getElementById(`screen-${t}`).classList.toggle('hidden', t !== tab);
-            });
-            document.getElementById('screen-auth').classList.add('hidden');
-            document.getElementById('bottom-nav').classList.remove('hidden');
-            document.querySelectorAll('.nav-tab').forEach(btn => {
-                const active = btn.getAttribute('data-tab') === tab;
-                btn.classList.toggle('text-[#111111]', active);
-                btn.classList.toggle('text-[#A3A3A3]', !active);
-            });
-            if (tab === 'home') renderHomeServices();
-            if (tab === 'bookings') renderBookingsList();
-            if (tab === 'profile') loadProfileFields();
-            document.getElementById('app-scroll-area').scrollTop = 0;
-            lucide.createIcons();
-        }
-
-        function setBookingStep(step) {
-            appState.bookingDraft.step = step;
-            document.getElementById('mob-step-1').classList.toggle('hidden', step !== 1);
-            document.getElementById('mob-step-2').classList.toggle('hidden', step !== 2);
-            document.getElementById('mob-step-3').classList.toggle('hidden', step !== 3);
-            document.getElementById('mob-step-pending').classList.toggle('hidden', step !== 4);
-            [1, 2, 3].forEach(i => {
-                const el = document.getElementById(`mob-step-ind-${i}`);
-                el.className = i === Math.min(step, 3)
-                    ? 'py-1.5 border-b-2 border-[#111111] text-[#111111] font-normal'
-                    : 'py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]';
-            });
-            lucide.createIcons();
-        }
-
-        function renderHomeServices() {
-            const categories = ['Todos', ...new Set(appState.services.map(s => s.category))];
-            document.getElementById('mob-category-chips').innerHTML = categories.map(cat => {
-                const active = appState.selectedCategory === cat;
-                return `<button type="button" onclick="appState.selectedCategory='${cat}'; renderHomeServices();" class="px-3 py-1.5 rounded-full text-[11px] whitespace-nowrap border ${active ? 'btn-brand border-transparent' : 'bg-white text-[#737373] border-[#EAEAEA]'}">${cat}</button>`;
-            }).join('');
-
-            const filtered = appState.services.filter(s => appState.selectedCategory === 'Todos' || s.category === appState.selectedCategory);
-            document.getElementById('mob-services-list').innerHTML = filtered.map(s => `
-                <button type="button" onclick="chooseService('${s.id}')" class="w-full text-left p-4 rounded-2xl border border-[#EAEAEA] hover:border-[#111111] flex items-center justify-between gap-3">
-                    <div>
-                        <p class="text-sm font-normal text-[#111111]">${s.name}</p>
-                        <p class="text-[11px] text-[#737373] mt-0.5">${s.category} • ${s.duration} min</p>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-sm font-normal text-[#111111]">R$ ${s.price}</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-[#A3A3A3]"></i>
-                    </div>
-                </button>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function chooseService(serviceId) {
-            appState.bookingDraft.serviceId = serviceId;
-            const pros = appState.professionals.filter(p => p.services && p.services[serviceId]);
-            document.getElementById('mob-pros-list').innerHTML = pros.map(p => {
-                const rate = p.services[serviceId];
-                const initials = p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-                return `
-                    <button type="button" onclick="chooseProfessional('${p.id}')" class="w-full text-left p-4 rounded-2xl border border-[#EAEAEA] hover:border-[#111111] flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <span class="w-9 h-9 rounded-full btn-brand text-xs flex items-center justify-center shrink-0">${initials}</span>
-                            <div>
-                                <p class="text-sm font-normal text-[#111111]">${p.name}</p>
-                                <p class="text-[11px] text-[#737373]">${p.role} • ${rate.duration} min</p>
-                            </div>
-                        </div>
-                        <span class="text-sm font-normal text-[#111111]">R$ ${rate.price}</span>
-                    </button>
-                `;
-            }).join('');
-            setBookingStep(2);
-        }
-
-        async function chooseProfessional(proId) {
-            appState.bookingDraft.proId = proId;
-            appState.bookingDraft.time = null;
-            const svc = appState.services.find(s => s.id === appState.bookingDraft.serviceId);
-            const pro = appState.professionals.find(p => p.id === proId);
-            const rate = pro.services[svc.id];
-
-            document.getElementById('mob-selected-summary').innerHTML = `
-                <div>
-                    <p class="font-normal text-[#111111]">${svc.name}</p>
-                    <p class="text-[11px] text-[#737373]">com ${pro.name} • ${rate.duration} min</p>
-                </div>
-                <span class="text-sm font-normal text-[#111111]">R$ ${rate.price}</span>
-            `;
-
-            await renderDateTimeAndPayment();
-            setBookingStep(3);
-        }
-
-        async function getTakenSlotsForDraft() {
-            if (!dbConnected || !sbClient) return ['10:30'];
-            const { data } = await sbClient
-                .from('agendamentos')
-                .select('hora_agendamento')
-                .eq('profissional_id', appState.bookingDraft.proId)
-                .eq('data_agendamento', appState.bookingDraft.date)
-                .neq('status', 'cancelled');
-            return (data || []).map(r => r.hora_agendamento);
-        }
-
-        async function renderDateTimeAndPayment() {
-            const dates = [
-                { label: 'Qui', day: '26 Nov', value: '2026-11-26' },
-                { label: 'Sex', day: '27 Nov', value: '2026-11-27' },
-                { label: 'Sáb', day: '28 Nov', value: '2026-11-28' },
-                { label: 'Seg', day: '30 Nov', value: '2026-11-30' },
-            ];
-
-            document.getElementById('mob-dates-row').innerHTML = dates.map(d => {
-                const active = appState.bookingDraft.date === d.value;
-                return `<button type="button" onclick="selectBookingDate('${d.value}')" class="py-2 px-1.5 rounded-xl border text-center ${active ? 'btn-brand border-transparent' : 'bg-white text-[#111111] border-[#EAEAEA]'}"><span class="block text-[11px]">${d.label}</span><span class="block text-[10px] opacity-75">${d.day}</span></button>`;
-            }).join('');
-
-            const taken = await getTakenSlotsForDraft();
-            const slots = ['09:00', '10:30', '13:00', '14:30', '16:00', '17:30'];
-            document.getElementById('mob-times-grid').innerHTML = slots.map(t => {
-                const isTaken = taken.includes(t);
-                const selected = appState.bookingDraft.time === t;
-                let cls = 'py-2 rounded-xl border text-xs ';
-                if (isTaken) cls += 'border-[#F2F2F2] bg-[#FAFAFA] text-[#CCCCCC] line-through';
-                else if (selected) cls += 'btn-brand border-transparent';
-                else cls += 'border-[#EAEAEA] bg-white text-[#111111]';
-                return `<button type="button" ${isTaken ? 'disabled' : ''} onclick="selectBookingTime('${t}')" class="${cls}">${t}</button>`;
-            }).join('');
-
-            document.getElementById('mob-payments-grid').innerHTML = appState.payments.map(pm => {
-                const selected = appState.bookingDraft.payment === pm;
-                return `<button type="button" onclick="selectBookingPayment('${pm}')" class="p-2.5 rounded-xl border text-xs text-left ${selected ? 'btn-brand border-transparent' : 'border-[#EAEAEA] bg-white text-[#111111]'}">${pm}</button>`;
-            }).join('');
-
-            document.getElementById('mob-submit-booking').disabled = !appState.bookingDraft.time;
-        }
-
-        async function selectBookingDate(val) {
-            appState.bookingDraft.date = val;
-            appState.bookingDraft.time = null;
-            await renderDateTimeAndPayment();
-        }
-
-        async function selectBookingTime(val) {
-            appState.bookingDraft.time = val;
-            await renderDateTimeAndPayment();
-        }
-
-        async function selectBookingPayment(val) {
-            appState.bookingDraft.payment = val;
-            await renderDateTimeAndPayment();
-        }
-
-        async function submitMobileBooking() {
-            const svc = appState.services.find(s => s.id === appState.bookingDraft.serviceId);
-            const pro = appState.professionals.find(p => p.id === appState.bookingDraft.proId);
-            const rate = pro.services[svc.id];
-
-            const newBooking = {
-                id: 'b-' + Date.now(), serviceName: svc.name, proName: pro.name, proRole: pro.role,
-                date: appState.bookingDraft.date, time: appState.bookingDraft.time, price: rate.price,
-                payment: appState.bookingDraft.payment, status: 'pending', receiptImage: null
-            };
-
-            appState.bookings.unshift(newBooking);
-            document.getElementById('nav-bookings-dot').classList.remove('hidden');
-
-            if (dbConnected && sbClient) {
-                await sbClient.from('agendamentos').insert({
-                    id: newBooking.id, cliente_nome: appState.user.fullName, cliente_whatsapp: appState.user.whatsapp,
-                    profissional_id: pro.id, servico_id: svc.id, data_agendamento: newBooking.date, hora_agendamento: newBooking.time,
-                    valor: newBooking.price, forma_pagamento: newBooking.payment, status: 'pending'
-                });
+            if (state.studioOnline) {
+                dot.classList.remove('status-dot-offline');
+                dot.classList.add('status-dot-online');
+                label.textContent = 'Disponível';
+                notice.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                dot.classList.remove('status-dot-online');
+                dot.classList.add('status-dot-offline');
+                label.textContent = 'Pausado';
+                notice.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
-
-            document.getElementById('mob-pending-desc').textContent =
-                `${svc.name} com ${pro.name} em ${newBooking.date} às ${newBooking.time} (${newBooking.payment}).`;
-            setBookingStep(4);
-            showAppToast('Solicitação enviada!');
         }
 
-        function resetMobileBooking() {
-            appState.bookingDraft.serviceId = null;
-            appState.bookingDraft.proId = null;
-            appState.bookingDraft.time = null;
-            renderHomeServices();
-            setBookingStep(1);
+        function populateClientFormOptions() {
+            const proSel = document.getElementById('client-pro-select');
+            const svcSel = document.getElementById('client-service-select');
+            const paySel = document.getElementById('client-payment-select');
+
+            const prevPro = proSel.value;
+            const prevSvc = svcSel.value;
+            const prevPay = paySel.value;
+
+            proSel.innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            if (prevPro && state.professionals.some(p => p.id === prevPro)) proSel.value = prevPro;
+
+            svcSel.innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            if (prevSvc && state.servicesCatalog.some(s => s.id === prevSvc)) svcSel.value = prevSvc;
+
+            const activePays = state.paymentMethods.filter(m => m.enabled);
+            const listPays = activePays.length ? activePays : state.paymentMethods;
+            paySel.innerHTML = listPays.map(m => `<option value="${m.label}">${m.label}</option>`).join('');
+            if (prevPay && listPays.some(m => m.label === prevPay)) paySel.value = prevPay;
+
+            handleClientProOrServiceChange();
         }
 
-        function buildReceiptCanvasDataUrl(booking) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 680;
-            canvas.height = 880;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = appState.studio.primary || '#111111';
-            ctx.fillRect(24, 24, canvas.width - 48, 130);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '400 28px "Plus Jakarta Sans", sans-serif';
-            ctx.fillText(`${appState.studio.name} • Confirmado`, 52, 98);
+        function handleClientProOrServiceChange() {
+            const proId = document.getElementById('client-pro-select').value;
+            const svcId = document.getElementById('client-service-select').value;
+            const pro = state.professionals.find(p => p.id === proId);
+            const svc = state.servicesCatalog.find(s => s.id === svcId);
 
-            const rows = [
-                ['DATA E HORÁRIO', `${booking.date} às ${booking.time}`],
-                ['SERVIÇO', booking.serviceName],
-                ['PROFISSIONAL', `${booking.proName} (${booking.proRole})`],
-                ['VALOR', `R$ ${Number(booking.price).toFixed(2).replace('.', ',')}`],
-                ['PAGAMENTO', booking.payment],
-                ['CLIENTE', appState.user.fullName]
-            ];
-            let y = 220;
-            rows.forEach(([k, v]) => {
-                ctx.fillStyle = '#737373';
-                ctx.font = '400 13px "Plus Jakarta Sans", sans-serif';
-                ctx.fillText(k, 52, y);
-                ctx.fillStyle = '#111111';
-                ctx.font = '400 22px "Plus Jakarta Sans", sans-serif';
-                ctx.fillText(v, 52, y + 30);
-                y += 96;
-            });
-            return canvas.toDataURL('image/png');
-        }
-
-        async function refreshFromCloud() {
-            await loadAppDataFromSupabase();
-            applyStudioAppearance();
-            renderBookingsList();
-            showAppToast('Atualizado.');
-        }
-
-        function renderBookingsList() {
-            document.getElementById('nav-bookings-dot').classList.add('hidden');
-            const container = document.getElementById('mob-bookings-list');
-            if (!appState.bookings.length) {
-                container.innerHTML = `<div class="p-6 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum agendamento ainda.</div>`;
+            if (!svc) {
+                document.getElementById('client-summary-meta').textContent = 'Selecione um serviço';
+                document.getElementById('client-summary-price').textContent = 'R$ 0';
                 return;
             }
-            container.innerHTML = appState.bookings.map(b => {
-                const isPending = b.status === 'pending';
-                if (!isPending && !b.receiptImage) b.receiptImage = buildReceiptCanvasDataUrl(b);
+
+            const custom = pro && pro.serviceRates && pro.serviceRates[svcId] && pro.serviceRates[svcId].enabled
+                ? pro.serviceRates[svcId]
+                : null;
+
+            const price = custom ? Number(custom.price) : Number(svc.price);
+            const duration = custom ? Number(custom.duration) : Number(svc.duration);
+
+            document.getElementById('client-summary-meta').textContent = `Duração: ${duration} min`;
+            document.getElementById('client-summary-price').textContent = `R$ ${price}`;
+        }
+
+        function renderClientAppointmentsList() {
+            const box = document.getElementById('client-my-appointments');
+            if (!state.appointments.length) {
+                box.innerHTML = `<div class="p-6 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum agendamento registrado ainda.</div>`;
+                return;
+            }
+            box.innerHTML = state.appointments.map(app => {
+                const pro = state.professionals.find(p => p.id === app.proId) || { name: 'Profissional' };
+                const svc = state.servicesCatalog.find(s => s.id === app.serviceId) || { name: 'Serviço' };
+                const statusLabel = app.status === 'pending'
+                    ? 'Aguardando aceite'
+                    : app.status === 'done'
+                        ? 'Concluído'
+                        : 'Confirmado';
+
                 return `
-                    <div class="p-4 rounded-2xl border space-y-2.5 ${isPending ? 'border-[#E6DEC8] bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white'}">
-                        <div class="flex items-start justify-between gap-2">
-                            <div>
-                                <p class="text-sm font-normal text-[#111111]">${b.serviceName}</p>
-                                <p class="text-xs text-[#737373]">${b.proName}</p>
-                            </div>
-                            ${isPending
-                                ? `<span class="text-[10px] px-2.5 py-1 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">Aguardando aceite</span>`
-                                : `<span class="text-[10px] px-2.5 py-1 rounded-full btn-brand">Confirmado</span>`}
+                    <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-normal text-[#111111]">${svc.name} • ${app.time}</p>
+                            <p class="text-xs text-[#737373]">${app.clientName} • ${pro.name} • ${app.date}</p>
                         </div>
-                        <div class="pt-2 border-t border-[#EAEAEA]/70 flex items-center justify-between text-xs">
-                            <span>${b.date} às ${b.time}</span>
-                            <span>R$ ${b.price} • ${b.payment}</span>
+                        <div class="text-right">
+                            <span class="block text-sm font-normal text-[#111111]">R$ ${app.price}</span>
+                            <span class="text-[11px] text-[#737373]">${statusLabel}</span>
                         </div>
-                        ${!isPending ? `
-                            <button onclick="openReceiptModal('${b.id}')" class="w-full py-2 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111] inline-flex items-center justify-center gap-1.5">
-                                <i data-lucide="image" class="w-3.5 h-3.5"></i>
-                                <span>Ver imagem de confirmação</span>
-                            </button>
-                        ` : ''}
                     </div>
                 `;
             }).join('');
-            lucide.createIcons();
         }
 
-        function openReceiptModal(id) {
-            const b = appState.bookings.find(x => x.id === id);
-            if (!b) return;
-            if (!b.receiptImage) b.receiptImage = buildReceiptCanvasDataUrl(b);
-            appState.activeReceiptDataUrl = b.receiptImage;
-            document.getElementById('receipt-preview-img').src = b.receiptImage;
-            const m = document.getElementById('receipt-modal');
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-            lucide.createIcons();
-        }
-
-        function closeReceiptModal() {
-            const m = document.getElementById('receipt-modal');
-            m.classList.add('hidden');
-            m.classList.remove('flex');
-        }
-
-        function downloadReceiptImage() {
-            if (!appState.activeReceiptDataUrl) return;
-            const a = document.createElement('a');
-            a.href = appState.activeReceiptDataUrl;
-            a.download = 'confirmacao-agendamento.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        function loadProfileFields() {
-            appState.profileEditing = false;
-            document.getElementById('prof-fullname').value = appState.user.fullName;
-            document.getElementById('prof-username').value = appState.user.username;
-            document.getElementById('prof-pin').value = appState.user.pin;
-            document.getElementById('prof-whatsapp').value = appState.user.whatsapp;
-            ['prof-fullname', 'prof-username', 'prof-pin', 'prof-whatsapp'].forEach(id => document.getElementById(id).disabled = true);
-            document.getElementById('prof-save-btn').classList.add('hidden');
-            document.getElementById('profile-edit-btn').textContent = 'Editar';
-        }
-
-        function toggleProfileEdit() {
-            appState.profileEditing = !appState.profileEditing;
-            const ed = appState.profileEditing;
-            ['prof-fullname', 'prof-username', 'prof-pin', 'prof-whatsapp'].forEach(id => document.getElementById(id).disabled = !ed);
-            document.getElementById('prof-save-btn').classList.toggle('hidden', !ed);
-            document.getElementById('profile-edit-btn').textContent = ed ? 'Cancelar' : 'Editar';
-        }
-
-        async function saveProfileChanges(event) {
+        async function submitClientBooking(event) {
             event.preventDefault();
-            appState.user.fullName = document.getElementById('prof-fullname').value.trim();
-            appState.user.username = document.getElementById('prof-username').value.trim();
-            appState.user.pin = document.getElementById('prof-pin').value.trim();
-            appState.user.whatsapp = document.getElementById('prof-whatsapp').value.trim();
-            document.getElementById('home-user-name').textContent = appState.user.fullName;
-            if (dbConnected && sbClient) {
-                await sbClient.from('clientes').upsert({
-                    id: appState.user.id, nome_completo: appState.user.fullName, usuario: appState.user.username,
-                    senha_pin: appState.user.pin, whatsapp: appState.user.whatsapp
-                });
+            if (!state.studioOnline) {
+                showToast('Agendamento online pausado no momento.');
+                return;
             }
-            loadProfileFields();
-            showAppToast('Dados salvos.');
-        }
 
-        function resetToFirstAccess() {
-            ['home', 'bookings', 'profile'].forEach(t => document.getElementById(`screen-${t}`).classList.add('hidden'));
-            document.getElementById('bottom-nav').classList.add('hidden');
-            document.getElementById('screen-auth').classList.remove('hidden');
-        }
+            const proId = document.getElementById('client-pro-select').value;
+            const svcId = document.getElementById('client-service-select').value;
+            const pro = state.professionals.find(p => p.id === proId);
+            const svc = state.servicesCatalog.find(s => s.id === svcId);
+            const custom = pro && pro.serviceRates && pro.serviceRates[svcId] && pro.serviceRates[svcId].enabled
+                ? pro.serviceRates[svcId]
+                : null;
+            const price = custom ? Number(custom.price) : Number(svc ? svc.price : 0);
 
-        async function completeFirstAccess(event) {
-            event.preventDefault();
-            appState.user = {
-                id: 'cli-' + Date.now(), fullName: document.getElementById('auth-fullname').value.trim(),
-                username: document.getElementById('auth-username').value.trim(), pin: document.getElementById('auth-pin').value.trim(),
-                whatsapp: document.getElementById('auth-whatsapp').value.trim()
+            const newItem = {
+                id: 'a-' + Date.now(),
+                clientName: document.getElementById('client-name').value.trim(),
+                clientPhone: document.getElementById('client-phone').value.trim(),
+                proId,
+                serviceId: svcId,
+                date: document.getElementById('client-date').value || TODAY_ISO,
+                time: document.getElementById('client-time').value || '09:00',
+                price,
+                paymentMethod: document.getElementById('client-payment-select').value || 'Pix',
+                status: 'pending'
             };
-            document.getElementById('home-user-name').textContent = appState.user.fullName;
+
+            state.appointments.push(newItem);
+            saveLocalState();
+
             if (dbConnected && sbClient) {
-                await sbClient.from('clientes').upsert({
-                    id: appState.user.id, nome_completo: appState.user.fullName, usuario: appState.user.username,
-                    senha_pin: appState.user.pin, whatsapp: appState.user.whatsapp
+                const { error } = await sbClient.from('agendamentos').insert({
+                    id: newItem.id,
+                    cliente_nome: newItem.clientName,
+                    cliente_whatsapp: newItem.clientPhone,
+                    profissional_id: newItem.proId,
+                    servico_id: newItem.serviceId,
+                    data_agendamento: newItem.date,
+                    hora_agendamento: newItem.time,
+                    valor: newItem.price,
+                    forma_pagamento: newItem.paymentMethod,
+                    status: 'pending'
                 });
-                await loadClientBookingsFromSupabase();
+                if (error) {
+                    console.warn('Erro ao enviar agendamento para o Supabase:', error.message);
+                }
             }
-            switchBottomTab('home');
+
+            renderClientAppointmentsList();
+            showToast('Solicitação enviada! Aguardando aceite do estabelecimento.');
+        }
+
+        async function syncClientState(showMsg = false) {
+            await loadRemoteState();
+            applyClientThemeAndBranding();
+            populateClientFormOptions();
+            renderClientAppointmentsList();
+            if (showMsg) showToast('Dados atualizados.');
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e;
+            deferredClientPrompt = e;
         });
 
         async function installClientPwa() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                await deferredPrompt.userChoice;
-                deferredPrompt = null;
+            if (deferredClientPrompt) {
+                deferredClientPrompt.prompt();
+                await deferredClientPrompt.userChoice;
+                deferredClientPrompt = null;
                 return;
             }
             const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-            showAppToast(isIos
+            showToast(isIos
                 ? 'No iPhone (Safari), toque em Compartilhar e depois "Adicionar à Tela de Início".'
-                : 'No menu do navegador (⋮), toque em "Instalar aplicativo".');
+                : 'No menu do navegador (⋮), toque em "Instalar aplicativo" ou "Adicionar à tela inicial".');
         }
 
-        function showAppToast(msg) {
-            const el = document.getElementById('app-toast');
+        function showToast(msg) {
+            const el = document.getElementById('toast');
             el.textContent = msg;
             el.classList.remove('opacity-0');
             el.classList.add('opacity-100');
-            clearTimeout(window._mobToast);
-            window._mobToast = setTimeout(() => {
+            clearTimeout(window._toastT);
+            window._toastT = setTimeout(() => {
                 el.classList.remove('opacity-100');
                 el.classList.add('opacity-0');
-            }, 2600);
+            }, 3000);
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('client-date').value = TODAY_ISO;
+            document.getElementById('client-time').value = '10:00';
             initSupabase();
-            await loadAppDataFromSupabase();
-            applyStudioAppearance();
-            document.getElementById('home-user-name').textContent = appState.user.fullName;
-            renderHomeServices();
+            await syncClientState(false);
+            subscribeClientRealtime();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
             lucide.createIcons();
+
+            setInterval(() => {
+                syncClientState(false);
+            }, 10000);
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) syncClientState(false);
+            });
+
+            window.addEventListener('pageshow', () => {
+                syncClientState(false);
+            });
+
+            window.addEventListener('focus', () => {
+                syncClientState(false);
+            });
+
+            window.addEventListener('storage', (e) => {
+                if (e.key === LOCAL_CFG_KEY || e.key === LOCAL_DATA_KEY) {
+                    syncClientState(false);
+                }
+            });
         });
     </script>
 </body>
