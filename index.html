@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agendamento — App do Cliente</title>
+    <meta name="theme-color" content="#111111">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Agendar">
+    <link rel="manifest" href="./manifest.webmanifest">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --brand-primary: #111111;
+            --brand-bg: #FFFFFF;
+            --brand-surface: #FAFAFA;
+        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #F4F4F5;
+            color: #111111;
+            font-weight: 300;
+            letter-spacing: -0.01em;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .fade-in {
+            animation: fadeIn 0.22s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-dot-online {
+            background-color: #39FF14;
+            box-shadow: 0 0 8px #39FF14, 0 0 14px rgba(57, 255, 20, 0.55);
+        }
+        .status-dot-offline {
+            background-color: #FF2A2A;
+            box-shadow: 0 0 8px #FF2A2A, 0 0 14px rgba(255, 42, 42, 0.55);
+        }
+        .btn-brand {
+            background-color: var(--brand-primary);
+            color: #FFFFFF;
+        }
+        .surface-brand {
+            background-color: var(--brand-surface);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-6">
+
+    <!-- MOLDURA MOBILE RESPONSIVA -->
+    <div class="w-full sm:max-w-[412px] min-h-screen sm:min-h-[820px] sm:max-h-[860px] sm:rounded-[38px] sm:border sm:border-[#E4E4E7] sm:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden relative"
+         style="background-color: var(--brand-bg);">
+
+        <!-- CABEÇALHO DO APP DO CLIENTE -->
+        <header class="px-5 py-3.5 border-b border-[#EAEAEA] flex items-center justify-between shrink-0 z-20"
+                style="background-color: var(--brand-bg);">
+            <div class="flex items-center gap-2.5">
+                <span id="app-header-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal tracking-wider overflow-hidden shrink-0">
+                    A
+                </span>
+                <div>
+                    <p id="app-header-studio" class="text-[10px] uppercase tracking-[0.15em] text-[#737373]">Atelier Studio</p>
+                    <h1 id="app-header-niche" class="text-sm font-normal text-[#111111] leading-tight">App do Cliente</h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full border border-[#EAEAEA] surface-brand text-[11px] text-[#111111] inline-flex items-center gap-1.5">
+                    <span id="app-header-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
+                    <span id="app-header-status-label">Online</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- ÁREA DE CONTEÚDO ROLÁVEL -->
+        <main id="app-scroll-area" class="flex-1 overflow-y-auto no-scrollbar px-5 py-5 pb-28 space-y-5">
+
+            <!-- TELA 0: PRIMEIRO ACESSO -->
+            <section id="screen-auth" class="hidden fade-in space-y-5 pt-2">
+                <div class="relative w-full h-36 rounded-2xl overflow-hidden border border-[#EAEAEA]">
+                    <img id="auth-cover-img"
+                         src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80"
+                         alt="Estabelecimento"
+                         onerror="this.onerror=null;this.src='https://placehold.co/800x360/F5F5F5/111111?text=ESTABELECIMENTO';"
+                         class="w-full h-full object-cover grayscale contrast-[1.03]">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent p-4 flex flex-col justify-end text-white">
+                        <span class="text-[10px] uppercase tracking-[0.16em] text-white/75">Bem-vinda(o)</span>
+                        <h2 id="auth-studio-name" class="text-lg font-normal">Atelier Studio</h2>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <h3 class="text-xl font-light text-[#111111]">Crie seu acesso</h3>
+                    <p class="text-xs text-[#737373]">
+                        Cadastre seus dados uma única vez para agendar horários e receber confirmações.
+                    </p>
+                </div>
+
+                <form onsubmit="completeFirstAccess(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[11px] text-[#737373] mb-1">Nome completo</label>
+                        <input id="auth-fullname" type="text" required placeholder="Ex: Mariana Costa"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Usuário</label>
+                            <input id="auth-username" type="text" required placeholder="marianacosta"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">Senha (até 6 dígitos)</label>
+                            <input id="auth-pin" type="password" maxlength="6" required placeholder="••••••"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs tracking-widest focus:outline-none focus:border-[#111111]">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#737373] mb-1">WhatsApp</label>
+                        <input id="auth-whatsapp" type="tel" required placeholder="(11) 98888-7777"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <button type="submit"
+                            class="w-full py-3 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                        Entrar no aplicativo
+                    </button>
+                </form>
+            </section>
+
+            <!-- TELA 1: INÍCIO & NOVO AGENDAMENTO -->
+            <section id="screen-home" class="fade-in space-y-5">
+                <div class="relative w-full h-36 rounded-2xl overflow-hidden border border-[#EAEAEA]">
+                    <img id="home-cover-img"
+                         src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80"
+                         alt="Capa do Estabelecimento"
+                         onerror="this.onerror=null;this.src='https://placehold.co/800x360/F5F5F5/111111?text=ESTABELECIMENTO';"
+                         class="w-full h-full object-cover grayscale contrast-[1.03]">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent p-4 flex items-end justify-between text-white gap-2">
+                        <div>
+                            <p id="home-studio-niche" class="text-[10px] uppercase tracking-[0.16em] text-white/75">Estabelecimento</p>
+                            <h2 id="home-studio-name" class="text-base font-normal">Atelier Studio</h2>
+                        </div>
+                        <span id="home-studio-hours" class="text-[10px] px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-xs border border-white/20 shrink-0">
+                            Seg – Sáb • 09h às 19h
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-end justify-between gap-2 pb-3 border-b border-[#EAEAEA]">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.12em] text-[#737373]">
+                            Olá, <span id="home-user-name" class="text-[#111111] font-normal">Mariana Costa</span>
+                        </p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111] mt-0.5">
+                            Agendar horário
+                        </h2>
+                    </div>
+
+                    <div class="mb-0.5 px-2.5 py-1 rounded-full border border-[#EAEAEA] surface-brand text-[11px] text-[#111111] inline-flex items-center gap-1.5 shrink-0">
+                        <span id="home-online-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
+                        <span id="home-online-label">Agendamento: ON</span>
+                    </div>
+                </div>
+
+                <div id="home-offline-alert" class="hidden p-4 rounded-2xl border border-[#FF2A2A]/35 bg-[#FFF8F8] text-xs text-[#111111]">
+                    O agendamento online está pausado no momento. Você ainda pode consultar seus agendamentos na aba <strong>Agenda</strong>.
+                </div>
+
+                <div id="mob-booking-wrapper" class="space-y-4">
+                    <div class="grid grid-cols-3 gap-1.5 text-center text-[11px]">
+                        <div id="mob-step-ind-1" class="py-1.5 border-b-2 border-[#111111] text-[#111111] font-normal">1. Serviço</div>
+                        <div id="mob-step-ind-2" class="py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]">2. Profissional</div>
+                        <div id="mob-step-ind-3" class="py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]">3. Data & Hora</div>
+                    </div>
+
+                    <!-- ETAPA 1 -->
+                    <div id="mob-step-1" class="space-y-3">
+                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1" id="mob-category-chips"></div>
+                        <div id="mob-services-list" class="space-y-2.5"></div>
+                    </div>
+
+                    <!-- ETAPA 2 -->
+                    <div id="mob-step-2" class="hidden space-y-3">
+                        <button onclick="setBookingStep(1)" class="inline-flex items-center gap-1 text-xs text-[#737373] hover:text-[#111111]">
+                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                            <span>Trocar serviço</span>
+                        </button>
+                        <div id="mob-pros-list" class="space-y-2.5"></div>
+                    </div>
+
+                    <!-- ETAPA 3 -->
+                    <div id="mob-step-3" class="hidden space-y-4">
+                        <button onclick="setBookingStep(2)" class="inline-flex items-center gap-1 text-xs text-[#737373] hover:text-[#111111]">
+                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                            <span>Trocar profissional</span>
+                        </button>
+
+                        <div id="mob-selected-summary" class="p-3.5 rounded-2xl surface-brand border border-[#EAEAEA] flex items-center justify-between text-xs"></div>
+
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-2">Selecione o dia</label>
+                            <div id="mob-dates-row" class="grid grid-cols-4 gap-2"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-2">Horários disponíveis</label>
+                            <div id="mob-times-grid" class="grid grid-cols-3 gap-2"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-2">Meio de pagamento</label>
+                            <div id="mob-payments-grid" class="grid grid-cols-2 gap-2"></div>
+                        </div>
+
+                        <button id="mob-submit-booking" onclick="submitMobileBooking()" disabled
+                                class="w-full py-3.5 rounded-full btn-brand text-xs font-normal disabled:bg-[#EAEAEA] disabled:text-[#A3A3A3] transition-colors">
+                            Solicitar agendamento
+                        </button>
+                    </div>
+
+                    <!-- ETAPA 4 -->
+                    <div id="mob-step-pending" class="hidden p-5 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] text-center space-y-3.5">
+                        <div class="w-11 h-11 rounded-full btn-brand flex items-center justify-center mx-auto">
+                            <i data-lucide="clock" class="w-5 h-5 stroke-[1.75]"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-lg font-light text-[#111111]">Aguardando aceite</h3>
+                            <p id="mob-pending-desc" class="text-xs text-[#737373] leading-relaxed"></p>
+                        </div>
+                        <p class="text-[11px] text-[#737373]">
+                            Assim que o profissional aceitar, seu comprovante em imagem aparecerá na aba <strong>Agenda</strong>.
+                        </p>
+                        <div class="pt-1 flex flex-col gap-2">
+                            <button onclick="switchBottomTab('bookings')" class="w-full py-2.5 rounded-full btn-brand text-xs font-normal">
+                                Acompanhar na minha agenda
+                            </button>
+                            <button onclick="resetMobileBooking()" class="w-full py-2.5 rounded-full border border-[#111111] text-xs text-[#111111]">
+                                Fazer outro agendamento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TELA 2: MEUS AGENDAMENTOS -->
+            <section id="screen-bookings" class="hidden fade-in space-y-4">
+                <div class="pb-3 border-b border-[#EAEAEA] flex items-end justify-between">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.12em] text-[#737373]">Histórico & Status</p>
+                        <h2 class="text-2xl font-light text-[#111111]">Meus agendamentos</h2>
+                    </div>
+                    <button onclick="refreshFromCloud()" class="px-2.5 py-1 rounded-full border border-[#EAEAEA] surface-brand text-[10px] text-[#737373] hover:text-[#111111]">
+                        Atualizar
+                    </button>
+                </div>
+                <div id="mob-bookings-list" class="space-y-3"></div>
+            </section>
+
+            <!-- TELA 3: MEU PERFIL -->
+            <section id="screen-profile" class="hidden fade-in space-y-4">
+                <div class="pb-3 border-b border-[#EAEAEA] flex items-end justify-between">
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.12em] text-[#737373]">Conta do Cliente</p>
+                        <h2 class="text-2xl font-light text-[#111111]">Meus dados</h2>
+                    </div>
+                    <button id="profile-edit-btn" onclick="toggleProfileEdit()" class="text-xs underline underline-offset-4 text-[#111111]">
+                        Editar
+                    </button>
+                </div>
+
+                <form onsubmit="saveProfileChanges(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[11px] text-[#737373] mb-1">Nome completo</label>
+                        <input id="prof-fullname" type="text" required disabled
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#737373] mb-1">Usuário para login</label>
+                        <input id="prof-username" type="text" required disabled
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#737373] mb-1">Senha (até 6 dígitos)</label>
+                        <input id="prof-pin" type="password" maxlength="6" required disabled
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs tracking-widest text-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#737373] mb-1">WhatsApp para lembretes (24h e 1h antes)</label>
+                        <input id="prof-whatsapp" type="tel" required disabled
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111]">
+                    </div>
+                    <button id="prof-save-btn" type="submit" class="hidden w-full py-3 rounded-full btn-brand text-xs font-normal">
+                        Salvar alterações
+                    </button>
+                </form>
+
+                <button onclick="installClientPwa()" class="w-full py-2.5 rounded-full border border-[#111111] text-xs text-[#111111]">
+                    Instalar aplicativo no celular
+                </button>
+
+                <button onclick="resetToFirstAccess()" class="w-full py-2.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111]">
+                    Trocar conta / primeiro acesso
+                </button>
+            </section>
+        </main>
+
+        <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
+        <nav id="bottom-nav" class="absolute bottom-0 inset-x-0 border-t border-[#EAEAEA] px-6 py-2.5 flex items-center justify-around z-20"
+             style="background-color: var(--brand-bg);">
+            <button onclick="switchBottomTab('home')" data-tab="home" class="nav-tab flex flex-col items-center gap-1 text-[#111111]">
+                <i data-lucide="calendar-plus" class="w-5 h-5 stroke-[1.6]"></i>
+                <span class="text-[10px] font-normal">Agendar</span>
+            </button>
+            <button onclick="switchBottomTab('bookings')" data-tab="bookings" class="nav-tab flex flex-col items-center gap-1 text-[#A3A3A3] relative">
+                <i data-lucide="calendar-check" class="w-5 h-5 stroke-[1.6]"></i>
+                <span class="text-[10px] font-normal">Agenda</span>
+                <span id="nav-bookings-dot" class="hidden absolute top-0 right-1 w-2 h-2 rounded-full btn-brand"></span>
+            </button>
+            <button onclick="switchBottomTab('profile')" data-tab="profile" class="nav-tab flex flex-col items-center gap-1 text-[#A3A3A3]">
+                <i data-lucide="user" class="w-5 h-5 stroke-[1.6]"></i>
+                <span class="text-[10px] font-normal">Perfil</span>
+            </button>
+        </nav>
+
+        <!-- MODAL COMPROVANTE -->
+        <div id="receipt-modal" class="hidden absolute inset-0 z-40 bg-black/45 backdrop-blur-[2px] p-4 items-center justify-center">
+            <div class="bg-white rounded-3xl border border-[#EAEAEA] w-full max-w-[350px] p-4 space-y-3.5 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.14em] text-[#737373]">Confirmado pelo profissional</p>
+                        <h3 class="text-sm font-normal text-[#111111]">Comprovante de agendamento</h3>
+                    </div>
+                    <button onclick="closeReceiptModal()" class="w-8 h-8 rounded-full border border-[#EAEAEA] flex items-center justify-center text-[#737373]">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="p-2.5 rounded-2xl surface-brand border border-[#EAEAEA] flex justify-center">
+                    <img id="receipt-preview-img" src="" alt="Comprovante" class="w-full rounded-xl border border-[#EAEAEA] bg-white">
+                </div>
+                <button onclick="downloadReceiptImage()" class="w-full py-3 rounded-full btn-brand text-xs font-normal inline-flex items-center justify-center gap-1.5">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Salvar imagem no celular</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="app-toast" class="pointer-events-none opacity-0 transition-opacity duration-200 absolute bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#111111] text-white text-[11px] px-4 py-2 rounded-full whitespace-nowrap shadow-sm"></div>
+    </div>
+
+    <script>
+        let sbClient = null;
+        let dbConnected = false;
+        let deferredPrompt = null;
+
+        const appState = {
+            activeTab: 'home',
+            selectedCategory: 'Todos',
+            profileEditing: false,
+            activeReceiptDataUrl: null,
+            studio: {
+                name: 'Atelier Studio',
+                niche: 'Estúdio Multiserviços',
+                online: true,
+                cover: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80',
+                logo: '',
+                hours: 'Seg – Sáb • 09h às 19h',
+                primary: '#111111',
+                bg: '#FFFFFF',
+                surface: '#FAFAFA'
+            },
+            user: {
+                id: 'cli-local-1',
+                fullName: 'Mariana Costa',
+                username: 'marianacosta',
+                pin: '123456',
+                whatsapp: '(11) 98888-7777'
+            },
+            services: [
+                { id: 's1', name: 'Corte & Visagismo', category: 'Barbeiro', duration: 45, price: 120 },
+                { id: 's2', name: 'Barba Terapia & Toalha Quente', category: 'Barbeiro', duration: 35, price: 70 },
+                { id: 's3', name: 'Manicure & Esmaltação em Gel', category: 'Manicure', duration: 60, price: 95 },
+                { id: 's4', name: 'Spa dos Pés & Cuticulagem', category: 'Manicure', duration: 50, price: 85 },
+                { id: 's5', name: 'Escova Modelada & Tratamento', category: 'Cabeleireira', duration: 60, price: 140 },
+                { id: 's6', name: 'Limpeza de Pele Profunda', category: 'Esteticista', duration: 75, price: 180 },
+            ],
+            professionals: [
+                { id: 'p1', name: 'Rafael Mendes', role: 'Barbeiro', services: { s1: { price: 130, duration: 50 }, s2: { price: 75, duration: 40 } } },
+                { id: 'p2', name: 'Camila Rocha', role: 'Manicure', services: { s3: { price: 100, duration: 60 }, s4: { price: 90, duration: 50 } } },
+                { id: 'p3', name: 'Juliana Freitas', role: 'Cabeleireira', services: { s5: { price: 150, duration: 65 } } },
+                { id: 'p4', name: 'Fernanda Lima', role: 'Esteticista', services: { s6: { price: 190, duration: 75 } } },
+            ],
+            payments: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro'],
+            bookingDraft: {
+                step: 1,
+                serviceId: null,
+                proId: null,
+                date: '2026-11-26',
+                time: null,
+                payment: 'Pix'
+            },
+            bookings: []
+        };
+
+        function initSupabase() {
+            const cfg = window.SUPABASE_CONFIG;
+            if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) return;
+            if (!window.supabase || !window.supabase.createClient) return;
+            sbClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+            dbConnected = true;
+        }
+
+        async function loadAppDataFromSupabase() {
+            if (!dbConnected || !sbClient) return;
+            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+            try {
+                const { data: est } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
+                if (est) {
+                    appState.studio.name = est.nome || appState.studio.name;
+                    appState.studio.niche = est.nicho || appState.studio.niche;
+                    appState.studio.online = typeof est.online === 'boolean' ? est.online : true;
+                    appState.studio.cover = est.capa_url || appState.studio.cover;
+                    appState.studio.logo = est.logo_url || '';
+                    appState.studio.hours = est.horario_funcionamento || appState.studio.hours;
+                    appState.studio.primary = est.cor_primaria || '#111111';
+                    appState.studio.bg = est.cor_fundo || '#FFFFFF';
+                    appState.studio.surface = est.cor_destaque || '#FAFAFA';
+                }
+
+                const { data: svcs } = await sbClient.from('servicos').select('*').eq('ativo', true);
+                if (svcs && svcs.length > 0) {
+                    appState.services = svcs.map(s => ({
+                        id: s.id,
+                        name: s.nome,
+                        category: s.categoria,
+                        duration: Number(s.duracao_min) || 45,
+                        price: Number(s.preco) || 0
+                    }));
+                }
+
+                const { data: pros } = await sbClient.from('profissionais').select('*').eq('ativo', true);
+                const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
+                if (pros && pros.length > 0) {
+                    appState.professionals = pros.map(p => {
+                        const map = {};
+                        (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
+                            map[ps.servico_id] = { price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
+                        });
+                        return { id: p.id, name: p.nome, role: p.especialidade, services: map };
+                    });
+                }
+
+                const { data: pays } = await sbClient.from('formas_pagamento').select('*').eq('ativo', true);
+                if (pays && pays.length > 0) {
+                    appState.payments = pays.map(pm => pm.nome);
+                    if (!appState.payments.includes(appState.bookingDraft.payment)) {
+                        appState.bookingDraft.payment = appState.payments[0];
+                    }
+                }
+
+                await loadClientBookingsFromSupabase();
+            } catch (err) {
+                console.warn('Erro ao carregar dados do Supabase:', err);
+            }
+        }
+
+        async function loadClientBookingsFromSupabase() {
+            if (!dbConnected || !sbClient) return;
+            const { data: apps } = await sbClient.from('agendamentos').select('*').order('criado_em', { ascending: false });
+            if (!apps) return;
+
+            appState.bookings = apps
+                .filter(a => a.cliente_nome && a.cliente_nome.toLowerCase() === appState.user.fullName.toLowerCase())
+                .map(a => {
+                    const svc = appState.services.find(s => s.id === a.servico_id);
+                    const pro = appState.professionals.find(p => p.id === a.profissional_id);
+                    return {
+                        id: a.id,
+                        serviceName: svc ? svc.name : 'Serviço',
+                        proName: pro ? pro.name : 'Profissional',
+                        proRole: pro ? pro.role : '',
+                        date: a.data_agendamento,
+                        time: a.hora_agendamento,
+                        price: Number(a.valor) || 0,
+                        payment: a.forma_pagamento || 'Pix',
+                        status: a.status || 'pending',
+                        receiptImage: null
+                    };
+                });
+        }
+
+        function applyStudioAppearance() {
+            document.documentElement.style.setProperty('--brand-primary', appState.studio.primary);
+            document.documentElement.style.setProperty('--brand-bg', appState.studio.bg);
+            document.documentElement.style.setProperty('--brand-surface', appState.studio.surface);
+
+            document.getElementById('app-header-studio').textContent = appState.studio.name;
+            document.getElementById('app-header-niche').textContent = appState.studio.niche;
+            document.getElementById('home-studio-name').textContent = appState.studio.name;
+            document.getElementById('home-studio-niche').textContent = appState.studio.niche;
+            document.getElementById('home-studio-hours').textContent = appState.studio.hours;
+            document.getElementById('auth-studio-name').textContent = appState.studio.name;
+            document.getElementById('home-cover-img').src = appState.studio.cover;
+            document.getElementById('auth-cover-img').src = appState.studio.cover;
+
+            const initial = (appState.studio.name || 'A').trim().charAt(0).toUpperCase() || 'A';
+            const logoEl = document.getElementById('app-header-logo');
+            if (appState.studio.logo) {
+                logoEl.innerHTML = `<img src="${appState.studio.logo}" alt="Logo" class="w-full h-full object-cover">`;
+            } else {
+                logoEl.textContent = initial;
+            }
+
+            const isOnline = appState.studio.online;
+            ['app-header-dot', 'home-online-dot'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.remove(isOnline ? 'status-dot-offline' : 'status-dot-online');
+                el.classList.add(isOnline ? 'status-dot-online' : 'status-dot-offline');
+            });
+            document.getElementById('app-header-status-label').textContent = isOnline ? 'Online' : 'Offline';
+            document.getElementById('home-online-label').textContent = isOnline ? 'Agendamento: ON' : 'Agendamento: OFF';
+            document.getElementById('home-offline-alert').classList.toggle('hidden', isOnline);
+            document.getElementById('mob-booking-wrapper').classList.toggle('hidden', !isOnline);
+        }
+
+        function switchBottomTab(tab) {
+            appState.activeTab = tab;
+            ['home', 'bookings', 'profile'].forEach(t => {
+                document.getElementById(`screen-${t}`).classList.toggle('hidden', t !== tab);
+            });
+            document.getElementById('screen-auth').classList.add('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                const active = btn.getAttribute('data-tab') === tab;
+                btn.classList.toggle('text-[#111111]', active);
+                btn.classList.toggle('text-[#A3A3A3]', !active);
+            });
+            if (tab === 'home') renderHomeServices();
+            if (tab === 'bookings') renderBookingsList();
+            if (tab === 'profile') loadProfileFields();
+            document.getElementById('app-scroll-area').scrollTop = 0;
+            lucide.createIcons();
+        }
+
+        function setBookingStep(step) {
+            appState.bookingDraft.step = step;
+            document.getElementById('mob-step-1').classList.toggle('hidden', step !== 1);
+            document.getElementById('mob-step-2').classList.toggle('hidden', step !== 2);
+            document.getElementById('mob-step-3').classList.toggle('hidden', step !== 3);
+            document.getElementById('mob-step-pending').classList.toggle('hidden', step !== 4);
+            [1, 2, 3].forEach(i => {
+                const el = document.getElementById(`mob-step-ind-${i}`);
+                el.className = i === Math.min(step, 3)
+                    ? 'py-1.5 border-b-2 border-[#111111] text-[#111111] font-normal'
+                    : 'py-1.5 border-b border-[#EAEAEA] text-[#A3A3A3]';
+            });
+            lucide.createIcons();
+        }
+
+        function renderHomeServices() {
+            const categories = ['Todos', ...new Set(appState.services.map(s => s.category))];
+            document.getElementById('mob-category-chips').innerHTML = categories.map(cat => {
+                const active = appState.selectedCategory === cat;
+                return `<button type="button" onclick="appState.selectedCategory='${cat}'; renderHomeServices();" class="px-3 py-1.5 rounded-full text-[11px] whitespace-nowrap border ${active ? 'btn-brand border-transparent' : 'bg-white text-[#737373] border-[#EAEAEA]'}">${cat}</button>`;
+            }).join('');
+
+            const filtered = appState.services.filter(s => appState.selectedCategory === 'Todos' || s.category === appState.selectedCategory);
+            document.getElementById('mob-services-list').innerHTML = filtered.map(s => `
+                <button type="button" onclick="chooseService('${s.id}')" class="w-full text-left p-4 rounded-2xl border border-[#EAEAEA] hover:border-[#111111] flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-normal text-[#111111]">${s.name}</p>
+                        <p class="text-[11px] text-[#737373] mt-0.5">${s.category} • ${s.duration} min</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-sm font-normal text-[#111111]">R$ ${s.price}</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-[#A3A3A3]"></i>
+                    </div>
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function chooseService(serviceId) {
+            appState.bookingDraft.serviceId = serviceId;
+            const pros = appState.professionals.filter(p => p.services && p.services[serviceId]);
+            document.getElementById('mob-pros-list').innerHTML = pros.map(p => {
+                const rate = p.services[serviceId];
+                const initials = p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+                return `
+                    <button type="button" onclick="chooseProfessional('${p.id}')" class="w-full text-left p-4 rounded-2xl border border-[#EAEAEA] hover:border-[#111111] flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="w-9 h-9 rounded-full btn-brand text-xs flex items-center justify-center shrink-0">${initials}</span>
+                            <div>
+                                <p class="text-sm font-normal text-[#111111]">${p.name}</p>
+                                <p class="text-[11px] text-[#737373]">${p.role} • ${rate.duration} min</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-normal text-[#111111]">R$ ${rate.price}</span>
+                    </button>
+                `;
+            }).join('');
+            setBookingStep(2);
+        }
+
+        async function chooseProfessional(proId) {
+            appState.bookingDraft.proId = proId;
+            appState.bookingDraft.time = null;
+            const svc = appState.services.find(s => s.id === appState.bookingDraft.serviceId);
+            const pro = appState.professionals.find(p => p.id === proId);
+            const rate = pro.services[svc.id];
+
+            document.getElementById('mob-selected-summary').innerHTML = `
+                <div>
+                    <p class="font-normal text-[#111111]">${svc.name}</p>
+                    <p class="text-[11px] text-[#737373]">com ${pro.name} • ${rate.duration} min</p>
+                </div>
+                <span class="text-sm font-normal text-[#111111]">R$ ${rate.price}</span>
+            `;
+
+            await renderDateTimeAndPayment();
+            setBookingStep(3);
+        }
+
+        async function getTakenSlotsForDraft() {
+            if (!dbConnected || !sbClient) return ['10:30'];
+            const { data } = await sbClient
+                .from('agendamentos')
+                .select('hora_agendamento')
+                .eq('profissional_id', appState.bookingDraft.proId)
+                .eq('data_agendamento', appState.bookingDraft.date)
+                .neq('status', 'cancelled');
+            return (data || []).map(r => r.hora_agendamento);
+        }
+
+        async function renderDateTimeAndPayment() {
+            const dates = [
+                { label: 'Qui', day: '26 Nov', value: '2026-11-26' },
+                { label: 'Sex', day: '27 Nov', value: '2026-11-27' },
+                { label: 'Sáb', day: '28 Nov', value: '2026-11-28' },
+                { label: 'Seg', day: '30 Nov', value: '2026-11-30' },
+            ];
+
+            document.getElementById('mob-dates-row').innerHTML = dates.map(d => {
+                const active = appState.bookingDraft.date === d.value;
+                return `<button type="button" onclick="selectBookingDate('${d.value}')" class="py-2 px-1.5 rounded-xl border text-center ${active ? 'btn-brand border-transparent' : 'bg-white text-[#111111] border-[#EAEAEA]'}"><span class="block text-[11px]">${d.label}</span><span class="block text-[10px] opacity-75">${d.day}</span></button>`;
+            }).join('');
+
+            const taken = await getTakenSlotsForDraft();
+            const slots = ['09:00', '10:30', '13:00', '14:30', '16:00', '17:30'];
+            document.getElementById('mob-times-grid').innerHTML = slots.map(t => {
+                const isTaken = taken.includes(t);
+                const selected = appState.bookingDraft.time === t;
+                let cls = 'py-2 rounded-xl border text-xs ';
+                if (isTaken) cls += 'border-[#F2F2F2] bg-[#FAFAFA] text-[#CCCCCC] line-through';
+                else if (selected) cls += 'btn-brand border-transparent';
+                else cls += 'border-[#EAEAEA] bg-white text-[#111111]';
+                return `<button type="button" ${isTaken ? 'disabled' : ''} onclick="selectBookingTime('${t}')" class="${cls}">${t}</button>`;
+            }).join('');
+
+            document.getElementById('mob-payments-grid').innerHTML = appState.payments.map(pm => {
+                const selected = appState.bookingDraft.payment === pm;
+                return `<button type="button" onclick="selectBookingPayment('${pm}')" class="p-2.5 rounded-xl border text-xs text-left ${selected ? 'btn-brand border-transparent' : 'border-[#EAEAEA] bg-white text-[#111111]'}">${pm}</button>`;
+            }).join('');
+
+            document.getElementById('mob-submit-booking').disabled = !appState.bookingDraft.time;
+        }
+
+        async function selectBookingDate(val) {
+            appState.bookingDraft.date = val;
+            appState.bookingDraft.time = null;
+            await renderDateTimeAndPayment();
+        }
+
+        async function selectBookingTime(val) {
+            appState.bookingDraft.time = val;
+            await renderDateTimeAndPayment();
+        }
+
+        async function selectBookingPayment(val) {
+            appState.bookingDraft.payment = val;
+            await renderDateTimeAndPayment();
+        }
+
+        async function submitMobileBooking() {
+            const svc = appState.services.find(s => s.id === appState.bookingDraft.serviceId);
+            const pro = appState.professionals.find(p => p.id === appState.bookingDraft.proId);
+            const rate = pro.services[svc.id];
+
+            const newBooking = {
+                id: 'b-' + Date.now(),
+                serviceName: svc.name,
+                proName: pro.name,
+                proRole: pro.role,
+                date: appState.bookingDraft.date,
+                time: appState.bookingDraft.time,
+                price: rate.price,
+                payment: appState.bookingDraft.payment,
+                status: 'pending',
+                receiptImage: null
+            };
+
+            appState.bookings.unshift(newBooking);
+            document.getElementById('nav-bookings-dot').classList.remove('hidden');
+
+            if (dbConnected && sbClient) {
+                await sbClient.from('agendamentos').insert({
+                    id: newBooking.id,
+                    cliente_nome: appState.user.fullName,
+                    cliente_whatsapp: appState.user.whatsapp,
+                    profissional_id: pro.id,
+                    servico_id: svc.id,
+                    data_agendamento: newBooking.date,
+                    hora_agendamento: newBooking.time,
+                    valor: newBooking.price,
+                    forma_pagamento: newBooking.payment,
+                    status: 'pending'
+                });
+            }
+
+            document.getElementById('mob-pending-desc').textContent =
+                `${svc.name} com ${pro.name} em ${newBooking.date} às ${newBooking.time} (${newBooking.payment}).`;
+            setBookingStep(4);
+            showAppToast('Solicitação enviada!');
+        }
+
+        function resetMobileBooking() {
+            appState.bookingDraft.serviceId = null;
+            appState.bookingDraft.proId = null;
+            appState.bookingDraft.time = null;
+            renderHomeServices();
+            setBookingStep(1);
+        }
+
+        function buildReceiptCanvasDataUrl(booking) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 680;
+            canvas.height = 880;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = appState.studio.primary || '#111111';
+            ctx.fillRect(24, 24, canvas.width - 48, 130);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '400 28px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(`${appState.studio.name} • Confirmado`, 52, 98);
+
+            const rows = [
+                ['DATA E HORÁRIO', `${booking.date} às ${booking.time}`],
+                ['SERVIÇO', booking.serviceName],
+                ['PROFISSIONAL', `${booking.proName} (${booking.proRole})`],
+                ['VALOR', `R$ ${Number(booking.price).toFixed(2).replace('.', ',')}`],
+                ['PAGAMENTO', booking.payment],
+                ['CLIENTE', appState.user.fullName]
+            ];
+            let y = 220;
+            rows.forEach(([k, v]) => {
+                ctx.fillStyle = '#737373';
+                ctx.font = '400 13px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(k, 52, y);
+                ctx.fillStyle = '#111111';
+                ctx.font = '400 22px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(v, 52, y + 30);
+                y += 96;
+            });
+            return canvas.toDataURL('image/png');
+        }
+
+        async function refreshFromCloud() {
+            await loadAppDataFromSupabase();
+            applyStudioAppearance();
+            renderBookingsList();
+            showAppToast('Atualizado.');
+        }
+
+        function renderBookingsList() {
+            document.getElementById('nav-bookings-dot').classList.add('hidden');
+            const container = document.getElementById('mob-bookings-list');
+            if (!appState.bookings.length) {
+                container.innerHTML = `<div class="p-6 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum agendamento ainda.</div>`;
+                return;
+            }
+            container.innerHTML = appState.bookings.map(b => {
+                const isPending = b.status === 'pending';
+                if (!isPending && !b.receiptImage) b.receiptImage = buildReceiptCanvasDataUrl(b);
+                return `
+                    <div class="p-4 rounded-2xl border space-y-2.5 ${isPending ? 'border-[#E6DEC8] bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white'}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-normal text-[#111111]">${b.serviceName}</p>
+                                <p class="text-xs text-[#737373]">${b.proName}</p>
+                            </div>
+                            ${isPending
+                                ? `<span class="text-[10px] px-2.5 py-1 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">Aguardando aceite</span>`
+                                : `<span class="text-[10px] px-2.5 py-1 rounded-full btn-brand">Confirmado</span>`}
+                        </div>
+                        <div class="pt-2 border-t border-[#EAEAEA]/70 flex items-center justify-between text-xs">
+                            <span>${b.date} às ${b.time}</span>
+                            <span>R$ ${b.price} • ${b.payment}</span>
+                        </div>
+                        ${!isPending ? `
+                            <button onclick="openReceiptModal('${b.id}')" class="w-full py-2 rounded-xl border border-[#EAEAEA] surface-brand text-xs text-[#111111] inline-flex items-center justify-center gap-1.5">
+                                <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                                <span>Ver imagem de confirmação</span>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function openReceiptModal(id) {
+            const b = appState.bookings.find(x => x.id === id);
+            if (!b) return;
+            if (!b.receiptImage) b.receiptImage = buildReceiptCanvasDataUrl(b);
+            appState.activeReceiptDataUrl = b.receiptImage;
+            document.getElementById('receipt-preview-img').src = b.receiptImage;
+            const m = document.getElementById('receipt-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeReceiptModal() {
+            const m = document.getElementById('receipt-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function downloadReceiptImage() {
+            if (!appState.activeReceiptDataUrl) return;
+            const a = document.createElement('a');
+            a.href = appState.activeReceiptDataUrl;
+            a.download = 'confirmacao-agendamento.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function loadProfileFields() {
+            appState.profileEditing = false;
+            document.getElementById('prof-fullname').value = appState.user.fullName;
+            document.getElementById('prof-username').value = appState.user.username;
+            document.getElementById('prof-pin').value = appState.user.pin;
+            document.getElementById('prof-whatsapp').value = appState.user.whatsapp;
+            ['prof-fullname', 'prof-username', 'prof-pin', 'prof-whatsapp'].forEach(id => document.getElementById(id).disabled = true);
+            document.getElementById('prof-save-btn').classList.add('hidden');
+            document.getElementById('profile-edit-btn').textContent = 'Editar';
+        }
+
+        function toggleProfileEdit() {
+            appState.profileEditing = !appState.profileEditing;
+            const ed = appState.profileEditing;
+            ['prof-fullname', 'prof-username', 'prof-pin', 'prof-whatsapp'].forEach(id => document.getElementById(id).disabled = !ed);
+            document.getElementById('prof-save-btn').classList.toggle('hidden', !ed);
+            document.getElementById('profile-edit-btn').textContent = ed ? 'Cancelar' : 'Editar';
+        }
+
+        async function saveProfileChanges(event) {
+            event.preventDefault();
+            appState.user.fullName = document.getElementById('prof-fullname').value.trim();
+            appState.user.username = document.getElementById('prof-username').value.trim();
+            appState.user.pin = document.getElementById('prof-pin').value.trim();
+            appState.user.whatsapp = document.getElementById('prof-whatsapp').value.trim();
+            document.getElementById('home-user-name').textContent = appState.user.fullName;
+            if (dbConnected && sbClient) {
+                await sbClient.from('clientes').upsert({
+                    id: appState.user.id,
+                    nome_completo: appState.user.fullName,
+                    usuario: appState.user.username,
+                    senha_pin: appState.user.pin,
+                    whatsapp: appState.user.whatsapp
+                });
+            }
+            loadProfileFields();
+            showAppToast('Dados salvos.');
+        }
+
+        function resetToFirstAccess() {
+            ['home', 'bookings', 'profile'].forEach(t => document.getElementById(`screen-${t}`).classList.add('hidden'));
+            document.getElementById('bottom-nav').classList.add('hidden');
+            document.getElementById('screen-auth').classList.remove('hidden');
+        }
+
+        async function completeFirstAccess(event) {
+            event.preventDefault();
+            appState.user = {
+                id: 'cli-' + Date.now(),
+                fullName: document.getElementById('auth-fullname').value.trim(),
+                username: document.getElementById('auth-username').value.trim(),
+                pin: document.getElementById('auth-pin').value.trim(),
+                whatsapp: document.getElementById('auth-whatsapp').value.trim()
+            };
+            document.getElementById('home-user-name').textContent = appState.user.fullName;
+            if (dbConnected && sbClient) {
+                await sbClient.from('clientes').upsert({
+                    id: appState.user.id,
+                    nome_completo: appState.user.fullName,
+                    usuario: appState.user.username,
+                    senha_pin: appState.user.pin,
+                    whatsapp: appState.user.whatsapp
+                });
+                await loadClientBookingsFromSupabase();
+            }
+            switchBottomTab('home');
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        async function installClientPwa() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                return;
+            }
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            showAppToast(isIos
+                ? 'No iPhone (Safari), toque em Compartilhar e depois "Adicionar à Tela de Início".'
+                : 'No menu do navegador (⋮), toque em "Instalar aplicativo".');
+        }
+
+        function showAppToast(msg) {
+            const el = document.getElementById('app-toast');
+            el.textContent = msg;
+            el.classList.remove('opacity-0');
+            el.classList.add('opacity-100');
+            clearTimeout(window._mobToast);
+            window._mobToast = setTimeout(() => {
+                el.classList.remove('opacity-100');
+                el.classList.add('opacity-0');
+            }, 2600);
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            initSupabase();
+            await loadAppDataFromSupabase();
+            applyStudioAppearance();
+            document.getElementById('home-user-name').textContent = appState.user.fullName;
+            renderHomeServices();
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
