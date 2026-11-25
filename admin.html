@@ -238,7 +238,7 @@
     <main class="max-w-5xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
         <section id="view-pro" class="fade-in space-y-6">
 
-            <!-- CAPA COLORIDA -->
+            <!-- CAPA COLORIDA (SEM GRAYSCALE) -->
             <div class="max-w-3xl mx-auto">
                 <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden group">
                     <img id="studio-cover-img"
@@ -278,7 +278,7 @@
                     <div class="flex flex-wrap items-end justify-between sm:justify-start gap-3 sm:gap-4">
                         <div>
                             <p id="current-date-label" class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">
-                                Quarta, 25 de Novembro
+                                Agenda
                             </p>
                             <h1 class="text-2xl sm:text-3xl font-light tracking-tight text-[#111111]">
                                 Agenda do dia
@@ -318,6 +318,7 @@
                     </div>
                 </div>
 
+                <!-- BANNER DE SOLICITAÇÕES PENDENTES DO CLIENTE -->
                 <div id="pending-requests-banner" class="hidden p-4 rounded-2xl border border-[#E6DEC8] bg-[#FAF7F0] flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#D97706] animate-pulse"></span>
@@ -506,35 +507,98 @@
                         <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Notificações • 24h e 1h antes</p>
                         <h2 class="text-2xl font-light tracking-tight text-[#111111]">Lembretes via WhatsApp</h2>
                     </div>
-                    <button onclick="navigateProSection('agenda')"
-                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
-                        Voltar à agenda
-                    </button>
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                        <button onclick="evaluateWhatsAppReminders(true)"
+                                class="px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#111111] hover:border-[#111111] transition-colors">
+                            Verificar agora
+                        </button>
+                        <button onclick="navigateProSection('agenda')"
+                                class="px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                            Voltar à agenda
+                        </button>
+                    </div>
                 </div>
-                <div id="reminders-list-container" class="space-y-3"></div>
+
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <p class="text-xs font-normal text-[#111111]">Regras de lembrete ativas</p>
+                        <p class="text-[11px] text-[#737373] font-light">
+                            Dispara alerta na janela de <strong>1 dia antes (até 24h)</strong> e na janela de <strong>1 hora antes (até 60min)</strong>.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input id="rule-24h" type="checkbox" checked onchange="updateReminderRules()" class="accent-[#111111]">
+                            <span>1 dia antes</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input id="rule-1h" type="checkbox" checked onchange="updateReminderRules()" class="accent-[#111111]">
+                            <span>1 hora antes</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="reminders-queue-list" class="space-y-2.5"></div>
             </div>
 
             <!-- SEÇÃO 7: RELATÓRIOS -->
             <div id="pro-section-reports" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
-                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Desempenho Financeiro</p>
-                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Relatórios</h2>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Desempenho</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Relatório de atendimentos</h2>
                     </div>
-                    <button onclick="navigateProSection('agenda')"
-                            class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
-                        Voltar à agenda
-                    </button>
+
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                        <div class="inline-flex rounded-full border border-[#EAEAEA] p-0.5 surface-brand">
+                            <button id="report-period-day" onclick="setReportPeriod('day')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs btn-brand transition-colors">
+                                Dia
+                            </button>
+                            <button id="report-period-week" onclick="setReportPeriod('week')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors">
+                                Semana
+                            </button>
+                            <button id="report-period-month" onclick="setReportPeriod('month')"
+                                    class="px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors">
+                                Mês
+                            </button>
+                        </div>
+
+                        <button onclick="navigateProSection('agenda')"
+                                class="px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
+                            Voltar
+                        </button>
+                    </div>
                 </div>
-                <div id="reports-summary-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Total de atendimentos</span>
+                        <span id="report-total-count" class="mt-1.5 block text-2xl font-light text-[#111111]">0</span>
+                    </div>
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Faturamento no período</span>
+                        <span id="report-total-revenue" class="mt-1.5 block text-2xl font-light text-[#111111]">R$ 0</span>
+                    </div>
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#737373]">Ticket médio</span>
+                        <span id="report-avg-ticket" class="mt-1.5 block text-2xl font-light text-[#111111]">R$ 0</span>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-2xl border border-[#EAEAEA] space-y-4">
+                    <h3 class="text-sm font-normal text-[#111111]">Atendimentos por profissional</h3>
+                    <div id="report-by-pro" class="space-y-3"></div>
+                </div>
             </div>
 
             <!-- SEÇÃO 8: PERSONALIZAÇÃO -->
             <div id="pro-section-customization" class="pro-section hidden space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#EAEAEA]">
                     <div>
-                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Identidade Visual</p>
-                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Personalização & Config</h2>
+                        <p class="text-xs uppercase tracking-[0.12em] text-[#737373] mb-1">Identidade Visual & Regras</p>
+                        <h2 class="text-2xl font-light tracking-tight text-[#111111]">Personalização do painel e app</h2>
                     </div>
                     <button onclick="navigateProSection('agenda')"
                             class="self-start sm:self-auto px-3.5 py-1.5 rounded-full border border-[#EAEAEA] text-xs text-[#737373] hover:text-[#111111] hover:border-[#111111] transition-colors">
@@ -542,91 +606,343 @@
                     </button>
                 </div>
 
-                <form onsubmit="saveBrandingSettings(event)" class="max-w-2xl p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <form onsubmit="saveCustomizationSettings(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
+                        <h3 class="text-sm font-normal text-[#111111]">Identidade do negócio</h3>
+
                         <div>
                             <label class="block text-[11px] text-[#737373] mb-1">Nome do estabelecimento</label>
-                            <input id="brand-name-input" type="text" required
+                            <input id="cfg-studio-name" type="text" required
                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
+
                         <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Nicho / Especialidade</label>
-                            <input id="brand-niche-input" type="text" required
+                            <label class="block text-[11px] text-[#737373] mb-1">Tipo de negócio / Nicho</label>
+                            <input id="cfg-studio-niche" type="text" required
                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-[#737373] mb-1">Horário de funcionamento</label>
-                        <input id="brand-hours-input" type="text" required
-                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
+
                         <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Cor principal</label>
-                            <input id="brand-primary-input" type="color" value="#111111" class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1">
+                            <label class="block text-[11px] text-[#737373] mb-1">Horário de funcionamento exibido ao cliente</label>
+                            <input id="cfg-studio-hours" type="text" required placeholder="Ex: Ter – Sáb • 09h às 19h"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Cor de fundo</label>
-                            <input id="brand-bg-input" type="color" value="#FFFFFF" class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] text-[#737373] mb-1">Cor de superfície</label>
-                            <input id="brand-surface-input" type="color" value="#FAFAFA" class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1">
+
+                        <div class="space-y-2 pt-1">
+                            <label class="block text-[11px] text-[#737373]">Logo do estabelecimento</label>
+                            <div class="flex items-center gap-3">
+                                <div id="cfg-logo-preview" class="w-12 h-12 rounded-full border border-[#EAEAEA] bg-white flex items-center justify-center text-sm overflow-hidden shrink-0">
+                                    A
+                                </div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <label for="cfg-logo-upload" class="cursor-pointer px-3.5 py-2 rounded-full border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111]">
+                                        Enviar imagem da logo
+                                    </label>
+                                    <button type="button" onclick="clearCustomLogo()" class="text-xs text-[#737373] hover:text-[#111111] underline underline-offset-4">
+                                        Excluir logo / usar inicial
+                                    </button>
+                                </div>
+                                <input id="cfg-logo-upload" type="file" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
-                        Salvar alterações
-                    </button>
+
+                    <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand space-y-4">
+                        <h3 class="text-sm font-normal text-[#111111]">Cores do painel e do app do cliente</h3>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Cor principal</label>
+                                <input id="cfg-color-primary" type="color" value="#111111"
+                                       oninput="previewColorsLive()"
+                                       class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Cor de fundo</label>
+                                <input id="cfg-color-bg" type="color" value="#FFFFFF"
+                                       oninput="previewColorsLive()"
+                                       class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#737373] mb-1">Cor de cartão</label>
+                                <input id="cfg-color-surface" type="color" value="#FAFAFA"
+                                       oninput="previewColorsLive()"
+                                       class="w-full h-10 rounded-xl border border-[#EAEAEA] bg-white p-1 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white space-y-2">
+                            <p class="text-[11px] text-[#737373]">Prévia rápida</p>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-normal text-[#111111]">Botão principal e destaques</span>
+                                <span id="cfg-preview-pill" class="px-3 py-1 rounded-full text-xs btn-brand">Confirmar</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 gap-2">
+                            <button type="button" onclick="resetDefaultTheme()"
+                                    class="px-4 py-2.5 rounded-full border border-[#EAEAEA] bg-white text-xs text-[#737373] hover:text-[#111111]">
+                                Restaurar padrão
+                            </button>
+                            <button type="submit"
+                                    class="px-6 py-2.5 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
+                                Salvar personalização
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </section>
     </main>
 
-    <!-- MODAL NOVO HORÁRIO -->
-    <div id="new-appointment-modal" class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-[1px] flex items-center justify-center p-4">
-        <form onsubmit="createAppointmentFromModal(event)" class="w-full max-w-md p-6 rounded-2xl border border-[#EAEAEA] bg-white space-y-4">
+    <!-- MODAL CRIAR / EDITAR AGENDAMENTO -->
+    <div id="modal-new-appointment" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-5 fade-in">
             <div class="flex items-center justify-between">
-                <h3 class="text-base font-normal text-[#111111]">Novo agendamento</h3>
-                <button type="button" onclick="closeNewAppointmentModal()" class="text-xs text-[#737373] hover:text-[#111111]">Fechar</button>
+                <h3 id="modal-app-title" class="text-base font-normal text-[#111111]">Novo agendamento</h3>
+                <button onclick="closeNewAppointmentModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
             </div>
-            <div>
-                <label class="block text-[11px] text-[#737373] mb-1">Cliente</label>
-                <input id="appt-client-name" type="text" required placeholder="Nome do cliente"
-                       class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-            </div>
-            <div>
-                <label class="block text-[11px] text-[#737373] mb-1">WhatsApp</label>
-                <input id="appt-client-phone" type="tel" placeholder="(11) 99999-0000"
-                       class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
+
+            <form onsubmit="saveAppointmentForm(event)" class="space-y-3.5">
+                <input id="input-app-id" type="hidden">
                 <div>
-                    <label class="block text-[11px] text-[#737373] mb-1">Profissional</label>
-                    <select id="appt-pro-select" class="w-full px-3 py-2 rounded-xl border border-[#EAEAEA] text-xs"></select>
+                    <label class="block text-xs text-[#737373] mb-1">Cliente</label>
+                    <input id="input-client-name" type="text" required placeholder="Nome do cliente"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">WhatsApp do cliente</label>
+                    <input id="input-client-phone" type="tel" placeholder="(11) 99999-0000"
+                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Profissional</label>
+                        <select id="input-pro-select" onchange="syncManualServicePrice()"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Serviço</label>
+                        <select id="input-service-select" onchange="syncManualServicePrice()"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]"></select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Data</label>
+                        <input id="input-date" type="date" required
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Horário</label>
+                        <input id="input-time" type="time" required
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Valor (R$)</label>
+                        <input id="input-price" type="number" min="0" step="1" required
+                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light focus:outline-none focus:border-[#111111]">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Meio de pagamento</label>
+                        <select id="input-payment"
+                                class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Status</label>
+                    <select id="input-status"
+                            class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-sm font-light bg-white focus:outline-none focus:border-[#111111]">
+                        <option value="confirmed">Confirmado</option>
+                        <option value="pending">Aguardando aceite</option>
+                        <option value="done">Concluído</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeNewAppointmentModal()"
+                            class="px-4 py-2 rounded-full text-xs text-[#737373] hover:text-[#111111]">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand hover:opacity-90">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR CLIENTE -->
+    <div id="modal-edit-client" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar cliente</h3>
+                <button onclick="closeEditClientModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedClient(event)" class="space-y-3">
+                <input id="edit-client-id" type="hidden">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Nome completo</label>
+                    <input id="edit-client-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-[#737373] mb-1">Serviço</label>
-                    <select id="appt-service-select" class="w-full px-3 py-2 rounded-xl border border-[#EAEAEA] text-xs"></select>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-[11px] text-[#737373] mb-1">Data</label>
-                    <input id="appt-date" type="date" required class="w-full px-3 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    <label class="block text-xs text-[#737373] mb-1">Telefone / WhatsApp</label>
+                    <input id="edit-client-phone" type="tel" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-[#737373] mb-1">Horário</label>
-                    <input id="appt-time" type="time" required class="w-full px-3 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    <label class="block text-xs text-[#737373] mb-1">Observação de preferência</label>
+                    <input id="edit-client-notes" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Quantidade de atendimentos</label>
+                    <input id="edit-client-visits" type="number" min="0" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditClientModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR SERVIÇO -->
+    <div id="modal-edit-service" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar serviço</h3>
+                <button onclick="closeEditServiceModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
             </div>
-            <div>
-                <label class="block text-[11px] text-[#737373] mb-1">Forma de pagamento</label>
-                <select id="appt-payment-select" class="w-full px-3 py-2 rounded-xl border border-[#EAEAEA] text-xs"></select>
+            <form onsubmit="saveEditedService(event)" class="space-y-3">
+                <input id="edit-service-id" type="hidden">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Nome do serviço</label>
+                    <input id="edit-service-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Categoria / Observação</label>
+                    <input id="edit-service-specialty" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Valor base (R$)</label>
+                        <input id="edit-service-price" type="number" min="1" step="1" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Duração (min)</label>
+                        <input id="edit-service-duration" type="number" min="10" step="5" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditServiceModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PROFISSIONAL E TABELA -->
+    <div id="modal-edit-pro" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-lg p-6 space-y-4 fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar profissional e tabela</h3>
+                <button onclick="closeEditProModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
             </div>
-            <button type="submit" class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal">
-                Salvar agendamento
-            </button>
-        </form>
+            <form onsubmit="saveEditedPro(event)" class="space-y-3">
+                <input id="edit-pro-id" type="hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Nome do profissional</label>
+                        <input id="edit-pro-name" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#737373] mb-1">Cargo / Função</label>
+                        <input id="edit-pro-specialty" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <span class="block text-xs text-[#737373]">Serviços habilitados, valor (R$) e duração (min)</span>
+                    <div id="edit-pro-services-matrix" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditProModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR FORMA DE PAGAMENTO -->
+    <div id="modal-edit-payment" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-sm p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-normal text-[#111111]">Editar meio de pagamento</h3>
+                <button onclick="closeEditPaymentModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedPayment(event)" class="space-y-3">
+                <input id="edit-pay-id" type="hidden">
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Nome</label>
+                    <input id="edit-pay-label" type="text" required class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-[#737373] mb-1">Descrição</label>
+                    <input id="edit-pay-detail" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeEditPaymentModal()" class="px-4 py-2 rounded-full text-xs text-[#737373]">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-full text-xs btn-brand">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL IMAGEM DE CONFIRMAÇÃO -->
+    <div id="modal-confirmation-card" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/35 backdrop-blur-[2px] p-4">
+        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-4 fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.14em] text-[#737373]">Agendamento Aceito</p>
+                    <h3 class="text-base font-normal text-[#111111]">Imagem de confirmação</h3>
+                </div>
+                <button onclick="closeConfirmationModal()" class="text-[#737373] hover:text-[#111111]">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="rounded-2xl border border-[#EAEAEA] surface-brand p-3 flex justify-center">
+                <img id="confirmation-card-preview" src="" alt="Imagem de confirmação do agendamento"
+                     class="w-full max-w-[340px] rounded-xl border border-[#EAEAEA] bg-white">
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+                <button onclick="closeConfirmationModal()"
+                        class="px-4 py-2 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-[#111111]">
+                    Fechar
+                </button>
+                <button onclick="downloadCurrentConfirmationCard()"
+                        class="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-xs btn-brand hover:opacity-90">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Baixar imagem</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div id="toast"
@@ -634,17 +950,24 @@
     </div>
 
     <script>
-        const TODAY_ISO = '2026-11-25';
+        function getTodayLocalIso() {
+            const now = new Date();
+            const off = now.getTimezoneOffset();
+            return new Date(now.getTime() - off * 60000).toISOString().slice(0, 10);
+        }
+
+        const TODAY_ISO = getTodayLocalIso();
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
         const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
         const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
-
         let sbClient = null;
         let dbConnected = false;
-        let deferredPrompt = null;
+        let knownPendingIds = new Set();
+        let syncInFlight = false;
 
         const state = {
             scheduleMode: 'day',
+            reportPeriod: 'day',
             studioOnline: true,
             studioName: 'Atelier Studio',
             studioNiche: 'Estúdio',
@@ -656,7 +979,10 @@
                 bg: '#FFFFFF',
                 surface: '#FAFAFA'
             },
-            clientsRoster: [],
+            reminderRules: {
+                dayBefore: true,
+                hourBefore: true
+            },
             servicesCatalog: [
                 { id: 's1', name: 'Corte & Visagismo', specialty: 'Atendimento', duration: 45, price: 120 },
                 { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Atendimento', duration: 35, price: 70 },
@@ -666,42 +992,62 @@
                 { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
                 { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
             ],
+            expandedProCards: {},
+            clientsRoster: [
+                { id: 'c1', name: 'Lucas Tavares', phone: '(11) 98111-2233', notes: 'Prefere degradê navalhado na lateral', visits: 8 },
+                { id: 'c2', name: 'Ana Beatriz', phone: '(11) 97222-3344', notes: 'Alergia a base com formol', visits: 12 },
+            ],
             paymentMethods: [
                 { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
                 { id: 'pay-credit', label: 'Cartão de Crédito', detail: 'À vista ou parcelado', enabled: true },
                 { id: 'pay-debit', label: 'Cartão de Débito', detail: 'Débito na maquininha', enabled: true },
                 { id: 'pay-cash', label: 'Dinheiro', detail: 'Pagamento presencial', enabled: true },
             ],
-            appointments: []
+            appointments: [],
+            latestConfirmationDataUrl: null
         };
 
-        function loadLocalState() {
+        let deferredPwaPrompt = null;
+
+        function updateDateLabel() {
+            const label = document.getElementById('current-date-label');
+            if (!label) return;
+            const formatted = new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long'
+            });
+            label.textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+        }
+
+        function loadLocalBackupConfig() {
             try {
-                const rawCfg = localStorage.getItem(LOCAL_CFG_KEY);
-                if (rawCfg) {
-                    const cfg = JSON.parse(rawCfg);
-                    if (cfg.studioName) state.studioName = cfg.studioName;
-                    if (cfg.studioNiche) state.studioNiche = cfg.studioNiche;
-                    if (typeof cfg.studioOnline === 'boolean') state.studioOnline = cfg.studioOnline;
-                    if (cfg.studioCover) state.studioCover = cfg.studioCover;
-                    if (typeof cfg.studioLogo === 'string') state.studioLogo = cfg.studioLogo;
-                    if (cfg.studioHours) state.studioHours = cfg.studioHours;
-                    if (cfg.themeColors) state.themeColors = { ...state.themeColors, ...cfg.themeColors };
+                const raw = localStorage.getItem(LOCAL_CFG_KEY);
+                if (raw) {
+                    const saved = JSON.parse(raw);
+                    if (saved.studioName) state.studioName = saved.studioName;
+                    if (saved.studioNiche) state.studioNiche = saved.studioNiche;
+                    if (typeof saved.studioOnline === 'boolean') state.studioOnline = saved.studioOnline;
+                    if (saved.studioCover) state.studioCover = saved.studioCover;
+                    if (typeof saved.studioLogo === 'string') state.studioLogo = saved.studioLogo;
+                    if (saved.studioHours) state.studioHours = saved.studioHours;
+                    if (saved.themeColors) state.themeColors = { ...state.themeColors, ...saved.themeColors };
+                    if (saved.reminderRules) state.reminderRules = { ...state.reminderRules, ...saved.reminderRules };
                 }
 
                 const rawData = localStorage.getItem(LOCAL_DATA_KEY);
                 if (rawData) {
                     const d = JSON.parse(rawData);
-                    if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
                     if (Array.isArray(d.servicesCatalog)) state.servicesCatalog = d.servicesCatalog;
                     if (Array.isArray(d.professionals)) state.professionals = d.professionals;
+                    if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
                     if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
                     if (Array.isArray(d.appointments)) state.appointments = d.appointments;
                 }
             } catch (e) {}
         }
 
-        function saveLocalState() {
+        function saveLocalBackupConfig() {
             try {
                 localStorage.setItem(LOCAL_CFG_KEY, JSON.stringify({
                     studioName: state.studioName,
@@ -710,12 +1056,13 @@
                     studioCover: state.studioCover,
                     studioLogo: state.studioLogo,
                     studioHours: state.studioHours,
-                    themeColors: state.themeColors
+                    themeColors: state.themeColors,
+                    reminderRules: state.reminderRules
                 }));
                 localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify({
-                    clientsRoster: state.clientsRoster,
                     servicesCatalog: state.servicesCatalog,
                     professionals: state.professionals,
+                    clientsRoster: state.clientsRoster,
                     paymentMethods: state.paymentMethods,
                     appointments: state.appointments
                 }));
@@ -730,43 +1077,33 @@
             dbConnected = true;
         }
 
-        async function pushStudioConfigToSupabase() {
-            saveLocalState();
-            if (!dbConnected || !sbClient) return;
-            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
-            await sbClient.from('estabelecimentos').upsert({
-                id: estId,
-                nome: state.studioName,
-                nicho: state.studioNiche,
-                online: state.studioOnline,
-                capa_url: state.studioCover,
-                logo_url: state.studioLogo,
-                horario_funcionamento: state.studioHours,
-                cor_primaria: state.themeColors.primary,
-                cor_fundo: state.themeColors.bg,
-                cor_destaque: state.themeColors.surface
-            }).catch(() => {});
-        }
-
-        async function loadFromSupabase(silent = false) {
-            loadLocalState();
-            if (!dbConnected || !sbClient) return;
-            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+        async function loadFromSupabase(notifyNewPending = false) {
+            if (syncInFlight) return;
+            syncInFlight = true;
 
             try {
+                if (!dbConnected || !sbClient) {
+                    loadLocalBackupConfig();
+                    return;
+                }
+
+                const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+
                 const { data: est, error: estErr } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
                 if (!estErr && est) {
                     state.studioName = est.nome || state.studioName;
                     state.studioNiche = est.nicho || state.studioNiche;
                     state.studioOnline = typeof est.online === 'boolean' ? est.online : state.studioOnline;
                     state.studioCover = est.capa_url || state.studioCover;
-                    state.studioLogo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : state.studioLogo;
+                    state.studioLogo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : '';
                     state.studioHours = est.horario_funcionamento || state.studioHours;
                     state.themeColors = {
-                        primary: est.cor_primaria || state.themeColors.primary || '#111111',
-                        bg: est.cor_fundo || state.themeColors.bg || '#FFFFFF',
-                        surface: est.cor_destaque || state.themeColors.surface || '#FAFAFA'
+                        primary: est.cor_primaria || '#111111',
+                        bg: est.cor_fundo || '#FFFFFF',
+                        surface: est.cor_destaque || '#FAFAFA'
                     };
+                    state.reminderRules.dayBefore = typeof est.lembrete_24h === 'boolean' ? est.lembrete_24h : true;
+                    state.reminderRules.hourBefore = typeof est.lembrete_1h === 'boolean' ? est.lembrete_1h : true;
                 }
 
                 const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*').eq('ativo', true);
@@ -789,45 +1126,102 @@
                 }
 
                 const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
-                if (!payErr && Array.isArray(pays) && pays.length > 0) {
+                if (!payErr && Array.isArray(pays)) {
                     state.paymentMethods = pays.map(pm => ({ id: pm.id, label: pm.nome, detail: pm.descricao || '', enabled: !!pm.ativo }));
+                }
+
+                const { data: clis, error: cliErr } = await sbClient.from('clientes').select('*');
+                if (!cliErr && Array.isArray(clis)) {
+                    state.clientsRoster = clis.map(c => ({ id: c.id, name: c.nome_completo, phone: c.whatsapp, notes: c.observacoes || '', visits: Number(c.visitas) || 0 }));
                 }
 
                 const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
                 if (!appErr && Array.isArray(apps)) {
-                    state.appointments = apps.map(a => ({
-                        id: a.id,
-                        clientName: a.cliente_nome,
-                        clientPhone: a.cliente_whatsapp || '',
-                        proId: a.profissional_id,
-                        serviceId: a.servico_id,
-                        date: a.data_agendamento,
-                        time: a.hora_agendamento,
-                        price: Number(a.valor) || 0,
-                        paymentMethod: a.forma_pagamento || 'Pix',
-                        status: a.status || 'pending'
-                    }));
+                    const prevMap = new Map(state.appointments.map(a => [a.id, a]));
+                    state.appointments = apps.map(a => {
+                        const existing = prevMap.get(a.id);
+                        return {
+                            id: a.id,
+                            clientName: a.cliente_nome,
+                            clientPhone: a.cliente_whatsapp || '',
+                            proId: a.profissional_id,
+                            serviceId: a.servico_id,
+                            date: a.data_agendamento,
+                            time: a.hora_agendamento,
+                            price: Number(a.valor) || 0,
+                            paymentMethod: a.forma_pagamento || 'Pix',
+                            status: a.status || 'pending',
+                            remindersSent: { dayBefore: !!a.lembrete_24h_enviado, hourBefore: !!a.lembrete_1h_enviado },
+                            confirmationImage: existing ? existing.confirmationImage : null
+                        };
+                    });
+
+                    const currentPending = state.appointments.filter(a => a.status === 'pending');
+                    if (notifyNewPending) {
+                        const brandNew = currentPending.filter(p => !knownPendingIds.has(p.id));
+                        if (brandNew.length > 0) {
+                            showToast(`Novo agendamento de ${brandNew[0].clientName} aguardando seu aceite!`);
+                        }
+                    }
+                    knownPendingIds = new Set(currentPending.map(p => p.id));
                 }
 
-                saveLocalState();
-            } catch (e) {
-                if (!silent) console.warn('Erro ao sincronizar no admin:', e);
+                saveLocalBackupConfig();
+            } catch (err) {
+                console.warn('Erro ao carregar do Supabase:', err);
+            } finally {
+                syncInFlight = false;
             }
         }
 
-        function subscribeAdminRealtime() {
+        function subscribeRealtimeAppointments() {
             if (!dbConnected || !sbClient || !sbClient.channel) return;
             try {
-                sbClient
-                    .channel('admin-live-updates')
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'estabelecimentos' }, () => syncNow(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'servicos' }, () => syncNow(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'profissionais' }, () => syncNow(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'profissional_servicos' }, () => syncNow(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'formas_pagamento' }, () => syncNow(false))
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, () => syncNow(false))
-                    .subscribe();
-            } catch (e) {}
+                const tables = ['agendamentos', 'estabelecimentos', 'servicos', 'profissionais', 'profissional_servicos', 'formas_pagamento', 'clientes'];
+                const channel = sbClient.channel('admin-full-realtime');
+                tables.forEach(tbl => {
+                    channel.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, async () => {
+                        await loadFromSupabase(tbl === 'agendamentos');
+                        applyBrandingAndTheme();
+                        renderProDashboard();
+                    });
+                });
+                channel.subscribe();
+            } catch (e) {
+                console.warn('Realtime indisponível, usando atualização automática.', e);
+            }
+        }
+
+        async function syncNow(showMsg = false) {
+            await loadFromSupabase(false);
+            applyBrandingAndTheme();
+            renderProDashboard();
+            if (showMsg) showToast('Agenda sincronizada.');
+        }
+
+        async function saveEstablishmentToSupabase() {
+            saveLocalBackupConfig();
+            if (!dbConnected || !sbClient) return;
+            const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
+            const { error } = await sbClient.from('estabelecimentos').upsert({
+                id: estId,
+                nome: state.studioName,
+                nicho: state.studioNiche,
+                online: state.studioOnline,
+                capa_url: state.studioCover,
+                logo_url: state.studioLogo,
+                cor_primaria: state.themeColors.primary,
+                cor_fundo: state.themeColors.bg,
+                cor_destaque: state.themeColors.surface,
+                horario_funcionamento: state.studioHours,
+                lembrete_24h: state.reminderRules.dayBefore,
+                lembrete_1h: state.reminderRules.hourBefore,
+                atualizado_em: new Date().toISOString()
+            });
+            if (error) {
+                console.error('Erro ao salvar estabelecimento:', error.message);
+                showToast('Erro ao salvar no banco: ' + error.message);
+            }
         }
 
         function applyBrandingAndTheme() {
@@ -835,55 +1229,85 @@
             document.documentElement.style.setProperty('--brand-bg', state.themeColors.bg);
             document.documentElement.style.setProperty('--brand-surface', state.themeColors.surface);
 
+            document.getElementById('studio-display-name').textContent = state.studioName;
             document.getElementById('header-brand-name').textContent = state.studioName;
             document.getElementById('header-brand-niche').textContent = state.studioNiche;
-            document.getElementById('studio-display-name').textContent = state.studioName;
             document.getElementById('cover-niche-label').textContent = state.studioNiche;
             document.getElementById('studio-cover-img').src = state.studioCover;
 
             const initial = (state.studioName || 'A').trim().charAt(0).toUpperCase() || 'A';
             const headerLogo = document.getElementById('header-brand-logo');
             const coverLogo = document.getElementById('cover-logo-badge');
+            const cfgLogo = document.getElementById('cfg-logo-preview');
 
             if (state.studioLogo) {
                 const imgHtml = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
                 headerLogo.innerHTML = imgHtml;
                 coverLogo.innerHTML = imgHtml;
+                if (cfgLogo) cfgLogo.innerHTML = imgHtml;
             } else {
                 headerLogo.textContent = initial;
                 coverLogo.textContent = initial;
+                if (cfgLogo) cfgLogo.textContent = initial;
             }
-
-            const online = !!state.studioOnline;
-            document.getElementById('header-online-dot').className = `w-2 h-2 rounded-full ${online ? 'status-dot-online' : 'status-dot-offline'}`;
-            document.getElementById('header-online-label').textContent = online ? 'Online' : 'Offline';
-            document.getElementById('pro-cover-dot').className = `w-2 h-2 rounded-full ${online ? 'status-dot-online' : 'status-dot-offline'}`;
-            document.getElementById('pro-cover-status-text').textContent = `Agendamento Online: ${online ? 'ON' : 'OFF'}`;
-
-            document.getElementById('brand-name-input').value = state.studioName;
-            document.getElementById('brand-niche-input').value = state.studioNiche;
-            document.getElementById('brand-hours-input').value = state.studioHours;
-            document.getElementById('brand-primary-input').value = state.themeColors.primary;
-            document.getElementById('brand-bg-input').value = state.themeColors.bg;
-            document.getElementById('brand-surface-input').value = state.themeColors.surface;
         }
 
-        async function toggleStudioOnline() {
-            state.studioOnline = !state.studioOnline;
+        function loadCustomizationForm() {
+            document.getElementById('cfg-studio-name').value = state.studioName;
+            document.getElementById('cfg-studio-niche').value = state.studioNiche;
+            document.getElementById('cfg-studio-hours').value = state.studioHours;
+            document.getElementById('cfg-color-primary').value = state.themeColors.primary;
+            document.getElementById('cfg-color-bg').value = state.themeColors.bg;
+            document.getElementById('cfg-color-surface').value = state.themeColors.surface;
             applyBrandingAndTheme();
-            await pushStudioConfigToSupabase();
-            showToast(state.studioOnline ? 'Agendamento online ativado.' : 'Agendamento online pausado.');
         }
 
-        function handleCoverUpload(event) {
+        function previewColorsLive() {
+            state.themeColors.primary = document.getElementById('cfg-color-primary').value;
+            state.themeColors.bg = document.getElementById('cfg-color-bg').value;
+            state.themeColors.surface = document.getElementById('cfg-color-surface').value;
+            applyBrandingAndTheme();
+        }
+
+        async function resetDefaultTheme() {
+            state.themeColors = { primary: '#111111', bg: '#FFFFFF', surface: '#FAFAFA' };
+            document.getElementById('cfg-color-primary').value = '#111111';
+            document.getElementById('cfg-color-bg').value = '#FFFFFF';
+            document.getElementById('cfg-color-surface').value = '#FAFAFA';
+            applyBrandingAndTheme();
+            await saveEstablishmentToSupabase();
+            showToast('Cores padrão restauradas e salvas.');
+        }
+
+        async function handleLogoUpload(event) {
             const file = event.target.files && event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = async () => {
-                state.studioCover = reader.result;
+            reader.onload = async (e) => {
+                state.studioLogo = e.target.result;
                 applyBrandingAndTheme();
-                await pushStudioConfigToSupabase();
-                showToast('Foto de capa atualizada.');
+                await saveEstablishmentToSupabase();
+                showToast('Logo atualizada e salva.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function clearCustomLogo() {
+            state.studioLogo = '';
+            applyBrandingAndTheme();
+            await saveEstablishmentToSupabase();
+            showToast('Logo removida.');
+        }
+
+        async function handleCoverUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                state.studioCover = e.target.result;
+                applyBrandingAndTheme();
+                await saveEstablishmentToSupabase();
+                showToast('Foto de capa atualizada e salva.');
             };
             reader.readAsDataURL(file);
         }
@@ -891,26 +1315,31 @@
         async function resetDefaultCover() {
             state.studioCover = DEFAULT_COVER;
             applyBrandingAndTheme();
-            await pushStudioConfigToSupabase();
-            showToast('Capa padrão restaurada.');
+            await saveEstablishmentToSupabase();
+            showToast('Capa restaurada para o padrão.');
         }
 
-        async function saveBrandingSettings(event) {
+        async function saveCustomizationSettings(event) {
             event.preventDefault();
-            state.studioName = document.getElementById('brand-name-input').value.trim() || 'Atelier Studio';
-            state.studioNiche = document.getElementById('brand-niche-input').value.trim() || 'Estúdio';
-            state.studioHours = document.getElementById('brand-hours-input').value.trim() || 'Seg – Sáb • 09h às 19h';
-            state.themeColors.primary = document.getElementById('brand-primary-input').value;
-            state.themeColors.bg = document.getElementById('brand-bg-input').value;
-            state.themeColors.surface = document.getElementById('brand-surface-input').value;
+            state.studioName = document.getElementById('cfg-studio-name').value.trim() || 'Atelier Studio';
+            state.studioNiche = document.getElementById('cfg-studio-niche').value.trim() || 'Estúdio';
+            state.studioHours = document.getElementById('cfg-studio-hours').value.trim() || 'Seg – Sáb • 09h às 19h';
+            state.themeColors = {
+                primary: document.getElementById('cfg-color-primary').value,
+                bg: document.getElementById('cfg-color-bg').value,
+                surface: document.getElementById('cfg-color-surface').value
+            };
             applyBrandingAndTheme();
-            await pushStudioConfigToSupabase();
-            showToast('Configurações salvas.');
+            await saveEstablishmentToSupabase();
+            showToast('Personalização salva!');
         }
 
         function openProDrawer() {
+            renderClientsDropdown();
+            updateDrawerReminderBadge();
             document.getElementById('pro-drawer-backdrop').classList.remove('hidden');
             document.getElementById('pro-drawer').classList.remove('-translate-x-full');
+            lucide.createIcons();
         }
 
         function closeProDrawer() {
@@ -918,399 +1347,1063 @@
             document.getElementById('pro-drawer').classList.add('-translate-x-full');
         }
 
-        function navigateProSection(section) {
-            document.querySelectorAll('.pro-section').forEach(el => el.classList.add('hidden'));
-            const target = document.getElementById(`pro-section-${section}`);
-            if (target) target.classList.remove('hidden');
-            document.querySelectorAll('.pro-nav-item').forEach(btn => {
-                const active = btn.getAttribute('data-nav') === section;
-                btn.classList.toggle('btn-brand', active);
-            });
-            closeProDrawer();
-            renderProDashboard();
-        }
-
         function toggleClientsDropdown() {
             const list = document.getElementById('clients-dropdown-list');
             const chevron = document.getElementById('clients-dropdown-chevron');
-            list.classList.toggle('hidden');
-            chevron.classList.toggle('rotate-180');
-            if (!list.classList.contains('hidden')) {
-                list.innerHTML = state.clientsRoster.length
-                    ? state.clientsRoster.map(c => `<button onclick="navigateProSection('clients')" class="w-full text-left py-1.5 px-2 text-xs text-[#737373] hover:text-[#111111] truncate">${c.name}</button>`).join('')
-                    : `<span class="block py-1.5 px-2 text-[11px] text-[#A3A3A3]">Nenhum cliente</span>`;
+            const hidden = list.classList.contains('hidden');
+            if (hidden) {
+                renderClientsDropdown();
+                list.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                list.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
             }
+        }
+
+        function renderClientsDropdown() {
+            const container = document.getElementById('clients-dropdown-list');
+            container.innerHTML = state.clientsRoster.map(c => `
+                <button type="button" onclick="closeProDrawer(); navigateProSection('clients');"
+                        class="w-full text-left px-2.5 py-2 rounded-lg hover:opacity-80 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-xs text-[#111111] truncate">${c.name}</p>
+                        <p class="text-[10px] text-[#737373] truncate">${c.phone}</p>
+                    </div>
+                    <span class="text-[10px] text-[#737373] shrink-0">${c.visits}x</span>
+                </button>
+            `).join('');
+        }
+
+        function navigateProSection(sectionKey) {
+            closeProDrawer();
+            document.querySelectorAll('.pro-section').forEach(sec => sec.classList.add('hidden'));
+            const target = document.getElementById(`pro-section-${sectionKey}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.pro-nav-item').forEach(btn => {
+                const active = btn.getAttribute('data-nav') === sectionKey;
+                btn.classList.toggle('btn-brand', active);
+                btn.classList.toggle('text-[#111111]', !active);
+            });
+
+            if (sectionKey === 'agenda') renderProDashboard();
+            if (sectionKey === 'clients') renderClientsRosterPage();
+            if (sectionKey === 'services') renderServicesCatalog();
+            if (sectionKey === 'professionals') renderProfessionalsSection();
+            if (sectionKey === 'payments') renderPaymentMethodsSection();
+            if (sectionKey === 'reminders') renderRemindersSection();
+            if (sectionKey === 'reports') renderReportsSection();
+            if (sectionKey === 'customization') loadCustomizationForm();
+
+            lucide.createIcons();
+        }
+
+        async function toggleStudioOnline() {
+            state.studioOnline = !state.studioOnline;
+            updateOnlineStatusIndicators();
+            await saveEstablishmentToSupabase();
+            showToast(state.studioOnline ? 'Agendamento online ativado (ON)' : 'Agendamento online pausado (OFF)');
+        }
+
+        function updateOnlineStatusIndicators() {
+            const isOnline = state.studioOnline;
+            ['header-online-dot', 'pro-cover-dot'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.remove(isOnline ? 'status-dot-offline' : 'status-dot-online');
+                el.classList.add(isOnline ? 'status-dot-online' : 'status-dot-offline');
+            });
+            document.getElementById('header-online-label').textContent = isOnline ? 'Online' : 'Offline';
+            document.getElementById('pro-cover-status-text').textContent = `Agendamento Online: ${isOnline ? 'ON' : 'OFF'}`;
+        }
+
+        function copyClientAppLink() {
+            const clientUrl = new URL('./index.html', window.location.href).toString();
+            navigator.clipboard?.writeText(clientUrl).catch(() => {});
+            showToast(`Link do App do Cliente: ${clientUrl}`);
+        }
+
+        function getProById(id) {
+            return state.professionals.find(p => p.id === id) || { name: 'Profissional', specialty: '', serviceRates: {} };
+        }
+        function getServiceById(id) {
+            return state.servicesCatalog.find(s => s.id === id) || { name: 'Serviço', specialty: '', duration: 45, price: 0 };
+        }
+        function getProServiceInfo(pro, serviceId) {
+            const base = getServiceById(serviceId);
+            const custom = pro.serviceRates && pro.serviceRates[serviceId];
+            if (custom && custom.enabled) {
+                return { available: true, price: Number(custom.price) || base.price, duration: Number(custom.duration) || base.duration };
+            }
+            return { available: false, price: base.price, duration: base.duration };
+        }
+
+        function renderProDashboard() {
+            updateDateLabel();
+            applyBrandingAndTheme();
+            updateOnlineStatusIndicators();
+            updateDrawerReminderBadge();
+            renderPendingBanner();
+            updateProStats();
+            if (state.scheduleMode === 'day') renderDaySchedule();
+            else renderWeekSchedule();
+            lucide.createIcons();
+        }
+
+        function renderPendingBanner() {
+            const banner = document.getElementById('pending-requests-banner');
+            const textEl = document.getElementById('pending-requests-text');
+            const pendingList = state.appointments.filter(a => a.status === 'pending');
+            if (!pendingList.length) {
+                banner.classList.add('hidden');
+                return;
+            }
+            banner.classList.remove('hidden');
+            textEl.textContent = pendingList.length === 1
+                ? `1 solicitação de agendamento (${pendingList[0].clientName} às ${pendingList[0].time}) aguarda seu aceite.`
+                : `${pendingList.length} solicitações de agendamento aguardam seu aceite.`;
+        }
+
+        function getFilteredDayAppointments() {
+            const pendingAll = state.appointments.filter(a => a.status === 'pending');
+            const todayOthers = state.appointments.filter(a => a.date === TODAY_ISO && a.status !== 'pending');
+            return [...pendingAll, ...todayOthers].sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return (a.time || '').localeCompare(b.time || '');
+            });
+        }
+
+        function updateProStats() {
+            const list = state.appointments.filter(a => a.date === TODAY_ISO || a.status === 'pending');
+            const confirmed = list.filter(a => a.status === 'confirmed' || a.status === 'done').length;
+            const revenue = list.reduce((sum, item) => sum + Number(item.price || 0), 0);
+            document.getElementById('stat-count').textContent = list.length;
+            document.getElementById('stat-confirmed').textContent = confirmed;
+            document.getElementById('stat-revenue').textContent = `R$ ${revenue}`;
         }
 
         function setScheduleMode(mode) {
             state.scheduleMode = mode;
-            const dayBtn = document.getElementById('btn-view-day');
-            const weekBtn = document.getElementById('btn-view-week');
             const dayBox = document.getElementById('day-schedule-container');
             const weekBox = document.getElementById('week-schedule-container');
-            if (mode === 'day') {
-                dayBtn.className = 'px-3.5 py-1.5 rounded-full text-xs btn-brand transition-colors';
-                weekBtn.className = 'px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors';
-                dayBox.classList.remove('hidden');
-                weekBox.classList.add('hidden');
-                weekBox.classList.remove('grid');
-            } else {
-                weekBtn.className = 'px-3.5 py-1.5 rounded-full text-xs btn-brand transition-colors';
-                dayBtn.className = 'px-3.5 py-1.5 rounded-full text-xs text-[#737373] hover:text-[#111111] transition-colors';
-                dayBox.classList.add('hidden');
-                weekBox.classList.remove('hidden');
-                weekBox.classList.add('grid');
+            document.getElementById('btn-view-day').className = `px-3.5 py-1.5 rounded-full text-xs transition-colors ${mode === 'day' ? 'btn-brand' : 'text-[#737373]'}`;
+            document.getElementById('btn-view-week').className = `px-3.5 py-1.5 rounded-full text-xs transition-colors ${mode === 'week' ? 'btn-brand' : 'text-[#737373]'}`;
+            dayBox.classList.toggle('hidden', mode !== 'day');
+            weekBox.classList.toggle('hidden', mode !== 'week');
+            weekBox.classList.toggle('grid', mode === 'week');
+            renderProDashboard();
+        }
+
+        function getStatusBadgeHtml(status) {
+            if (status === 'pending') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">Aguardando aceite</span>';
+            if (status === 'done') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full btn-brand">Concluído</span>';
+            return '<span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#111111]">Confirmado</span>';
+        }
+
+        function renderDaySchedule() {
+            const container = document.getElementById('day-schedule-container');
+            const items = getFilteredDayAppointments();
+            if (!items.length) {
+                container.innerHTML = `<div class="text-center py-14 border border-dashed border-[#EAEAEA] rounded-2xl"><p class="text-sm text-[#737373]">Nenhum atendimento no momento.</p></div>`;
+                return;
             }
-            renderSchedule();
+            container.innerHTML = items.map(app => {
+                const pro = getProById(app.proId);
+                const svc = getServiceById(app.serviceId);
+                const pendingClass = app.status === 'pending' ? 'border-[#D97706]/50 bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white';
+                return `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${pendingClass}">
+                        <div class="flex items-start sm:items-center gap-4">
+                            <div class="w-16 shrink-0">
+                                <span class="block text-sm font-normal text-[#111111]">${app.time}</span>
+                                <span class="block text-[10px] text-[#737373]">${app.date || ''}</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-sm font-normal text-[#111111]">${app.clientName}</span>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${pro.name}</span>
+                                </div>
+                                <p class="text-xs text-[#737373] mt-0.5">${svc.name} • ${app.paymentMethod}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
+                            <span class="text-sm font-normal text-[#111111]">R$ ${app.price}</span>
+                            ${getStatusBadgeHtml(app.status)}
+                            ${app.status === 'pending' ? `
+                                <button onclick="acceptAppointment('${app.id}')" class="px-3 py-1 rounded-full text-[11px] btn-brand">Aceitar</button>
+                                <button onclick="declineAppointment('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373]">Recusar</button>
+                            ` : `
+                                <button onclick="openConfirmationModal('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111]">Imagem</button>
+                                <button onclick="cycleAppointmentStatus('${app.id}')" class="text-[11px] text-[#737373] underline underline-offset-4">${app.status === 'done' ? 'Reabrir' : 'Concluir'}</button>
+                            `}
+                            <button onclick="openEditAppointmentModal('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111] hover:border-[#111111]">Editar</button>
+                            <button onclick="deleteAppointment('${app.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderWeekSchedule() {
+            const container = document.getElementById('week-schedule-container');
+            const baseDate = new Date(TODAY_ISO + 'T12:00:00');
+            const days = Array.from({ length: 4 }, (_, i) => {
+                const dt = new Date(baseDate);
+                dt.setDate(baseDate.getDate() + i);
+                const iso = dt.toISOString().slice(0, 10);
+                const label = dt.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+                return { label, date: iso };
+            });
+
+            container.innerHTML = days.map(d => {
+                const apps = state.appointments.filter(a => a.date === d.date);
+                return `
+                    <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-[#EAEAEA]">
+                            <span class="text-xs font-normal text-[#111111]">${d.label}</span>
+                            <span class="text-[11px] text-[#A3A3A3]">${apps.length}</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${apps.length ? apps.map(a => `
+                                <div class="p-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs space-y-1.5">
+                                    <p class="font-normal">${a.time} · ${a.clientName}</p>
+                                    <p class="text-[11px] text-[#737373]">${getServiceById(a.serviceId).name}</p>
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <button onclick="openEditAppointmentModal('${a.id}')" class="text-[10px] underline text-[#111111]">Editar</button>
+                                        <button onclick="deleteAppointment('${a.id}')" class="text-[10px] underline text-[#737373]">Excluir</button>
+                                    </div>
+                                </div>
+                            `).join('') : `<p class="text-xs text-[#A3A3A3] py-4 text-center">Livre</p>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         async function acceptAppointment(id) {
             const app = state.appointments.find(a => a.id === id);
             if (!app) return;
             app.status = 'confirmed';
-            saveLocalState();
+            app.confirmationImage = generateConfirmationImageDataUrl(app);
+            state.latestConfirmationDataUrl = app.confirmationImage;
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                await sbClient.from('agendamentos').update({ status: 'confirmed' }).eq('id', id).catch(() => {});
+                const { error } = await sbClient.from('agendamentos').update({ status: 'confirmed' }).eq('id', id);
+                if (error) showToast('Erro ao atualizar status no banco: ' + error.message);
             }
             renderProDashboard();
-            showToast('Agendamento confirmado.');
+            openConfirmationModal(app.id);
+            showToast(`Agendamento de ${app.clientName} aceito.`);
+        }
+
+        async function declineAppointment(id) {
+            state.appointments = state.appointments.filter(a => a.id !== id);
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('agendamentos').delete().eq('id', id);
+                if (error) showToast('Erro ao recusar no banco: ' + error.message);
+            }
+            renderProDashboard();
+            showToast('Solicitação recusada.');
         }
 
         async function deleteAppointment(id) {
             state.appointments = state.appointments.filter(a => a.id !== id);
-            saveLocalState();
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                await sbClient.from('agendamentos').delete().eq('id', id).catch(() => {});
+                const { error } = await sbClient.from('agendamentos').delete().eq('id', id);
+                if (error) showToast('Erro ao excluir no banco: ' + error.message);
             }
             renderProDashboard();
-            showToast('Agendamento removido.');
+            showToast('Agendamento excluído.');
         }
 
-        function renderSchedule() {
-            const pending = state.appointments.filter(a => a.status === 'pending');
-            const banner = document.getElementById('pending-requests-banner');
-            if (pending.length) {
-                banner.classList.remove('hidden');
-                document.getElementById('pending-requests-text').textContent = `Você tem ${pending.length} solicitação(ões) de horário aguardando aceite.`;
-            } else {
-                banner.classList.add('hidden');
+        async function cycleAppointmentStatus(id) {
+            const app = state.appointments.find(a => a.id === id);
+            if (!app) return;
+            if (!app.confirmationImage) app.confirmationImage = generateConfirmationImageDataUrl(app);
+            app.status = app.status === 'done' ? 'confirmed' : 'done';
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('agendamentos').update({ status: app.status }).eq('id', id);
+                if (error) showToast('Erro ao atualizar status: ' + error.message);
             }
-
-            const confirmedApps = state.appointments.filter(a => a.status !== 'cancelled');
-            document.getElementById('stat-count').textContent = state.appointments.length;
-            document.getElementById('stat-confirmed').textContent = confirmedApps.length;
-            document.getElementById('stat-revenue').textContent = `R$ ${confirmedApps.reduce((acc, a) => acc + Number(a.price || 0), 0)}`;
-            document.getElementById('drawer-reminder-badge').textContent = state.appointments.length;
-
-            const dayContainer = document.getElementById('day-schedule-container');
-            if (!state.appointments.length) {
-                dayContainer.innerHTML = `<div class="p-8 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum agendamento por aqui ainda.</div>`;
-            } else {
-                dayContainer.innerHTML = state.appointments.map(app => {
-                    const pro = state.professionals.find(p => p.id === app.proId) || { name: 'Profissional' };
-                    const svc = state.servicesCatalog.find(s => s.id === app.serviceId) || { name: 'Serviço' };
-                    const isPending = app.status === 'pending';
-
-                    return `
-                        <div class="p-4 rounded-2xl border ${isPending ? 'border-[#E6DEC8] bg-[#FAF7F0]' : 'border-[#EAEAEA] bg-white'} flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-normal text-[#111111]">${app.time} • ${app.clientName}</span>
-                                    <span class="text-[11px] px-2 py-0.5 rounded-full border border-[#EAEAEA] bg-white text-[#737373]">${isPending ? 'Pendente' : 'Confirmado'}</span>
-                                </div>
-                                <p class="text-xs text-[#737373] mt-0.5">${svc.name} • ${pro.name} • ${app.paymentMethod || 'Pix'} • ${app.date}</p>
-                            </div>
-                            <div class="flex items-center gap-2 self-end sm:self-center">
-                                <span class="text-sm font-normal text-[#111111] mr-1">R$ ${app.price}</span>
-                                ${isPending ? `<button onclick="acceptAppointment('${app.id}')" class="px-3 py-1.5 rounded-full btn-brand text-xs">Aceitar</button>` : ''}
-                                <button onclick="deleteAppointment('${app.id}')" class="px-3 py-1.5 rounded-full border border-[#EAEAEA] bg-white text-xs text-[#737373] hover:text-[#111111]">Excluir</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            const weekContainer = document.getElementById('week-schedule-container');
-            weekContainer.innerHTML = ['Seg–Ter', 'Qua', 'Qui–Sex', 'Sáb–Dom'].map(block => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand space-y-2">
-                    <p class="text-xs font-normal text-[#111111]">${block}</p>
-                    <p class="text-xs text-[#737373]">${state.appointments.length} agendamento(s) no total</p>
-                </div>
-            `).join('');
+            renderProDashboard();
         }
 
-        function renderClientsRoster() {
-            const box = document.getElementById('clients-roster-cards');
-            if (!state.clientsRoster.length) {
-                box.innerHTML = `<div class="p-6 rounded-2xl border border-dashed border-[#EAEAEA] text-xs text-[#737373] text-center">Nenhum cliente cadastrado na cartela.</div>`;
-                return;
-            }
-            box.innerHTML = state.clientsRoster.map(c => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+        function generateConfirmationImageDataUrl(app) {
+            const pro = getProById(app.proId);
+            const svc = getServiceById(app.serviceId);
+            const canvas = document.createElement('canvas');
+            canvas.width = 680;
+            canvas.height = 880;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = state.themeColors.primary || '#111111';
+            ctx.fillRect(24, 24, canvas.width - 48, 136);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '400 28px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(`${state.studioName} • Confirmado`, 54, 102);
+
+            const rows = [
+                ['DATA E HORÁRIO', `${app.date} às ${app.time}`],
+                ['SERVIÇO', svc.name],
+                ['PROFISSIONAL', pro.name],
+                ['VALOR', `R$ ${Number(app.price || 0).toFixed(2).replace('.', ',')}`],
+                ['PAGAMENTO', app.paymentMethod || 'Pix'],
+                ['CLIENTE', app.clientName]
+            ];
+            let y = 225;
+            rows.forEach(([k, v]) => {
+                ctx.fillStyle = '#737373';
+                ctx.font = '400 13px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(k, 54, y);
+                ctx.fillStyle = '#111111';
+                ctx.font = '400 22px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(v, 54, y + 30);
+                y += 96;
+            });
+            return canvas.toDataURL('image/png');
+        }
+
+        function openConfirmationModal(appId) {
+            const app = state.appointments.find(a => a.id === appId);
+            const url = (app && app.confirmationImage) || state.latestConfirmationDataUrl;
+            if (!url) return;
+            state.latestConfirmationDataUrl = url;
+            document.getElementById('confirmation-card-preview').src = url;
+            const m = document.getElementById('modal-confirmation-card');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeConfirmationModal() {
+            const m = document.getElementById('modal-confirmation-card');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function downloadCurrentConfirmationCard() {
+            if (!state.latestConfirmationDataUrl) return;
+            const a = document.createElement('a');
+            a.download = 'confirmacao-agendamento.png';
+            a.href = state.latestConfirmationDataUrl;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        /* ================= CLIENTES ================= */
+        function renderClientsRosterPage() {
+            document.getElementById('clients-roster-cards').innerHTML = state.clientsRoster.map(c => `
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <p class="text-sm font-normal text-[#111111]">${c.name}</p>
                         <p class="text-xs text-[#737373]">${c.phone}${c.notes ? ` • ${c.notes}` : ''}</p>
                     </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs px-3 py-1 rounded-full surface-brand border border-[#EAEAEA]">${c.visits} atendimento(s)</span>
+                        <button onclick="openEditClientModal('${c.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#111111] hover:border-[#111111]">Editar</button>
+                        <button onclick="deleteClientFromRoster('${c.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function addClientToRoster(e) {
-            e.preventDefault();
-            state.clientsRoster.push({
+        async function addClientToRoster(event) {
+            event.preventDefault();
+            const item = {
                 id: 'c-' + Date.now(),
                 name: document.getElementById('roster-client-name').value.trim(),
                 phone: document.getElementById('roster-client-phone').value.trim(),
-                notes: document.getElementById('roster-client-notes').value.trim()
-            });
-            saveLocalState();
-            e.target.reset();
-            renderClientsRoster();
-            showToast('Cliente adicionado.');
+                notes: document.getElementById('roster-client-notes').value.trim(),
+                visits: 0
+            };
+            state.clientsRoster.unshift(item);
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('clientes').insert({
+                    id: item.id, nome_completo: item.name, usuario: item.name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 99),
+                    senha_pin: '1234', whatsapp: item.phone, observacoes: item.notes, visitas: 0
+                });
+                if (error) showToast('Erro ao salvar cliente no banco: ' + error.message);
+            }
+            event.target.reset();
+            renderClientsRosterPage();
+            showToast(`${item.name} adicionado à cartela.`);
         }
 
+        function openEditClientModal(id) {
+            const c = state.clientsRoster.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('edit-client-id').value = c.id;
+            document.getElementById('edit-client-name').value = c.name;
+            document.getElementById('edit-client-phone').value = c.phone;
+            document.getElementById('edit-client-notes').value = c.notes || '';
+            document.getElementById('edit-client-visits').value = c.visits || 0;
+            const m = document.getElementById('modal-edit-client');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditClientModal() {
+            const m = document.getElementById('modal-edit-client');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedClient(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-client-id').value;
+            const c = state.clientsRoster.find(x => x.id === id);
+            if (!c) return;
+            c.name = document.getElementById('edit-client-name').value.trim();
+            c.phone = document.getElementById('edit-client-phone').value.trim();
+            c.notes = document.getElementById('edit-client-notes').value.trim();
+            c.visits = Number(document.getElementById('edit-client-visits').value) || 0;
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('clientes').update({
+                    nome_completo: c.name, whatsapp: c.phone, observacoes: c.notes, visitas: c.visits
+                }).eq('id', id);
+                if (error) showToast('Erro ao atualizar cliente: ' + error.message);
+            }
+            closeEditClientModal();
+            renderClientsRosterPage();
+            showToast('Cliente atualizado.');
+        }
+
+        async function deleteClientFromRoster(id) {
+            state.clientsRoster = state.clientsRoster.filter(x => x.id !== id);
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('clientes').delete().eq('id', id);
+                if (error) showToast('Erro ao excluir cliente no banco: ' + error.message);
+            }
+            renderClientsRosterPage();
+            showToast('Cliente excluído.');
+        }
+
+        /* ================= SERVIÇOS ================= */
         function renderServicesCatalog() {
-            const box = document.getElementById('services-catalog-list');
-            box.innerHTML = state.servicesCatalog.map(s => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
+            document.getElementById('services-catalog-list').innerHTML = state.servicesCatalog.map(s => `
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <p class="text-sm font-normal text-[#111111]">${s.name}</p>
-                        <p class="text-xs text-[#737373]">${s.specialty} • ${s.duration} min</p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-normal text-[#111111]">${s.name}</span>
+                            ${s.specialty ? `<span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${s.specialty}</span>` : ''}
+                        </div>
+                        <p class="text-xs text-[#737373] mt-0.5">Duração base: ${s.duration} min</p>
                     </div>
-                    <span class="text-sm font-normal text-[#111111]">R$ ${s.price}</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-normal text-[#111111] mr-1">R$ ${s.price}</span>
+                        <button onclick="openEditServiceModal('${s.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#111111] hover:border-[#111111]">Editar</button>
+                        <button onclick="deleteServiceCatalogItem('${s.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        async function addServiceCatalogItem(e) {
-            e.preventDefault();
+        async function addServiceCatalogItem(event) {
+            event.preventDefault();
             const item = {
                 id: 's-' + Date.now(),
                 name: document.getElementById('new-service-name').value.trim(),
                 specialty: document.getElementById('new-service-specialty').value.trim() || 'Atendimento',
-                price: Number(document.getElementById('new-service-price').value) || 0,
-                duration: Number(document.getElementById('new-service-duration').value) || 45
+                price: Number(document.getElementById('new-service-price').value),
+                duration: Number(document.getElementById('new-service-duration').value)
             };
             state.servicesCatalog.push(item);
-            saveLocalState();
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                await sbClient.from('servicos').insert({
-                    id: item.id, nome: item.name, categoria: item.specialty, preco: item.price, duracao_min: item.duration, ativo: true
-                }).catch(() => {});
+                const { error } = await sbClient.from('servicos').insert({
+                    id: item.id, nome: item.name, categoria: item.specialty, duracao_min: item.duration, preco: item.price, ativo: true
+                });
+                if (error) showToast('Erro ao salvar serviço no banco: ' + error.message);
             }
-            e.target.reset();
-            renderProDashboard();
-            showToast('Serviço salvo.');
+            event.target.reset();
+            document.getElementById('new-service-specialty').value = 'Atendimento';
+            renderServicesCatalog();
+            renderProServicesMatrix();
+            showToast(`Serviço "${item.name}" salvo.`);
         }
 
-        function renderProfessionalsMatrix() {
-            const matrix = document.getElementById('pro-services-matrix');
-            matrix.innerHTML = state.servicesCatalog.map(s => `
-                <div class="p-2.5 rounded-xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-2 text-xs">
-                    <label class="flex items-center gap-2 min-w-0">
-                        <input type="checkbox" class="pro-svc-check" data-sid="${s.id}" checked>
-                        <span class="truncate">${s.name}</span>
+        function openEditServiceModal(id) {
+            const s = state.servicesCatalog.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('edit-service-id').value = s.id;
+            document.getElementById('edit-service-name').value = s.name;
+            document.getElementById('edit-service-specialty').value = s.specialty || '';
+            document.getElementById('edit-service-price').value = s.price;
+            document.getElementById('edit-service-duration').value = s.duration;
+            const m = document.getElementById('modal-edit-service');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditServiceModal() {
+            const m = document.getElementById('modal-edit-service');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedService(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-service-id').value;
+            const s = state.servicesCatalog.find(x => x.id === id);
+            if (!s) return;
+            s.name = document.getElementById('edit-service-name').value.trim();
+            s.specialty = document.getElementById('edit-service-specialty').value.trim();
+            s.price = Number(document.getElementById('edit-service-price').value) || 0;
+            s.duration = Number(document.getElementById('edit-service-duration').value) || 45;
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('servicos').update({
+                    nome: s.name, categoria: s.specialty, preco: s.price, duracao_min: s.duration
+                }).eq('id', id);
+                if (error) showToast('Erro ao atualizar serviço: ' + error.message);
+            }
+            closeEditServiceModal();
+            renderServicesCatalog();
+            renderProServicesMatrix();
+            showToast('Serviço atualizado.');
+        }
+
+        async function deleteServiceCatalogItem(id) {
+            state.servicesCatalog = state.servicesCatalog.filter(x => x.id !== id);
+            state.professionals.forEach(p => {
+                if (p.serviceRates && p.serviceRates[id]) delete p.serviceRates[id];
+            });
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                await sbClient.from('profissional_servicos').delete().eq('servico_id', id);
+                const { error } = await sbClient.from('servicos').delete().eq('id', id);
+                if (error) showToast('Erro ao excluir serviço no banco: ' + error.message);
+            }
+            renderServicesCatalog();
+            renderProServicesMatrix();
+            showToast('Serviço excluído.');
+        }
+
+        /* ================= PROFISSIONAIS E TABELA ================= */
+        function renderProfessionalsSection() {
+            renderProServicesMatrix();
+            document.getElementById('professionals-matrix-list').innerHTML = state.professionals.map(pro => {
+                const isExpanded = !!state.expandedProCards[pro.id];
+                const enabled = Object.entries(pro.serviceRates || {}).filter(([, c]) => c && c.enabled);
+                return `
+                    <div class="rounded-2xl border border-[#EAEAEA] bg-white overflow-hidden">
+                        <div class="p-4 flex items-center justify-between gap-3">
+                            <button type="button" onclick="state.expandedProCards['${pro.id}']=!state.expandedProCards['${pro.id}']; renderProfessionalsSection();"
+                                    class="flex-1 text-left flex items-center justify-between gap-2">
+                                <div>
+                                    <p class="text-sm font-normal text-[#111111]">${pro.name}</p>
+                                    <p class="text-[11px] text-[#737373]">${enabled.length} serviço(s) na tabela</p>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-[#737373] ${isExpanded ? 'rotate-180' : ''}"></i>
+                            </button>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <button onclick="openEditProModal('${pro.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#111111] hover:border-[#111111]">Editar</button>
+                                <button onclick="deleteProfessional('${pro.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA] text-[#737373] hover:text-red-600 hover:border-red-300">Excluir</button>
+                            </div>
+                        </div>
+                        <div class="${isExpanded ? 'block' : 'hidden'} px-4 pb-4 pt-2 border-t border-[#EAEAEA] surface-brand space-y-1.5">
+                            ${enabled.map(([svcId, cfg]) => `<div class="flex justify-between text-xs"><span>${getServiceById(svcId).name}</span><span>R$ ${cfg.price} · ${cfg.duration}m</span></div>`).join('') || `<p class="text-xs text-[#737373]">Sem serviços vinculados.</p>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderProServicesMatrix() {
+            document.getElementById('pro-services-matrix').innerHTML = state.servicesCatalog.map(svc => `
+                <div class="p-3 rounded-xl border border-[#EAEAEA] bg-white space-y-2">
+                    <label class="flex items-center justify-between text-xs cursor-pointer">
+                        <span class="flex items-center gap-2"><input type="checkbox" class="pro-svc-check accent-[#111111]" data-svc-id="${svc.id}" onchange="document.getElementById('pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)"><span>${svc.name}</span></span>
+                        <span class="text-[11px] text-[#737373]">R$ ${svc.price}</span>
                     </label>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <input type="number" class="pro-svc-price w-16 px-2 py-1 rounded border border-[#EAEAEA] text-xs" data-sid="${s.id}" value="${s.price}">
-                        <input type="number" class="pro-svc-dur w-14 px-2 py-1 rounded border border-[#EAEAEA] text-xs" data-sid="${s.id}" value="${s.duration}">
+                    <div id="pro-svc-fields-${svc.id}" class="hidden grid grid-cols-2 gap-2">
+                        <input type="number" min="1" value="${svc.price}" class="pro-svc-price px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] text-xs" data-svc-id="${svc.id}">
+                        <input type="number" min="10" step="5" value="${svc.duration}" class="pro-svc-duration px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] text-xs" data-svc-id="${svc.id}">
                     </div>
                 </div>
             `).join('');
-
-            const list = document.getElementById('professionals-matrix-list');
-            list.innerHTML = state.professionals.map(p => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white">
-                    <p class="text-sm font-normal text-[#111111]">${p.name}</p>
-                    <p class="text-xs text-[#737373]">${p.specialty}</p>
-                </div>
-            `).join('');
         }
 
-        async function addProfessionalWithServices(e) {
-            e.preventDefault();
+        async function addProfessionalWithServices(event) {
+            event.preventDefault();
             const name = document.getElementById('pro-form-name').value.trim();
             const specialty = document.getElementById('pro-form-specialty').value.trim() || 'Profissional';
-            const rates = {};
+            const proId = 'p-' + Date.now();
+            const serviceRates = {};
+
             document.querySelectorAll('.pro-svc-check').forEach(chk => {
-                const sid = chk.getAttribute('data-sid');
-                const price = Number(document.querySelector(`.pro-svc-price[data-sid="${sid}"]`).value) || 0;
-                const duration = Number(document.querySelector(`.pro-svc-dur[data-sid="${sid}"]`).value) || 45;
-                if (chk.checked) rates[sid] = { enabled: true, price, duration };
+                if (chk.checked) {
+                    const svcId = chk.getAttribute('data-svc-id');
+                    const price = Number(document.querySelector(`.pro-svc-price[data-svc-id="${svcId}"]`).value) || 0;
+                    const duration = Number(document.querySelector(`.pro-svc-duration[data-svc-id="${svcId}"]`).value) || 45;
+                    serviceRates[svcId] = { enabled: true, price, duration };
+                }
             });
 
-            const pro = { id: 'p-' + Date.now(), name, specialty, serviceRates: rates };
-            state.professionals.push(pro);
-            saveLocalState();
+            state.professionals.push({ id: proId, name, specialty, serviceRates });
+            state.expandedProCards[proId] = true;
+            saveLocalBackupConfig();
 
             if (dbConnected && sbClient) {
-                await sbClient.from('profissionais').insert({ id: pro.id, nome: pro.name, especialidade: pro.specialty, ativo: true }).catch(() => {});
-                for (const [sid, r] of Object.entries(rates)) {
-                    await sbClient.from('profissional_servicos').insert({
-                        profissional_id: pro.id, servico_id: sid, habilitado: true, preco: r.price, duracao_min: r.duration
-                    }).catch(() => {});
-                }
+                const { error } = await sbClient.from('profissionais').insert({ id: proId, nome: name, especialidade: specialty, ativo: true });
+                if (error) showToast('Erro ao salvar profissional no banco: ' + error.message);
+                const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
+                    id: `ps-${Date.now()}-${idx}`, profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
+                }));
+                if (rows.length) await sbClient.from('profissional_servicos').insert(rows);
             }
 
-            e.target.reset();
-            renderProDashboard();
-            showToast('Profissional salvo.');
+            event.target.reset();
+            document.getElementById('pro-form-specialty').value = 'Profissional';
+            renderProfessionalsSection();
+            showToast(`${name} cadastrado.`);
         }
 
-        function renderPaymentMethods() {
-            const grid = document.getElementById('payment-methods-grid');
-            grid.innerHTML = state.paymentMethods.map(pm => `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
-                    <div>
-                        <p class="text-sm font-normal text-[#111111]">${pm.label}</p>
-                        <p class="text-xs text-[#737373]">${pm.detail || 'Ativo'}</p>
+        function openEditProModal(proId) {
+            const pro = state.professionals.find(p => p.id === proId);
+            if (!pro) return;
+            document.getElementById('edit-pro-id').value = pro.id;
+            document.getElementById('edit-pro-name').value = pro.name;
+            document.getElementById('edit-pro-specialty').value = pro.specialty || '';
+
+            document.getElementById('edit-pro-services-matrix').innerHTML = state.servicesCatalog.map(svc => {
+                const cur = pro.serviceRates && pro.serviceRates[svc.id];
+                const checked = !!(cur && cur.enabled);
+                const price = cur && cur.price !== undefined ? cur.price : svc.price;
+                const dur = cur && cur.duration !== undefined ? cur.duration : svc.duration;
+                return `
+                    <div class="p-3 rounded-xl border border-[#EAEAEA] bg-[#FAFAFA] space-y-2">
+                        <label class="flex items-center justify-between text-xs cursor-pointer">
+                            <span class="flex items-center gap-2">
+                                <input type="checkbox" ${checked ? 'checked' : ''} class="edit-pro-svc-check accent-[#111111]" data-svc-id="${svc.id}"
+                                       onchange="document.getElementById('edit-pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)">
+                                <span>${svc.name}</span>
+                            </span>
+                            <span class="text-[11px] text-[#737373]">R$ ${svc.price}</span>
+                        </label>
+                        <div id="edit-pro-svc-fields-${svc.id}" class="${checked ? 'grid' : 'hidden'} grid-cols-2 gap-2">
+                            <input type="number" min="1" value="${price}" class="edit-pro-svc-price px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] bg-white text-xs" data-svc-id="${svc.id}">
+                            <input type="number" min="10" step="5" value="${dur}" class="edit-pro-svc-duration px-2.5 py-1.5 rounded-lg border border-[#EAEAEA] bg-white text-xs" data-svc-id="${svc.id}">
+                        </div>
                     </div>
-                    <button onclick="togglePaymentMethod('${pm.id}')" class="px-3 py-1 rounded-full text-xs border border-[#EAEAEA]">
-                        ${pm.enabled ? 'Ativo' : 'Inativo'}
-                    </button>
+                `;
+            }).join('');
+
+            const m = document.getElementById('modal-edit-pro');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditProModal() {
+            const m = document.getElementById('modal-edit-pro');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedPro(event) {
+            event.preventDefault();
+            const proId = document.getElementById('edit-pro-id').value;
+            const pro = state.professionals.find(p => p.id === proId);
+            if (!pro) return;
+
+            pro.name = document.getElementById('edit-pro-name').value.trim();
+            pro.specialty = document.getElementById('edit-pro-specialty').value.trim();
+            const serviceRates = {};
+
+            document.querySelectorAll('.edit-pro-svc-check').forEach(chk => {
+                if (chk.checked) {
+                    const svcId = chk.getAttribute('data-svc-id');
+                    const price = Number(document.querySelector(`.edit-pro-svc-price[data-svc-id="${svcId}"]`).value) || 0;
+                    const duration = Number(document.querySelector(`.edit-pro-svc-duration[data-svc-id="${svcId}"]`).value) || 45;
+                    serviceRates[svcId] = { enabled: true, price, duration };
+                }
+            });
+            pro.serviceRates = serviceRates;
+            saveLocalBackupConfig();
+
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('profissionais').update({ nome: pro.name, especialidade: pro.specialty }).eq('id', proId);
+                if (error) showToast('Erro ao atualizar profissional: ' + error.message);
+                await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
+                const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
+                    id: `ps-${Date.now()}-${idx}`, profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
+                }));
+                if (rows.length) await sbClient.from('profissional_servicos').insert(rows);
+            }
+
+            closeEditProModal();
+            renderProfessionalsSection();
+            showToast('Profissional atualizado.');
+        }
+
+        async function deleteProfessional(proId) {
+            state.professionals = state.professionals.filter(p => p.id !== proId);
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
+                const { error } = await sbClient.from('profissionais').delete().eq('id', proId);
+                if (error) showToast('Erro ao excluir profissional no banco: ' + error.message);
+            }
+            renderProfessionalsSection();
+            showToast('Profissional excluído.');
+        }
+
+        /* ================= FORMAS DE PAGAMENTO ================= */
+        function renderPaymentMethodsSection() {
+            document.getElementById('payment-methods-grid').innerHTML = state.paymentMethods.map(pm => `
+                <div class="p-4 rounded-2xl border space-y-3 ${pm.enabled ? 'border-[#111111] bg-white' : 'border-[#EAEAEA] surface-brand opacity-70'}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="text-sm font-normal text-[#111111]">${pm.label}</p>
+                            <p class="text-xs text-[#737373]">${pm.detail || ''}</p>
+                        </div>
+                        <button type="button" onclick="togglePaymentMethod('${pm.id}')"
+                                class="text-[11px] px-2.5 py-1 rounded-full ${pm.enabled ? 'btn-brand' : 'bg-[#EAEAEA] text-[#737373]'}">
+                            ${pm.enabled ? 'Aceito' : 'Inativo'}
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2 pt-2 border-t border-[#EAEAEA]">
+                        <button type="button" onclick="openEditPaymentModal('${pm.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#111111]">Editar</button>
+                        <button type="button" onclick="deletePaymentMethod('${pm.id}')" class="px-2.5 py-1 rounded-full text-[11px] border border-[#EAEAEA] bg-white text-[#737373] hover:text-red-600">Excluir</button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        async function togglePaymentMethod(id) {
-            const pm = state.paymentMethods.find(m => m.id === id);
-            if (!pm) return;
-            pm.enabled = !pm.enabled;
-            saveLocalState();
-            if (dbConnected && sbClient) {
-                await sbClient.from('formas_pagamento').update({ ativo: pm.enabled }).eq('id', id).catch(() => {});
-            }
-            renderPaymentMethods();
-        }
-
-        async function addPaymentMethod(e) {
-            e.preventDefault();
-            const pm = {
+        async function addPaymentMethod(event) {
+            event.preventDefault();
+            const item = {
                 id: 'pay-' + Date.now(),
                 label: document.getElementById('new-pay-label').value.trim(),
                 detail: document.getElementById('new-pay-detail').value.trim(),
                 enabled: true
             };
-            state.paymentMethods.push(pm);
-            saveLocalState();
+            state.paymentMethods.push(item);
+            saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                await sbClient.from('formas_pagamento').insert({ id: pm.id, nome: pm.label, descricao: pm.detail, ativo: true }).catch(() => {});
+                const { error } = await sbClient.from('formas_pagamento').insert({ id: item.id, nome: item.label, descricao: item.detail, ativo: true });
+                if (error) showToast('Erro ao salvar pagamento no banco: ' + error.message);
             }
-            e.target.reset();
-            renderPaymentMethods();
-            showToast('Forma de pagamento adicionada.');
+            event.target.reset();
+            renderPaymentMethodsSection();
+            showToast('Meio de pagamento adicionado.');
         }
 
-        function renderReminders() {
-            const box = document.getElementById('reminders-list-container');
-            if (!state.appointments.length) {
-                box.innerHTML = `<div class="p-6 rounded-2xl border border-dashed border-[#EAEAEA] text-xs text-[#737373]">Nenhum agendamento para lembrete.</div>`;
-                return;
+        function openEditPaymentModal(id) {
+            const pm = state.paymentMethods.find(p => p.id === id);
+            if (!pm) return;
+            document.getElementById('edit-pay-id').value = pm.id;
+            document.getElementById('edit-pay-label').value = pm.label;
+            document.getElementById('edit-pay-detail').value = pm.detail || '';
+            const m = document.getElementById('modal-edit-payment');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeEditPaymentModal() {
+            const m = document.getElementById('modal-edit-payment');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function saveEditedPayment(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-pay-id').value;
+            const pm = state.paymentMethods.find(p => p.id === id);
+            if (!pm) return;
+            pm.label = document.getElementById('edit-pay-label').value.trim();
+            pm.detail = document.getElementById('edit-pay-detail').value.trim();
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('formas_pagamento').update({ nome: pm.label, descricao: pm.detail }).eq('id', id);
+                if (error) showToast('Erro ao atualizar pagamento: ' + error.message);
             }
-            box.innerHTML = state.appointments.map(app => {
-                const msg = encodeURIComponent(`Olá ${app.clientName}, lembrando do seu horário em ${state.studioName} dia ${app.date} às ${app.time}.`);
+            closeEditPaymentModal();
+            renderPaymentMethodsSection();
+            showToast('Meio de pagamento atualizado.');
+        }
+
+        async function deletePaymentMethod(id) {
+            state.paymentMethods = state.paymentMethods.filter(p => p.id !== id);
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('formas_pagamento').delete().eq('id', id);
+                if (error) showToast('Erro ao excluir pagamento no banco: ' + error.message);
+            }
+            renderPaymentMethodsSection();
+            showToast('Meio de pagamento excluído.');
+        }
+
+        async function togglePaymentMethod(id) {
+            const pm = state.paymentMethods.find(p => p.id === id);
+            if (!pm) return;
+            pm.enabled = !pm.enabled;
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const { error } = await sbClient.from('formas_pagamento').upsert({ id: pm.id, nome: pm.label, descricao: pm.detail, ativo: pm.enabled });
+                if (error) showToast('Erro ao alterar pagamento: ' + error.message);
+            }
+            renderPaymentMethodsSection();
+        }
+
+        /* ================= LEMBRETES E RELATÓRIOS ================= */
+        function getDueRemindersList() {
+            const now = new Date();
+            const due = [];
+            state.appointments.forEach(app => {
+                if (app.status === 'done') return;
+                const [y, m, d] = (app.date || TODAY_ISO).split('-').map(Number);
+                const [hh, mm] = (app.time || '09:00').split(':').map(Number);
+                const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
+                const diffH = (dt.getTime() - now.getTime()) / 3600000;
+                if (state.reminderRules.dayBefore && diffH > 1.5 && diffH <= 24) {
+                    due.push({ appId: app.id, windowKey: 'dayBefore', label: '1 dia antes (até 24h)', sent: !!app.remindersSent?.dayBefore, app });
+                }
+                if (state.reminderRules.hourBefore && diffH >= -0.25 && diffH <= 1.5) {
+                    due.push({ appId: app.id, windowKey: 'hourBefore', label: '1 hora antes (até 60min)', sent: !!app.remindersSent?.hourBefore, app });
+                }
+            });
+            return due;
+        }
+
+        function updateDrawerReminderBadge() {
+            const el = document.getElementById('drawer-reminder-badge');
+            if (el) el.textContent = getDueRemindersList().filter(i => !i.sent).length;
+        }
+
+        async function updateReminderRules() {
+            state.reminderRules.dayBefore = document.getElementById('rule-24h').checked;
+            state.reminderRules.hourBefore = document.getElementById('rule-1h').checked;
+            await saveEstablishmentToSupabase();
+            renderRemindersSection();
+        }
+
+        function evaluateWhatsAppReminders(notify = false) {
+            updateDrawerReminderBadge();
+            if (!document.getElementById('pro-section-reminders').classList.contains('hidden')) renderRemindersSection();
+            if (notify) showToast(`${getDueRemindersList().filter(i => !i.sent).length} lembrete(s) pendente(s).`);
+        }
+
+        function renderRemindersSection() {
+            const list = getDueRemindersList();
+            updateDrawerReminderBadge();
+            document.getElementById('reminders-queue-list').innerHTML = list.length ? list.map(item => `
+                <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA]">${item.label}</span>
+                        <p class="text-sm font-normal text-[#111111] mt-1">${item.app.clientName} • ${item.app.time}</p>
+                        <p class="text-xs text-[#737373]">${getServiceById(item.app.serviceId).name} com ${getProById(item.app.proId).name}</p>
+                    </div>
+                    <button onclick="sendWhatsAppReminder('${item.appId}','${item.windowKey}')" class="px-3.5 py-1.5 rounded-full text-xs btn-brand">
+                        ${item.sent ? 'Reenviar WhatsApp' : 'Enviar WhatsApp'}
+                    </button>
+                </div>
+            `).join('') : `<div class="p-8 rounded-2xl border border-dashed border-[#EAEAEA] text-center text-xs text-[#737373]">Nenhum lembrete na janela de 24h ou 1h agora.</div>`;
+        }
+
+        async function sendWhatsAppReminder(appId, windowKey) {
+            const app = state.appointments.find(a => a.id === appId);
+            if (!app) return;
+            const momento = windowKey === 'dayBefore' ? 'amanhã (1 dia antes)' : 'em 1 hora';
+            const msg = `Olá, ${app.clientName}! Lembrando do seu agendamento ${momento}: ${getServiceById(app.serviceId).name} com ${getProById(app.proId).name} às ${app.time} (${state.studioName}).`;
+            const digits = String(app.clientPhone || '').replace(/\D/g, '');
+            const wa = digits ? (digits.startsWith('55') ? digits : `55${digits}`) : '';
+            window.open(wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+            app.remindersSent[windowKey] = true;
+            saveLocalBackupConfig();
+            if (dbConnected && sbClient) {
+                const col = windowKey === 'dayBefore' ? 'lembrete_24h_enviado' : 'lembrete_1h_enviado';
+                await sbClient.from('agendamentos').update({ [col]: true }).eq('id', appId);
+            }
+            renderRemindersSection();
+        }
+
+        function setReportPeriod(period) {
+            state.reportPeriod = period;
+            ['day', 'week', 'month'].forEach(p => {
+                document.getElementById(`report-period-${p}`).className = `px-3.5 py-1.5 rounded-full text-xs transition-colors ${p === period ? 'btn-brand' : 'text-[#737373]'}`;
+            });
+            renderReportsSection();
+        }
+
+        function renderReportsSection() {
+            const baseDate = new Date(TODAY_ISO + 'T12:00:00');
+            const weekEnd = new Date(baseDate);
+            weekEnd.setDate(baseDate.getDate() + 6);
+            const weekEndIso = weekEnd.toISOString().slice(0, 10);
+            const monthPrefix = TODAY_ISO.slice(0, 7);
+
+            const apps = state.reportPeriod === 'day'
+                ? state.appointments.filter(a => a.date === TODAY_ISO)
+                : state.reportPeriod === 'week'
+                    ? state.appointments.filter(a => a.date >= TODAY_ISO && a.date <= weekEndIso)
+                    : state.appointments.filter(a => (a.date || '').startsWith(monthPrefix));
+
+            const total = apps.length;
+            const rev = apps.reduce((s, a) => s + Number(a.price || 0), 0);
+            const avg = total ? Math.round(rev / total) : 0;
+
+            document.getElementById('report-total-count').textContent = total;
+            document.getElementById('report-total-revenue').textContent = `R$ ${rev}`;
+            document.getElementById('report-avg-ticket').textContent = `R$ ${avg}`;
+
+            document.getElementById('report-by-pro').innerHTML = state.professionals.map(pro => {
+                const pApps = apps.filter(a => a.proId === pro.id);
+                const pRev = pApps.reduce((s, a) => s + Number(a.price || 0), 0);
+                const pct = rev ? Math.round((pRev / rev) * 100) : 0;
                 return `
-                    <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-sm font-normal text-[#111111]">${app.clientName} • ${app.time}</p>
-                            <p class="text-xs text-[#737373]">${app.clientPhone || 'Sem telefone'}</p>
-                        </div>
-                        <a href="https://wa.me/?text=${msg}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-full btn-brand text-xs">
-                            Enviar WhatsApp
-                        </a>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs"><span>${pro.name}</span><span>${pApps.length} atend. • R$ ${pRev}</span></div>
+                        <div class="w-full h-1.5 rounded-full bg-[#F2F2F2] overflow-hidden"><div class="h-full btn-brand" style="width:${pct}%"></div></div>
                     </div>
                 `;
             }).join('');
         }
 
-        function renderReports() {
-            const total = state.appointments.reduce((s, a) => s + Number(a.price || 0), 0);
-            document.getElementById('reports-summary-grid').innerHTML = `
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand"><span class="text-xs text-[#737373]">Faturamento do Dia</span><p class="text-xl font-light mt-1">R$ ${total}</p></div>
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand"><span class="text-xs text-[#737373]">Previsão Semanal</span><p class="text-xl font-light mt-1">R$ ${total * 5}</p></div>
-                <div class="p-4 rounded-2xl border border-[#EAEAEA] surface-brand"><span class="text-xs text-[#737373]">Previsão Mensal</span><p class="text-xl font-light mt-1">R$ ${total * 20}</p></div>
-            `;
+        /* ================= MODAL CRIAR / EDITAR AGENDAMENTO ================= */
+        function populateAppointmentSelects() {
+            document.getElementById('input-pro-select').innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            document.getElementById('input-service-select').innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            const activePay = state.paymentMethods.filter(m => m.enabled);
+            document.getElementById('input-payment').innerHTML = (activePay.length ? activePay : state.paymentMethods).map(m => `<option value="${m.label}">${m.label}</option>`).join('');
         }
 
         function openNewAppointmentModal() {
-            document.getElementById('appt-date').value = TODAY_ISO;
-            document.getElementById('appt-time').value = '11:00';
-            document.getElementById('appt-pro-select').innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            document.getElementById('appt-service-select').innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            document.getElementById('appt-payment-select').innerHTML = state.paymentMethods.filter(m => m.enabled).map(m => `<option value="${m.label}">${m.label}</option>`).join('');
-            document.getElementById('new-appointment-modal').classList.remove('hidden');
+            populateAppointmentSelects();
+            document.getElementById('modal-app-title').textContent = 'Novo agendamento';
+            document.getElementById('input-app-id').value = '';
+            document.getElementById('input-client-name').value = '';
+            document.getElementById('input-client-phone').value = '';
+            document.getElementById('input-date').value = TODAY_ISO;
+            document.getElementById('input-time').value = '09:00';
+            document.getElementById('input-status').value = 'confirmed';
+            syncManualServicePrice();
+            const m = document.getElementById('modal-new-appointment');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function openEditAppointmentModal(appId) {
+            const app = state.appointments.find(a => a.id === appId);
+            if (!app) return;
+            populateAppointmentSelects();
+            document.getElementById('modal-app-title').textContent = 'Editar agendamento';
+            document.getElementById('input-app-id').value = app.id;
+            document.getElementById('input-client-name').value = app.clientName;
+            document.getElementById('input-client-phone').value = app.clientPhone || '';
+            document.getElementById('input-pro-select').value = app.proId;
+            document.getElementById('input-service-select').value = app.serviceId;
+            document.getElementById('input-date').value = app.date;
+            document.getElementById('input-time').value = app.time;
+            document.getElementById('input-price').value = app.price;
+            document.getElementById('input-payment').value = app.paymentMethod || 'Pix';
+            document.getElementById('input-status').value = app.status || 'confirmed';
+            const m = document.getElementById('modal-new-appointment');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function syncManualServicePrice() {
+            if (document.getElementById('input-app-id').value) return;
+            const pro = getProById(document.getElementById('input-pro-select').value);
+            const svcId = document.getElementById('input-service-select').value;
+            document.getElementById('input-price').value = getProServiceInfo(pro, svcId).price;
         }
 
         function closeNewAppointmentModal() {
-            document.getElementById('new-appointment-modal').classList.add('hidden');
+            const m = document.getElementById('modal-new-appointment');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
 
-        async function createAppointmentFromModal(e) {
-            e.preventDefault();
-            const svcId = document.getElementById('appt-service-select').value;
-            const svc = state.servicesCatalog.find(s => s.id === svcId);
-            const item = {
-                id: 'a-' + Date.now(),
-                clientName: document.getElementById('appt-client-name').value.trim(),
-                clientPhone: document.getElementById('appt-client-phone').value.trim(),
-                proId: document.getElementById('appt-pro-select').value,
-                serviceId: svcId,
-                date: document.getElementById('appt-date').value || TODAY_ISO,
-                time: document.getElementById('appt-time').value || '11:00',
-                price: svc ? Number(svc.price) : 0,
-                paymentMethod: document.getElementById('appt-payment-select').value || 'Pix',
-                status: 'confirmed'
+        async function saveAppointmentForm(event) {
+            event.preventDefault();
+            const existingId = document.getElementById('input-app-id').value;
+            const payload = {
+                clientName: document.getElementById('input-client-name').value.trim(),
+                clientPhone: document.getElementById('input-client-phone').value.trim() || '11999990000',
+                proId: document.getElementById('input-pro-select').value,
+                serviceId: document.getElementById('input-service-select').value,
+                date: document.getElementById('input-date').value,
+                time: document.getElementById('input-time').value,
+                price: Number(document.getElementById('input-price').value) || 0,
+                paymentMethod: document.getElementById('input-payment').value || 'Pix',
+                status: document.getElementById('input-status').value || 'confirmed'
             };
-            state.appointments.push(item);
-            saveLocalState();
-            if (dbConnected && sbClient) {
-                await sbClient.from('agendamentos').insert({
-                    id: item.id, cliente_nome: item.clientName, cliente_whatsapp: item.clientPhone,
-                    profissional_id: item.proId, servico_id: item.serviceId, data_agendamento: item.date,
-                    hora_agendamento: item.time, valor: item.price, forma_pagamento: item.paymentMethod, status: item.status
-                }).catch(() => {});
+
+            if (existingId) {
+                const app = state.appointments.find(a => a.id === existingId);
+                if (app) {
+                    Object.assign(app, payload);
+                    app.confirmationImage = generateConfirmationImageDataUrl(app);
+                    saveLocalBackupConfig();
+                    if (dbConnected && sbClient) {
+                        const { error } = await sbClient.from('agendamentos').update({
+                            cliente_nome: app.clientName, cliente_whatsapp: app.clientPhone, profissional_id: app.proId,
+                            servico_id: app.serviceId, data_agendamento: app.date, hora_agendamento: app.time,
+                            valor: app.price, forma_pagamento: app.paymentMethod, status: app.status
+                        }).eq('id', existingId);
+                        if (error) showToast('Erro ao atualizar agendamento: ' + error.message);
+                    }
+                }
+                showToast('Agendamento atualizado.');
+            } else {
+                const item = {
+                    id: 'a-' + Date.now(), ...payload,
+                    remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null
+                };
+                item.confirmationImage = generateConfirmationImageDataUrl(item);
+                state.appointments.push(item);
+                saveLocalBackupConfig();
+                if (dbConnected && sbClient) {
+                    const { error } = await sbClient.from('agendamentos').insert({
+                        id: item.id, cliente_nome: item.clientName, cliente_whatsapp: item.clientPhone, profissional_id: item.proId,
+                        servico_id: item.serviceId, data_agendamento: item.date, hora_agendamento: item.time, valor: item.price,
+                        forma_pagamento: item.paymentMethod, status: item.status
+                    });
+                    if (error) showToast('Erro ao salvar agendamento no banco: ' + error.message);
+                }
+                showToast('Agendamento adicionado.');
             }
+
             closeNewAppointmentModal();
+            event.target.reset();
             renderProDashboard();
-            showToast('Agendamento criado.');
-        }
-
-        function renderProDashboard() {
-            renderSchedule();
-            renderClientsRoster();
-            renderServicesCatalog();
-            renderProfessionalsMatrix();
-            renderPaymentMethods();
-            renderReminders();
-            renderReports();
-        }
-
-        async function syncNow(showMsg = false) {
-            await loadFromSupabase(true);
-            applyBrandingAndTheme();
-            renderProDashboard();
-            if (showMsg) showToast('Painel atualizado.');
-        }
-
-        function copyClientAppLink() {
-            const url = new URL('./index.html', window.location.href).href;
-            navigator.clipboard?.writeText(url).catch(() => {});
-            showToast('Link do cliente copiado.');
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e;
+            deferredPwaPrompt = e;
         });
 
         async function installPwaApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                await deferredPrompt.userChoice;
-                deferredPrompt = null;
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                await deferredPwaPrompt.userChoice;
+                deferredPwaPrompt = null;
                 return;
             }
-            showToast('Use o menu do navegador para instalar o app.');
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            showToast(isIos
+                ? 'No iPhone (Safari), toque em Compartilhar e depois "Adicionar à Tela de Início".'
+                : 'No menu do navegador (⋮), toque em "Instalar aplicativo" ou "Adicionar à tela inicial".');
         }
 
         function showToast(msg) {
@@ -1322,35 +2415,51 @@
             window._toastT = setTimeout(() => {
                 el.classList.remove('opacity-100');
                 el.classList.add('opacity-0');
-            }, 3000);
+            }, 3200);
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            updateDateLabel();
             initSupabase();
-            await syncNow(false);
-            subscribeAdminRealtime();
+            await loadFromSupabase(false);
+            applyBrandingAndTheme();
+            renderProDashboard();
+            evaluateWhatsAppReminders(false);
+            subscribeRealtimeAppointments();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
             lucide.createIcons();
 
-            setInterval(() => {
-                syncNow(false);
-            }, 10000);
+            setInterval(async () => {
+                await loadFromSupabase(true);
+                applyBrandingAndTheme();
+                renderProDashboard();
+            }, 8000);
 
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) syncNow(false);
+            document.addEventListener('visibilitychange', async () => {
+                if (!document.hidden) {
+                    await loadFromSupabase(true);
+                    applyBrandingAndTheme();
+                    renderProDashboard();
+                }
             });
 
-            window.addEventListener('pageshow', () => {
-                syncNow(false);
+            window.addEventListener('pageshow', async () => {
+                await loadFromSupabase(true);
+                applyBrandingAndTheme();
+                renderProDashboard();
             });
 
-            window.addEventListener('focus', () => {
-                syncNow(false);
+            window.addEventListener('focus', async () => {
+                await loadFromSupabase(true);
+                applyBrandingAndTheme();
+                renderProDashboard();
             });
 
-            window.addEventListener('storage', (e) => {
+            window.addEventListener('storage', async (e) => {
                 if (e.key === LOCAL_CFG_KEY || e.key === LOCAL_DATA_KEY) {
-                    syncNow(false);
+                    await loadFromSupabase(true);
+                    applyBrandingAndTheme();
+                    renderProDashboard();
                 }
             });
         });
