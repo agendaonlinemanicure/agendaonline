@@ -115,11 +115,7 @@
                 </span>
             </div>
 
-            <div class="flex items-center gap-2">
-                <span id="db-sync-badge" class="hidden lg:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border border-[#EAEAEA] surface-brand text-[#737373]">
-                    Local
-                </span>
-
+           <div class="flex items-center gap-2">
                 <button id="header-online-toggle" onclick="toggleStudioOnline()"
                         class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] surface-brand hover:border-[#111111] transition-colors"
                         title="Alternar status de agendamento online">
@@ -875,22 +871,13 @@
         function initSupabase() {
             const cfg = window.SUPABASE_CONFIG;
             if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) {
-                setSyncBadge(false);
                 return;
             }
             if (!window.supabase || !window.supabase.createClient) {
-                setSyncBadge(false);
                 return;
             }
             sbClient = window.supabase.createClient(cfg.url, cfg.anonKey);
             dbConnected = true;
-            setSyncBadge(true);
-        }
-
-        function setSyncBadge(online) {
-            const el = document.getElementById('db-sync-badge');
-            if (!el) return;
-            el.textContent = online ? 'Supabase ON' : 'Modo Local';
         }
 
         async function loadFromSupabase() {
