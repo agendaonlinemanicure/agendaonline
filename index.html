@@ -4,28 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agendar horário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--c:#1f3d36;--ink:#1c1c1a;--mut:#6b6b66;--line:#e3e1da;--bg:#faf9f6}
+:root{--c:#111111;--ink:#1c1c1a;--mut:#737373;--line:#EAEAEA;--bg:#FFFFFF}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,'Times New Roman',serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:300 15px/1.6 'Plus Jakarta Sans',system-ui,sans-serif}
 main{max-width:540px;margin:0 auto;padding:28px 20px 80px}
-h1{font-size:30px;line-height:1.15;margin:0 0 4px;color:var(--c)}
-h2{font:600 15px system-ui,sans-serif;margin:26px 0 8px}
+h1{font-size:28px;font-weight:400;line-height:1.15;margin:0 0 4px;color:var(--c)}
+h2{font:500 14px 'Plus Jakarta Sans',system-ui,sans-serif;margin:26px 0 8px}
 .m{color:var(--mut);font:14px system-ui,sans-serif}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-button,input,select{font:15px system-ui,sans-serif}
-.chip{padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+button,input,select{font:inherit}
+.chip{padding:9px 14px;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);cursor:pointer}
 .chip.on{background:var(--c);border-color:var(--c);color:#fff}
 .chip:disabled{opacity:.4;text-decoration:line-through;cursor:not-allowed}
 .chip:focus-visible,.go:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--c);outline-offset:2px}
-input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:10px}
-.go{width:100%;padding:14px;border:0;border-radius:12px;background:var(--c);color:#fff;font-weight:600;cursor:pointer;margin-top:8px}
+input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:16px;background:#fff;margin-bottom:10px}
+.go{width:100%;padding:14px;border:0;border-radius:16px;background:var(--c);color:#fff;font-weight:600;cursor:pointer;margin-top:8px}
 .go:disabled{opacity:.5}
 .row{padding:11px 0;border-bottom:1px solid var(--line);font:14px system-ui,sans-serif}
 .tag{float:right;font-size:12px;padding:2px 9px;border-radius:99px;background:#eee}
 .tag.confirmed,.tag.done{background:var(--c);color:#fff}
-.warn{padding:12px;border-radius:10px;background:#f5e6d3;font:14px system-ui,sans-serif}
-#t{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:90%;background:#1c1c1a;color:#fff;padding:11px 16px;border-radius:12px;font:14px system-ui,sans-serif;display:none}
+.warn{padding:12px;border-radius:16px;background:#f5e6d3;font:14px system-ui,sans-serif}
+#t{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:90%;background:#1c1c1a;color:#fff;padding:11px 16px;border-radius:16px;font:14px system-ui,sans-serif;display:none}
 </style>
 </head>
 <body>
@@ -92,7 +93,7 @@ async function loadTaken() {
   S.taken = error ? [] : data.map(r => r.t);
 }
 function render() {
-  document.documentElement.style.setProperty('--c', S.st.color || '#1f3d36');
+  document.documentElement.style.setProperty('--c', S.st.color || '#111111');
   $('nm').textContent = S.st.name || 'Agendamento';
   $('hr').textContent = S.st.hours || '';
   $('off').hidden = S.st.online !== false;

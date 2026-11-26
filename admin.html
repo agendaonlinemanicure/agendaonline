@@ -4,28 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel do estúdio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--c:#1f3d36;--ink:#1c1c1a;--mut:#6b6b66;--line:#e3e1da;--bg:#faf9f6}
+:root{--c:#111111;--ink:#1c1c1a;--mut:#737373;--line:#EAEAEA;--bg:#FFFFFF}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:300 15px/1.5 'Plus Jakarta Sans',system-ui,sans-serif}
 main{max-width:760px;margin:0 auto;padding:20px 16px 80px}
-h1{font:28px Georgia,serif;color:var(--c);margin:0}
+h1{font:400 26px 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--c);margin:0}
 h3{margin:22px 0 8px}
 .m{color:var(--mut);font-size:13px}
 nav{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}
 button,input{font:inherit}
-.tab,.b{padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;color:var(--ink)}
+.tab,.b{padding:8px 14px;border:1px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;color:var(--ink)}
 .tab.on,.b.p{background:var(--c);border-color:var(--c);color:#fff}
 .b.d{color:#a33}
 button:focus-visible,input:focus-visible{outline:2px solid var(--c);outline-offset:2px}
-input{padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;width:100%;margin-bottom:8px}
+input{padding:10px;border:1px solid var(--line);border-radius:16px;background:#fff;width:100%;margin-bottom:8px}
 .grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:start}
-.row{padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin:8px 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.row{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;margin:8px 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .row.pend{border-color:#c98a2b;background:#fdf6ea}
 .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 #login{max-width:340px;margin:12vh auto}
 #st{font-size:13px}.ok{color:#1d7a3f}.bad{color:#a33}
-#t{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:92%;background:#1c1c1a;color:#fff;padding:11px 16px;border-radius:12px;display:none}
+#t{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:92%;background:#1c1c1a;color:#fff;padding:11px 16px;border-radius:16px;display:none}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -118,7 +119,7 @@ async function load() {
 }
 
 function draw() {
-  document.documentElement.style.setProperty('--c', D.t.color || '#1f3d36');
+  document.documentElement.style.setProperty('--c', D.t.color || '#111111');
   $('title').textContent = D.t.name || 'Painel';
   const pend = D.b.filter(x => x.status === 'pending').length;
   $('ag').innerHTML = (pend ? `<p><b>${pend}</b> solicitação(ões) aguardando seu aceite.</p>` : '') +
@@ -136,7 +137,7 @@ function draw() {
   $('prl').innerHTML = D.p.map(x => `<div class="row"><span>${esc(x.name)}</span>
     <span class="acts"><button class="b" data-a="ped" data-id="${x.id}">Renomear</button><button class="b d" data-a="pdel" data-id="${x.id}">Excluir</button></span></div>`).join('') || '<p class="m">Nenhum profissional ainda.</p>';
   if (!filled) {
-    $('cn').value = D.t.name || ''; $('ch').value = D.t.hours || ''; $('cc').value = D.t.color || '#1f3d36'; $('co').checked = D.t.online !== false;
+    $('cn').value = D.t.name || ''; $('ch').value = D.t.hours || ''; $('cc').value = D.t.color || '#111111'; $('co').checked = D.t.online !== false;
     $('lnk').textContent = new URL('./index.html', location.href).href; filled = true;
   }
 }
