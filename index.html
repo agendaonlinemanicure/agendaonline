@@ -1,1173 +1,148 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atelier Agenda — Agendamento do Cliente</title>
-    <meta name="theme-color" content="#111111">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Atelier Agenda">
-    <link rel="manifest" href="./manifest.webmanifest">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./config.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        :root {
-            --brand-primary: #111111;
-            --brand-bg: #FFFFFF;
-            --brand-surface: #FAFAFA;
-        }
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-        body {
-            background-color: var(--brand-bg);
-            color: #111111;
-            font-weight: 300;
-            letter-spacing: -0.01em;
-            overflow-x: hidden;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .fade-in {
-            animation: fadeIn 0.22s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .status-dot-online {
-            background-color: #39FF14;
-            box-shadow: 0 0 8px #39FF14, 0 0 14px rgba(57, 255, 20, 0.55);
-        }
-        .status-dot-offline {
-            background-color: #FF2A2A;
-            box-shadow: 0 0 8px #FF2A2A, 0 0 14px rgba(255, 42, 42, 0.55);
-        }
-        .btn-brand {
-            background-color: var(--brand-primary);
-            color: #FFFFFF;
-        }
-        .surface-brand {
-            background-color: var(--brand-surface);
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agendar horário</title>
+<style>
+:root{--c:#1f3d36;--ink:#1c1c1a;--mut:#6b6b66;--line:#e3e1da;--bg:#faf9f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,'Times New Roman',serif}
+main{max-width:540px;margin:0 auto;padding:28px 20px 80px}
+h1{font-size:30px;line-height:1.15;margin:0 0 4px;color:var(--c)}
+h2{font:600 15px system-ui,sans-serif;margin:26px 0 8px}
+.m{color:var(--mut);font:14px system-ui,sans-serif}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+button,input,select{font:15px system-ui,sans-serif}
+.chip{padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.chip.on{background:var(--c);border-color:var(--c);color:#fff}
+.chip:disabled{opacity:.4;text-decoration:line-through;cursor:not-allowed}
+.chip:focus-visible,.go:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:10px}
+.go{width:100%;padding:14px;border:0;border-radius:12px;background:var(--c);color:#fff;font-weight:600;cursor:pointer;margin-top:8px}
+.go:disabled{opacity:.5}
+.row{padding:11px 0;border-bottom:1px solid var(--line);font:14px system-ui,sans-serif}
+.tag{float:right;font-size:12px;padding:2px 9px;border-radius:99px;background:#eee}
+.tag.confirmed,.tag.done{background:var(--c);color:#fff}
+.warn{padding:12px;border-radius:10px;background:#f5e6d3;font:14px system-ui,sans-serif}
+#t{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:90%;background:#1c1c1a;color:#fff;padding:11px 16px;border-radius:12px;font:14px system-ui,sans-serif;display:none}
+</style>
 </head>
-<body class="min-h-screen text-[#111111] antialiased selection:bg-[#111111] selection:text-white">
-
-    <header class="sticky top-0 z-30 backdrop-blur-sm border-b border-[#EAEAEA]" style="background-color: color-mix(in srgb, var(--brand-bg) 95%, transparent);">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-            <button onclick="goClientHome()" class="flex items-center gap-2.5 text-left group min-w-0">
-                <span id="client-header-logo" class="w-8 h-8 rounded-full btn-brand flex items-center justify-center text-xs font-normal tracking-wider overflow-hidden shrink-0">
-                    A
-                </span>
-                <div class="min-w-0">
-                    <span id="client-header-name" class="text-sm font-normal tracking-tight text-[#111111] block leading-none truncate">
-                        Atelier Studio
-                    </span>
-                    <span id="client-header-hours" class="text-[10px] text-[#737373] leading-tight block truncate">
-                        Seg – Sáb • 09h às 19h
-                    </span>
-                </div>
-            </button>
-
-            <div class="flex items-center gap-2 shrink-0">
-                <button onclick="syncClientNow(true)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] bg-white hover:border-[#111111] text-[#111111] transition-colors">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 stroke-[1.5]"></i>
-                    <span class="hidden sm:inline">Atualizar</span>
-                </button>
-
-                <button onclick="openClientAccountModal()"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-[#EAEAEA] surface-brand hover:border-[#111111] text-[#111111] transition-colors">
-                    <i data-lucide="user" class="w-3.5 h-3.5 stroke-[1.5]"></i>
-                    <span id="client-account-pill" class="max-w-[110px] truncate">Entrar / Conta</span>
-                </button>
-
-                <button id="install-client-pwa-btn" onclick="installClientPwa()"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs btn-brand hover:opacity-90 transition-opacity">
-                    <i data-lucide="download" class="w-3.5 h-3.5 stroke-[1.75]"></i>
-                    <span class="font-normal">Instalar App</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-7 sm:py-10">
-        <section id="view-client" class="fade-in space-y-8">
-
-            <div class="relative w-full h-36 sm:h-48 rounded-2xl border border-[#EAEAEA] surface-brand overflow-hidden">
-                <img id="client-cover-img"
-                     src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
-                     alt="Foto do estabelecimento"
-                     onerror="this.onerror=null;this.src='https://placehold.co/1200x400/F5F5F5/111111?text=ESTABELECIMENTO';"
-                     class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent flex items-end justify-between p-4 sm:p-5 gap-3">
-                    <div class="text-white min-w-0">
-                        <p id="client-cover-niche" class="text-[10px] uppercase tracking-[0.16em] text-white/75 truncate">Estabelecimento</p>
-                        <h1 id="client-cover-title" class="text-lg sm:text-xl font-normal tracking-tight truncate">Atelier Studio</h1>
-                        <p id="client-cover-hours" class="text-[11px] text-white/80 truncate">Seg – Sáb • 09h às 19h</p>
-                    </div>
-                    <span class="px-3 py-1 rounded-full bg-black/55 backdrop-blur-xs text-white text-[11px] inline-flex items-center gap-2 shrink-0">
-                        <span id="client-cover-dot" class="w-2 h-2 rounded-full status-dot-online"></span>
-                        <span id="client-cover-status-text">Online</span>
-                    </span>
-                </div>
-            </div>
-
-            <div id="studio-offline-banner" class="hidden p-4 rounded-2xl border border-[#EAEAEA] surface-brand text-xs text-[#737373] flex items-center justify-between gap-3">
-                <span>O agendamento online está pausado no momento.</span>
-                <span class="text-[11px] text-[#111111]">Studio Offline</span>
-            </div>
-
-            <div id="client-booking-flow" class="space-y-8">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs uppercase tracking-[0.12em] text-[#737373]">1. Escolha o profissional</span>
-                        <span id="selected-pro-summary" class="text-xs text-[#737373]"></span>
-                    </div>
-                    <div id="client-pro-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs uppercase tracking-[0.12em] text-[#737373]">2. Escolha o serviço</span>
-                        <span class="text-[11px] text-[#A3A3A3]">Preço e duração conforme o profissional</span>
-                    </div>
-                    <div id="client-service-list" class="space-y-2.5"></div>
-                </div>
-
-                <div class="space-y-3">
-                    <span class="block text-xs uppercase tracking-[0.12em] text-[#737373]">3. Data e horário</span>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input id="client-date" type="date" onchange="renderClientTimeSlots()"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
-                        <div id="client-time-slots" class="flex gap-2 overflow-x-auto no-scrollbar py-0.5"></div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <span class="block text-xs uppercase tracking-[0.12em] text-[#737373]">4. Forma de pagamento</span>
-                    <div id="client-payment-methods" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
-                </div>
-
-                <div class="space-y-3 pt-2 border-t border-[#EAEAEA]">
-                    <span class="block text-xs uppercase tracking-[0.12em] text-[#737373]">5. Seus dados</span>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input id="client-name" type="text" placeholder="Seu nome completo"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
-                        <input id="client-phone" type="tel" oninput="renderClientAppointments()" placeholder="WhatsApp (ex: 11 99999-9999)"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
-                    </div>
-                </div>
-
-                <div class="p-5 rounded-2xl border border-[#EAEAEA] surface-brand flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <span class="block text-xs text-[#737373]">Total do serviço</span>
-                        <span id="client-total-price" class="text-2xl font-light text-[#111111]">R$ 0</span>
-                        <span id="client-total-meta" class="block text-xs text-[#737373] mt-0.5">Selecione profissional e serviço</span>
-                    </div>
-                    <button id="btn-confirm-booking" onclick="submitClientBooking()"
-                            class="px-6 py-3 rounded-full btn-brand text-xs font-normal tracking-wide hover:opacity-90 transition-opacity">
-                        Solicitar agendamento
-                    </button>
-                </div>
-            </div>
-
-            <div id="client-success-box" class="hidden p-6 sm:p-8 rounded-2xl border border-[#EAEAEA] surface-brand text-center space-y-5">
-                <div class="w-10 h-10 rounded-full btn-brand flex items-center justify-center mx-auto">
-                    <i data-lucide="clock" class="w-4 h-4 stroke-[1.75]"></i>
-                </div>
-                <div class="space-y-1">
-                    <span class="inline-block text-[11px] px-3 py-0.5 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">
-                        Solicitação enviada • Aguardando aceite do profissional
-                    </span>
-                    <h2 class="text-xl font-light text-[#111111] pt-1">Horário reservado para análise</h2>
-                    <p id="client-success-summary" class="text-xs text-[#737373] max-w-md mx-auto leading-relaxed"></p>
-                </div>
-
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
-                    <a id="client-whatsapp-link" href="#" target="_blank" rel="noopener noreferrer"
-                       class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
-                        <i data-lucide="message-circle" class="w-3.5 h-3.5 stroke-[1.5]"></i>
-                        <span>Avisar no WhatsApp</span>
-                    </a>
-                    <button onclick="resetClientBookingForm()"
-                            class="w-full sm:w-auto px-5 py-2.5 rounded-full border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111] transition-colors">
-                        Fazer novo agendamento
-                    </button>
-                </div>
-            </div>
-
-            <div class="pt-6 border-t border-[#EAEAEA] space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs uppercase tracking-[0.12em] text-[#737373]">Meus agendamentos</span>
-                    <span id="client-appointments-count" class="text-xs text-[#A3A3A3]">0</span>
-                </div>
-                <div id="client-my-appointments" class="space-y-2"></div>
-            </div>
-        </section>
-    </main>
-
-    <!-- MODAL CONTA DO CLIENTE -->
-    <div id="modal-client-account" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
-        <div class="bg-white border border-[#EAEAEA] rounded-2xl w-full max-w-md p-6 space-y-5 fade-in">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] uppercase tracking-[0.14em] text-[#737373]">Área do Cliente</p>
-                    <h3 class="text-base font-normal text-[#111111]">Entrar ou criar conta</h3>
-                </div>
-                <button onclick="closeClientAccountModal()" class="text-[#737373] hover:text-[#111111]">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <div id="client-logged-in-box" class="hidden p-4 rounded-2xl border border-[#EAEAEA] surface-brand space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p id="logged-client-name" class="text-sm font-normal text-[#111111]"></p>
-                        <p id="logged-client-user" class="text-xs text-[#737373]"></p>
-                    </div>
-                    <span class="text-[11px] px-2.5 py-0.5 rounded-full btn-brand">Conectado</span>
-                </div>
-                <button type="button" onclick="logoutClientAccount()"
-                        class="w-full py-2 rounded-xl border border-[#EAEAEA] bg-white hover:border-[#111111] text-xs text-[#111111]">
-                    Sair da conta
-                </button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-1 p-1 rounded-full surface-brand border border-[#EAEAEA]">
-                <button type="button" id="tab-client-login" onclick="switchClientAuthTab('login')"
-                        class="py-1.5 rounded-full text-xs btn-brand">Entrar</button>
-                <button type="button" id="tab-client-register" onclick="switchClientAuthTab('register')"
-                        class="py-1.5 rounded-full text-xs text-[#737373]">Criar conta</button>
-            </div>
-
-            <form id="form-client-login" onsubmit="handleClientLogin(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Usuário ou WhatsApp</label>
-                    <input id="login-client-identifier" type="text" required placeholder="Ex: maria.silva ou 11999990000"
-                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-                </div>
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Senha (PIN de 4+ dígitos)</label>
-                    <input id="login-client-pin" type="password" required placeholder="••••"
-                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-                </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90">
-                    Entrar na minha conta
-                </button>
-            </form>
-
-            <form id="form-client-register" onsubmit="handleClientRegister(event)" class="hidden space-y-3">
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Nome completo</label>
-                    <input id="reg-client-name" type="text" required placeholder="Ex: Mariana Costa"
-                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-                </div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <label class="block text-xs text-[#737373] mb-1">Nome de usuário</label>
-                        <input id="reg-client-username" type="text" required placeholder="mariana.costa"
-                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-[#737373] mb-1">WhatsApp</label>
-                        <input id="reg-client-phone" type="tel" required placeholder="11999990000"
-                               class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-[#737373] mb-1">Crie uma senha / PIN</label>
-                    <input id="reg-client-pin" type="password" required minlength="4" placeholder="Mínimo 4 caracteres"
-                           class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs focus:outline-none focus:border-[#111111]">
-                </div>
-                <button type="submit" class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90">
-                    Criar conta e entrar
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div id="toast"
-         class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200 bg-[#111111] text-white text-xs px-4 py-2.5 rounded-full shadow-sm max-w-[92vw] text-center">
-    </div>
-
-    <script>
-        function getTodayLocalIso() {
-            const now = new Date();
-            const off = now.getTimezoneOffset();
-            return new Date(now.getTime() - off * 60000).toISOString().slice(0, 10);
-        }
-
-        let TODAY_ISO = getTodayLocalIso();
-
-        /* ===== Helpers compartilhados (idênticos no admin e no app do cliente) ===== */
-        function escapeHtml(v) {
-            return String(v === null || v === undefined ? '' : v)
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        }
-        function newId(prefix) {
-            if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
-            return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-        }
-        function normTime(t) {
-            const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
-            return m ? m[1].padStart(2, '0') + ':' + m[2] : String(t || '');
-        }
-        function timeToMin(t) {
-            const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
-            return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
-        }
-        function phoneKey(p) {
-            const d = String(p || '').replace(/\D/g, '');
-            return d.length >= 8 ? d.slice(-8) : '';
-        }
-        function normalizeAppointment(a) {
-            return {
-                ...a,
-                time: normTime(a.time),
-                remindersSent: a.remindersSent || { dayBefore: false, hourBefore: false },
-                confirmationImage: a.confirmationImage || null
-            };
-        }
-        function apptDuration(a) {
-            return getProServiceInfo(getProById(a.proId), a.serviceId).duration || 45;
-        }
-        function hasTimeConflict(list, proId, date, startMin, durMin, ignoreId) {
-            return list.some(a => a.id !== ignoreId && a.proId === proId && a.date === date &&
-                startMin < timeToMin(a.time) + apptDuration(a) && timeToMin(a.time) < startMin + durMin);
-        }
-        const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
-        const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
-        const CLIENT_SESSION_KEY = 'atelier_client_session_v1';
-        const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
-        const TIME_SLOTS = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:30', '18:00'];
-
-        let sbClient = null;
-        let dbConnected = false;
-        let deferredClientPwaPrompt = null;
-        let syncInFlight = false;
-        let resyncQueued = false;
-
-        const state = {
-            studioOnline: true,
-            studioName: 'Atelier Studio',
-            studioNiche: 'Estúdio',
-            studioHours: 'Seg – Sáb • 09h às 19h',
-            studioCover: DEFAULT_COVER,
-            studioLogo: '',
-            themeColors: {
-                primary: '#111111',
-                bg: '#FFFFFF',
-                surface: '#FAFAFA'
-            },
-            selectedProId: null,
-            selectedServiceId: null,
-            selectedDate: TODAY_ISO,
-            selectedTime: '10:00',
-            selectedPayment: 'Pix',
-            loggedClient: null,
-            servicesCatalog: [
-                { id: 's1', name: 'Corte & Visagismo', specialty: 'Atendimento', duration: 45, price: 120 },
-                { id: 's2', name: 'Barba Terapia & Toalha Quente', specialty: 'Atendimento', duration: 35, price: 70 },
-                { id: 's3', name: 'Manicure & Esmaltação em Gel', specialty: 'Atendimento', duration: 60, price: 95 },
-            ],
-            professionals: [
-                { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
-                { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
-            ],
-            archivedServices: [],
-            archivedProfessionals: [],
-            clientsRoster: [],
-            paymentMethods: [
-                { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
-                { id: 'pay-credit', label: 'Cartão de Crédito', detail: 'À vista ou parcelado', enabled: true },
-                { id: 'pay-debit', label: 'Cartão de Débito', detail: 'Débito na maquininha', enabled: true },
-                { id: 'pay-cash', label: 'Dinheiro', detail: 'Pagamento presencial', enabled: true },
-            ],
-            appointments: []
-        };
-
-        function loadLocalBackup() {
-            try {
-                const raw = localStorage.getItem(LOCAL_CFG_KEY);
-                if (raw) {
-                    const saved = JSON.parse(raw);
-                    if (saved.studioName) state.studioName = saved.studioName;
-                    if (saved.studioNiche) state.studioNiche = saved.studioNiche;
-                    if (typeof saved.studioOnline === 'boolean') state.studioOnline = saved.studioOnline;
-                    if (saved.studioCover) state.studioCover = saved.studioCover;
-                    if (typeof saved.studioLogo === 'string') state.studioLogo = saved.studioLogo;
-                    if (saved.studioHours) state.studioHours = saved.studioHours;
-                    if (saved.themeColors) state.themeColors = { ...state.themeColors, ...saved.themeColors };
-                }
-
-                const rawData = localStorage.getItem(LOCAL_DATA_KEY);
-                if (rawData) {
-                    const d = JSON.parse(rawData);
-                    if (Array.isArray(d.servicesCatalog)) state.servicesCatalog = d.servicesCatalog;
-                    if (Array.isArray(d.professionals)) state.professionals = d.professionals;
-                    if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
-                    if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
-                    if (Array.isArray(d.appointments)) state.appointments = d.appointments.map(normalizeAppointment);
-                }
-
-                const rawSession = localStorage.getItem(CLIENT_SESSION_KEY);
-                if (rawSession) {
-                    const sess = JSON.parse(rawSession);
-                    if (sess && sess.name) state.loggedClient = sess;
-                }
-            } catch (e) {}
-        }
-
-        function saveLocalBackup() {
-            try {
-                let prevCfg = {};
-                try { prevCfg = JSON.parse(localStorage.getItem(LOCAL_CFG_KEY) || '{}') || {}; } catch (e) {}
-                localStorage.setItem(LOCAL_CFG_KEY, JSON.stringify({
-                    ...prevCfg, // preserva campos que só o admin conhece (ex.: reminderRules)
-                    studioName: state.studioName,
-                    studioNiche: state.studioNiche,
-                    studioOnline: state.studioOnline,
-                    studioCover: state.studioCover,
-                    studioLogo: state.studioLogo,
-                    studioHours: state.studioHours,
-                    themeColors: state.themeColors
-                }));
-                localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify({
-                    servicesCatalog: state.servicesCatalog,
-                    professionals: state.professionals,
-                    clientsRoster: dbConnected ? [] : state.clientsRoster, // nunca guardar PINs vindos do banco
-                    paymentMethods: state.paymentMethods,
-                    appointments: state.appointments.map(ap => ({ ...ap, confirmationImage: null }))
-                }));
-            } catch (e) {}
-        }
-
-        async function checkDbStatus() {
-            if (!dbConnected) {
-                console.warn('Supabase não conectado. window.SUPABASE_CONFIG =', window.SUPABASE_CONFIG);
-                showToast('Banco não conectado: os dados exibidos são só deste navegador.');
-                return;
-            }
-            const { error } = await sbClient.from('estabelecimentos').select('id').limit(1);
-            if (error) { console.error('Supabase leitura falhou:', error); showToast('Falha ao ler o banco: ' + error.message); }
-        }
-
-        function initSupabase() {
-            const cfg = window.SUPABASE_CONFIG;
-            if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) return;
-            if (!window.supabase || !window.supabase.createClient) return;
-            sbClient = window.supabase.createClient(cfg.url, cfg.anonKey);
-            dbConnected = true;
-        }
-
-        async function loadFromSupabase() {
-            if (syncInFlight) { resyncQueued = true; return; }
-            syncInFlight = true;
-            TODAY_ISO = getTodayLocalIso();
-
-            try {
-                if (!dbConnected || !sbClient) {
-                    loadLocalBackup();
-                    return;
-                }
-
-                const estId = (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.estabelecimentoId) || 'default';
-
-                const { data: est, error: estErr } = await sbClient.from('estabelecimentos').select('*').eq('id', estId).maybeSingle();
-                if (!estErr && est) {
-                    state.studioName = est.nome || state.studioName;
-                    state.studioNiche = est.nicho || state.studioNiche;
-                    state.studioOnline = typeof est.online === 'boolean' ? est.online : state.studioOnline;
-                    state.studioCover = est.capa_url || state.studioCover;
-                    state.studioLogo = est.logo_url !== undefined && est.logo_url !== null ? est.logo_url : '';
-                    state.studioHours = est.horario_funcionamento || state.studioHours;
-                    state.themeColors = {
-                        primary: est.cor_primaria || '#111111',
-                        bg: est.cor_fundo || '#FFFFFF',
-                        surface: est.cor_destaque || '#FAFAFA'
-                    };
-                }
-
-                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*');
-                if (!svcErr && Array.isArray(svcs)) {
-                    const mapSvc = s => ({ id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0 });
-                    state.servicesCatalog = svcs.filter(s => s.ativo !== false).map(mapSvc);
-                    state.archivedServices = svcs.filter(s => s.ativo === false).map(mapSvc);
-                }
-
-                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*');
-                const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
-                if (!proErr && Array.isArray(pros)) {
-                    const mapPro = p => {
-                        const rates = {};
-                        (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
-                            rates[ps.servico_id] = { enabled: true, price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
-                        });
-                        return { id: p.id, name: p.nome, specialty: p.especialidade || 'Profissional', serviceRates: rates };
-                    };
-                    state.professionals = pros.filter(p => p.ativo !== false).map(mapPro);
-                    state.archivedProfessionals = pros.filter(p => p.ativo === false).map(mapPro);
-                }
-
-                const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
-                if (!payErr && Array.isArray(pays)) {
-                    state.paymentMethods = pays.map(pm => ({ id: pm.id, label: pm.nome, detail: pm.descricao || '', enabled: !!pm.ativo }));
-                }
-
-                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('data_agendamento', { ascending: true }).order('hora_agendamento', { ascending: true });
-                if (!appErr && Array.isArray(apps)) {
-                    state.appointments = apps.map(a => ({
-                        id: a.id,
-                        clientName: a.cliente_nome,
-                        clientPhone: a.cliente_whatsapp || '',
-                        proId: a.profissional_id,
-                        serviceId: a.servico_id,
-                        date: a.data_agendamento,
-                        time: normTime(a.hora_agendamento),
-                        price: Number(a.valor) || 0,
-                        paymentMethod: a.forma_pagamento || 'Pix',
-                        status: a.status || 'pending',
-                        remindersSent: { dayBefore: !!a.lembrete_24h_enviado, hourBefore: !!a.lembrete_1h_enviado }
-                    }));
-                }
-
-                saveLocalBackup();
-            } catch (e) {
-                console.warn('Erro ao sincronizar app cliente:', e);
-            } finally {
-                syncInFlight = false;
-                if (resyncQueued) {
-                    resyncQueued = false;
-                    loadFromSupabase().then(() => renderClientView());
-                }
-            }
-        }
-
-        function subscribeClientRealtime() {
-            if (!dbConnected || !sbClient || !sbClient.channel) return;
-            try {
-                const tables = ['agendamentos', 'estabelecimentos', 'servicos', 'profissionais', 'profissional_servicos', 'formas_pagamento'];
-                const channel = sbClient.channel('client-full-realtime');
-                tables.forEach(tbl => {
-                    channel.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, async () => {
-                        await loadFromSupabase();
-                        renderClientView();
-                    });
-                });
-                channel.subscribe();
-            } catch (e) {}
-        }
-
-        async function syncClientNow(showMsg = false) {
-            await loadFromSupabase();
-            renderClientView();
-            if (showMsg) showToast('Informações atualizadas.');
-        }
-
-        function applyBrandingAndTheme() {
-            document.documentElement.style.setProperty('--brand-primary', state.themeColors.primary);
-            document.documentElement.style.setProperty('--brand-bg', state.themeColors.bg);
-            document.documentElement.style.setProperty('--brand-surface', state.themeColors.surface);
-
-            document.getElementById('client-header-name').textContent = state.studioName;
-            document.getElementById('client-header-hours').textContent = state.studioHours;
-            document.getElementById('client-cover-title').textContent = state.studioName;
-            document.getElementById('client-cover-niche').textContent = state.studioNiche;
-            document.getElementById('client-cover-hours').textContent = state.studioHours;
-            document.getElementById('client-cover-img').src = state.studioCover;
-
-            const initial = (state.studioName || 'A').trim().charAt(0).toUpperCase() || 'A';
-            const logoEl = document.getElementById('client-header-logo');
-            if (state.studioLogo) {
-                logoEl.innerHTML = `<img src="${escapeHtml(state.studioLogo)}" alt="Logo" class="w-full h-full object-cover">`;
-            } else {
-                logoEl.textContent = initial;
-            }
-
-            const dot = document.getElementById('client-cover-dot');
-            const statusText = document.getElementById('client-cover-status-text');
-            dot.classList.remove(state.studioOnline ? 'status-dot-offline' : 'status-dot-online');
-            dot.classList.add(state.studioOnline ? 'status-dot-online' : 'status-dot-offline');
-            statusText.textContent = state.studioOnline ? 'Online' : 'Offline';
-
-            const pill = document.getElementById('client-account-pill');
-            pill.textContent = state.loggedClient ? state.loggedClient.name.split(' ')[0] : 'Entrar / Conta';
-        }
-
-        function getProById(id) {
-            const found = state.professionals.find(p => p.id === id) || state.archivedProfessionals.find(p => p.id === id);
-            if (found) return found;
-            if (id) return { id, name: 'Profissional removido', specialty: '', serviceRates: {} };
-            return state.professionals[0] || { id: null, name: 'Profissional', specialty: '', serviceRates: {} };
-        }
-        function getServiceById(id) {
-            const found = state.servicesCatalog.find(s => s.id === id) || state.archivedServices.find(s => s.id === id);
-            if (found) return found;
-            if (id) return { id, name: 'Serviço removido', specialty: '', duration: 45, price: 0 };
-            return state.servicesCatalog[0] || { id: null, name: 'Serviço', specialty: '', duration: 45, price: 0 };
-        }
-        function getProServiceInfo(pro, serviceId) {
-            const base = getServiceById(serviceId);
-            const custom = pro && pro.serviceRates && pro.serviceRates[serviceId];
-            if (custom && custom.enabled) {
-                return { available: true, price: Number(custom.price) || base.price, duration: Number(custom.duration) || base.duration };
-            }
-            return { available: false, price: base.price, duration: base.duration };
-        }
-
-        function ensureValidSelections() {
-            if (!state.professionals.some(p => p.id === state.selectedProId)) {
-                state.selectedProId = state.professionals[0] ? state.professionals[0].id : null;
-            }
-            const pro = getProById(state.selectedProId);
-            const availableServices = state.servicesCatalog.filter(s => getProServiceInfo(pro, s.id).available);
-            if (!availableServices.some(s => s.id === state.selectedServiceId)) {
-                state.selectedServiceId = availableServices[0] ? availableServices[0].id : (state.servicesCatalog[0] ? state.servicesCatalog[0].id : null);
-            }
-            const activePayments = state.paymentMethods.filter(m => m.enabled);
-            if (!activePayments.some(m => m.label === state.selectedPayment)) {
-                state.selectedPayment = activePayments[0] ? activePayments[0].label : 'Pix';
-            }
-        }
-
-        function renderClientView() {
-            applyBrandingAndTheme();
-            ensureValidSelections();
-
-            const dateInput = document.getElementById('client-date');
-            dateInput.min = TODAY_ISO;
-            if (!dateInput.value || dateInput.value < TODAY_ISO) dateInput.value = TODAY_ISO;
-            state.selectedDate = dateInput.value || TODAY_ISO;
-
-            if (state.loggedClient) {
-                const nameInput = document.getElementById('client-name');
-                const phoneInput = document.getElementById('client-phone');
-                if (!nameInput.value) nameInput.value = state.loggedClient.name || '';
-                if (!phoneInput.value) phoneInput.value = state.loggedClient.phone || '';
-            }
-
-            const offlineBanner = document.getElementById('studio-offline-banner');
-            const flow = document.getElementById('client-booking-flow');
-            if (!state.studioOnline) {
-                offlineBanner.classList.remove('hidden');
-                flow.classList.add('opacity-50', 'pointer-events-none');
-            } else {
-                offlineBanner.classList.add('hidden');
-                flow.classList.remove('opacity-50', 'pointer-events-none');
-            }
-
-            renderClientProList();
-            renderClientServiceList();
-            renderClientTimeSlots();
-            renderClientPayments();
-            updateClientTotal();
-            renderClientAppointments();
-            lucide.createIcons();
-        }
-
-        function renderClientProList() {
-            const container = document.getElementById('client-pro-list');
-            const pro = getProById(state.selectedProId);
-            document.getElementById('selected-pro-summary').textContent = pro ? `${pro.name} selecionado` : '';
-
-            container.innerHTML = state.professionals.map(p => {
-                const active = p.id === state.selectedProId;
-                const count = Object.values(p.serviceRates || {}).filter(r => r && r.enabled).length;
-                return `
-                    <button type="button" onclick="selectClientPro('${p.id}')"
-                            class="p-4 rounded-2xl border text-left transition-all ${active ? 'border-[#111111] btn-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm font-normal">${escapeHtml(p.name)}</span>
-                            <span class="text-[11px] ${active ? 'text-white/75' : 'text-[#737373]'}">${count} serviço(s)</span>
-                        </div>
-                        <p class="text-xs mt-1 ${active ? 'text-white/80' : 'text-[#737373]'}">${escapeHtml(p.specialty || 'Profissional')}</p>
-                    </button>
-                `;
-            }).join('');
-        }
-
-        function selectClientPro(proId) {
-            state.selectedProId = proId;
-            const pro = getProById(proId);
-            const available = state.servicesCatalog.filter(s => getProServiceInfo(pro, s.id).available);
-            if (!available.some(s => s.id === state.selectedServiceId)) {
-                state.selectedServiceId = available[0] ? available[0].id : null;
-            }
-            renderClientView();
-        }
-
-        function renderClientServiceList() {
-            const container = document.getElementById('client-service-list');
-            const pro = getProById(state.selectedProId);
-            const list = state.servicesCatalog.filter(s => getProServiceInfo(pro, s.id).available);
-            const itemsToShow = list.length ? list : state.servicesCatalog;
-
-            container.innerHTML = itemsToShow.map(s => {
-                const info = getProServiceInfo(pro, s.id);
-                const active = s.id === state.selectedServiceId;
-                return `
-                    <button type="button" onclick="selectClientService('${s.id}')"
-                            class="w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all ${active ? 'border-[#111111] surface-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
-                        <div>
-                            <p class="text-sm font-normal text-[#111111]">${escapeHtml(s.name)}</p>
-                            <p class="text-xs text-[#737373]">${info.duration} min${s.specialty ? ` • ${escapeHtml(s.specialty)}` : ''}</p>
-                        </div>
-                        <span class="text-sm font-normal text-[#111111]">R$ ${info.price}</span>
-                    </button>
-                `;
-            }).join('');
-        }
-
-        function selectClientService(svcId) {
-            state.selectedServiceId = svcId;
-            renderClientServiceList();
-            renderClientTimeSlots(); // a duração do serviço muda quais horários ficam livres
-            updateClientTotal();
-        }
-
-        function renderClientTimeSlots() {
-            const dateVal = document.getElementById('client-date').value || TODAY_ISO;
-            state.selectedDate = dateVal;
-            const pro = getProById(state.selectedProId);
-            const dur = getProServiceInfo(pro, state.selectedServiceId).duration || 45;
-            const now = new Date();
-            const nowMin = now.getHours() * 60 + now.getMinutes();
-            const isTaken = (slot) => {
-                const start = timeToMin(slot);
-                if (dateVal < TODAY_ISO) return true;
-                if (dateVal === TODAY_ISO && start <= nowMin) return true;
-                return hasTimeConflict(state.appointments, state.selectedProId, dateVal, start, dur, null);
-            };
-            if (!state.selectedTime || isTaken(state.selectedTime)) {
-                state.selectedTime = TIME_SLOTS.find(s => !isTaken(s)) || null;
-            }
-
-            const container = document.getElementById('client-time-slots');
-            container.innerHTML = TIME_SLOTS.map(slot => {
-                const taken = isTaken(slot);
-                const active = !taken && state.selectedTime === slot;
-                return `
-                    <button type="button" ${taken ? 'disabled' : `onclick="selectClientTime('${slot}')"`}
-                            class="px-3.5 py-2 rounded-xl text-xs shrink-0 border transition-colors ${
-                                taken
-                                    ? 'border-[#EAEAEA] bg-[#F5F5F5] text-[#A3A3A3] line-through cursor-not-allowed'
-                                    : active
-                                        ? 'border-[#111111] btn-brand'
-                                        : 'border-[#EAEAEA] bg-white text-[#111111] hover:border-[#111111]'
-                            }">
-                        ${slot}
-                    </button>
-                `;
-            }).join('');
-        }
-
-        function selectClientTime(slot) {
-            state.selectedTime = slot;
-            renderClientTimeSlots();
-        }
-
-        function renderClientPayments() {
-            const activeMethods = state.paymentMethods.filter(m => m.enabled);
-            const list = activeMethods.length ? activeMethods : state.paymentMethods;
-            const container = document.getElementById('client-payment-methods');
-            container.innerHTML = list.map(pm => {
-                const active = pm.label === state.selectedPayment;
-                return `
-                    <button type="button" data-label="${escapeHtml(pm.label)}" onclick="selectClientPayment(this.dataset.label)"
-                            class="p-3 rounded-xl border text-left transition-colors ${active ? 'border-[#111111] btn-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
-                        <span class="block text-xs font-normal">${escapeHtml(pm.label)}</span>
-                        <span class="block text-[10px] mt-0.5 ${active ? 'text-white/75' : 'text-[#737373]'}">${escapeHtml(pm.detail || '')}</span>
-                    </button>
-                `;
-            }).join('');
-        }
-
-        function selectClientPayment(label) {
-            state.selectedPayment = label;
-            renderClientPayments();
-        }
-
-        function updateClientTotal() {
-            const pro = getProById(state.selectedProId);
-            const svc = getServiceById(state.selectedServiceId);
-            const info = getProServiceInfo(pro, svc.id);
-            document.getElementById('client-total-price').textContent = `R$ ${info.price}`;
-            document.getElementById('client-total-meta').textContent = `${svc.name} • ${info.duration} min • com ${pro.name}`;
-        }
-
-        let bookingInFlight = false;
-
-        async function submitClientBooking() {
-            if (bookingInFlight) return;
-            if (!state.studioOnline) {
-                showToast('O agendamento online está pausado no momento.');
-                return;
-            }
-            const name = document.getElementById('client-name').value.trim();
-            const phone = document.getElementById('client-phone').value.trim();
-            const date = document.getElementById('client-date').value || TODAY_ISO;
-
-            if (!name) { showToast('Por favor, informe seu nome.'); return; }
-            if (!phone) { showToast('Por favor, informe seu WhatsApp.'); return; }
-            if (!phoneKey(phone)) { showToast('Informe um WhatsApp válido, com DDD.'); return; }
-            if (date < TODAY_ISO) { showToast('Escolha uma data a partir de hoje.'); return; }
-
-            const pro = getProById(state.selectedProId);
-            const svc = getServiceById(state.selectedServiceId);
-            const info = getProServiceInfo(pro, svc.id);
-            if (!pro.id || !svc.id) { showToast('Nenhum profissional ou serviço disponível no momento.'); return; }
-            if (!info.available) { showToast('Este profissional não realiza o serviço selecionado.'); return; }
-            if (!state.selectedTime) { showToast('Não há horários livres nesta data. Escolha outro dia.'); return; }
-
-            const startMin = timeToMin(state.selectedTime);
-            const now = new Date();
-            if (date === TODAY_ISO && startMin <= now.getHours() * 60 + now.getMinutes()) {
-                showToast('Esse horário já passou. Escolha outro.');
-                renderClientTimeSlots();
-                return;
-            }
-
-            bookingInFlight = true;
-            try {
-                const item = {
-                    id: newId('a'),
-                    clientName: name,
-                    clientPhone: phone,
-                    proId: pro.id,
-                    serviceId: svc.id,
-                    date,
-                    time: state.selectedTime,
-                    price: info.price,
-                    paymentMethod: state.selectedPayment,
-                    status: 'pending',
-                    remindersSent: { dayBefore: false, hourBefore: false }
-                };
-
-                if (dbConnected && sbClient) {
-                    // revalida no banco: outro cliente (ou o admin) pode ter ocupado o horário nos últimos segundos
-                    const { data: rows, error: chkErr } = await sbClient.from('agendamentos')
-                        .select('id,profissional_id,servico_id,data_agendamento,hora_agendamento')
-                        .eq('profissional_id', pro.id).eq('data_agendamento', date);
-                    if (!chkErr && Array.isArray(rows)) {
-                        const remote = rows.map(r => ({ id: r.id, proId: r.profissional_id, serviceId: r.servico_id, date: r.data_agendamento, time: normTime(r.hora_agendamento) }));
-                        if (hasTimeConflict(remote, pro.id, date, startMin, info.duration, null)) {
-                            await loadFromSupabase();
-                            renderClientView();
-                            showToast('Esse horário acabou de ser ocupado. Escolha outro.');
-                            return;
-                        }
-                    }
-                    const { error } = await sbClient.from('agendamentos').insert({
-                        id: item.id,
-                        cliente_nome: item.clientName,
-                        cliente_whatsapp: item.clientPhone,
-                        profissional_id: item.proId,
-                        servico_id: item.serviceId,
-                        data_agendamento: item.date,
-                        hora_agendamento: item.time,
-                        valor: item.price,
-                        forma_pagamento: item.paymentMethod,
-                        status: 'pending'
-                    });
-                    if (error) {
-                        // não mostra "enviado" se o banco recusou
-                        showToast(error.code === '23505'
-                            ? 'Esse horário acabou de ser ocupado. Escolha outro.'
-                            : 'Não foi possível enviar a solicitação: ' + error.message);
-                        return;
-                    }
-                } else if (hasTimeConflict(state.appointments, pro.id, date, startMin, info.duration, null)) {
-                    showToast('Esse horário já está ocupado. Escolha outro.');
-                    renderClientTimeSlots();
-                    return;
-                }
-
-                state.appointments.push(item);
-                saveLocalBackup();
-
-                document.getElementById('client-booking-flow').classList.add('hidden');
-                const box = document.getElementById('client-success-box');
-                box.classList.remove('hidden');
-                document.getElementById('client-success-summary').textContent =
-                    `${name}, sua solicitação de ${svc.name} com ${pro.name} para ${date} às ${item.time} (${item.paymentMethod} • R$ ${item.price}) foi enviada.`;
-
-                const waMsg = `Olá! Solicitei um agendamento no ${state.studioName}: ${svc.name} com ${pro.name} em ${date} às ${item.time} (${item.paymentMethod}). Nome: ${name}.`;
-                document.getElementById('client-whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
-
-                renderClientAppointments();
-                lucide.createIcons();
-                showToast('Solicitação enviada ao profissional!');
-            } finally {
-                bookingInFlight = false;
-            }
-        }
-
-        function resetClientBookingForm() {
-            document.getElementById('client-success-box').classList.add('hidden');
-            document.getElementById('client-booking-flow').classList.remove('hidden');
-            renderClientView();
-        }
-
-        function goClientHome() {
-            resetClientBookingForm();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function getClientStatusBadge(status) {
-            if (status === 'pending') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full bg-[#F1E9D8] text-[#6B5B3E]">Aguardando aceite</span>';
-            if (status === 'done') return '<span class="text-[11px] px-2.5 py-0.5 rounded-full btn-brand">Concluído</span>';
-            return '<span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#111111]">Confirmado</span>';
-        }
-
-        function renderClientAppointments() {
-            const container = document.getElementById('client-my-appointments');
-            const countEl = document.getElementById('client-appointments-count');
-            const typedPhone = document.getElementById('client-phone')?.value || '';
-            const key = phoneKey(typedPhone) || phoneKey(state.loggedClient?.phone);
-
-            if (!key) {
-                countEl.textContent = '0';
-                container.innerHTML = `<p class="text-xs text-[#737373] py-4 text-center border border-dashed border-[#EAEAEA] rounded-2xl">Informe seu WhatsApp (ou entre na conta) para ver seus agendamentos.</p>`;
-                return;
-            }
-
-            const list = state.appointments
-                .filter(a => phoneKey(a.clientPhone) === key)
-                .sort((x, y) => `${x.date} ${x.time}`.localeCompare(`${y.date} ${y.time}`));
-
-            countEl.textContent = `${list.length}`;
-            if (!list.length) {
-                container.innerHTML = `<p class="text-xs text-[#737373] py-4 text-center border border-dashed border-[#EAEAEA] rounded-2xl">Nenhum agendamento encontrado.</p>`;
-                return;
-            }
-
-            container.innerHTML = list.map(app => {
-                const pro = getProById(app.proId);
-                const svc = getServiceById(app.serviceId);
-                return `
-                    <div class="p-3.5 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-xs font-normal text-[#111111]">${escapeHtml(app.date)} às ${escapeHtml(app.time)} • ${escapeHtml(svc.name)}</p>
-                            <p class="text-[11px] text-[#737373]">${escapeHtml(app.clientName)} • com ${escapeHtml(pro.name)} • R$ ${escapeHtml(app.price)}</p>
-                        </div>
-                        ${getClientStatusBadge(app.status)}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        /* ================= CONTA DO CLIENTE ================= */
-        function openClientAccountModal() {
-            const m = document.getElementById('modal-client-account');
-            const loggedBox = document.getElementById('client-logged-in-box');
-            if (state.loggedClient) {
-                loggedBox.classList.remove('hidden');
-                document.getElementById('logged-client-name').textContent = state.loggedClient.name;
-                document.getElementById('logged-client-user').textContent = `@${state.loggedClient.username || 'cliente'} • ${state.loggedClient.phone || ''}`;
-            } else {
-                loggedBox.classList.add('hidden');
-            }
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-            lucide.createIcons();
-        }
-
-        function closeClientAccountModal() {
-            const m = document.getElementById('modal-client-account');
-            m.classList.add('hidden');
-            m.classList.remove('flex');
-        }
-
-        function switchClientAuthTab(tab) {
-            const isLogin = tab === 'login';
-            document.getElementById('tab-client-login').className = `py-1.5 rounded-full text-xs ${isLogin ? 'btn-brand' : 'text-[#737373]'}`;
-            document.getElementById('tab-client-register').className = `py-1.5 rounded-full text-xs ${!isLogin ? 'btn-brand' : 'text-[#737373]'}`;
-            document.getElementById('form-client-login').classList.toggle('hidden', !isLogin);
-            document.getElementById('form-client-register').classList.toggle('hidden', isLogin);
-        }
-
-        function finishClientLogin(c) {
-            state.loggedClient = { id: c.id, name: c.name, username: c.username || '', phone: c.phone || '' };
-            localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
-            document.getElementById('client-name').value = state.loggedClient.name;
-            document.getElementById('client-phone').value = state.loggedClient.phone;
-            closeClientAccountModal();
-            renderClientView();
-            showToast(`Bem-vindo(a), ${state.loggedClient.name}!`);
-        }
-
-        async function handleClientLogin(event) {
-            event.preventDefault();
-            const ident = document.getElementById('login-client-identifier').value.trim().toLowerCase();
-            const pin = document.getElementById('login-client-pin').value.trim();
-            const identDigits = ident.replace(/\D/g, '');
-
-            let pool = [];
-            if (dbConnected && sbClient) {
-                const { data, error } = await sbClient.from('clientes').select('id,nome_completo,usuario,whatsapp,senha_pin');
-                if (error) {
-                    showToast('Não foi possível validar o login agora. Tente novamente.');
-                    return;
-                }
-                pool = (data || []).map(c => ({ id: c.id, name: c.nome_completo, username: c.usuario || '', phone: c.whatsapp || '', pin: c.senha_pin || '' }));
-            } else {
-                pool = state.clientsRoster;
-            }
-
-            const match = pool.find(c =>
-                ((c.username || '').toLowerCase() === ident || (identDigits.length >= 8 && phoneKey(c.phone) === phoneKey(identDigits))) &&
-                c.pin && c.pin === pin
-            );
-            if (match) {
-                finishClientLogin(match);
-                return;
-            }
-            showToast('Usuário/WhatsApp ou PIN não encontrado.');
-        }
-
-        async function handleClientRegister(event) {
-            event.preventDefault();
-            const name = document.getElementById('reg-client-name').value.trim();
-            const username = document.getElementById('reg-client-username').value.trim().toLowerCase().replace(/\s+/g, '');
-            const phone = document.getElementById('reg-client-phone').value.trim();
-            const pin = document.getElementById('reg-client-pin').value.trim();
-
-            if (!phoneKey(phone)) { showToast('Informe um WhatsApp válido, com DDD.'); return; }
-            if (pin.length < 4) { showToast('O PIN precisa ter pelo menos 4 caracteres.'); return; }
-
-            const newClient = { id: newId('c'), name, username, phone, pin, notes: '', visits: 0 };
-
-            if (dbConnected && sbClient) {
-                const { data: dup, error: dupErr } = await sbClient.from('clientes').select('id').eq('usuario', username).limit(1);
-                if (dupErr) { showToast('Não foi possível criar a conta agora. Tente novamente.'); return; }
-                if (dup && dup.length) { showToast('Esse nome de usuário já existe. Escolha outro.'); return; }
-                const { error } = await sbClient.from('clientes').insert({
-                    id: newClient.id,
-                    nome_completo: name,
-                    usuario: username,
-                    senha_pin: pin,
-                    whatsapp: phone,
-                    observacoes: '',
-                    visitas: 0
-                });
-                if (error) { showToast('Erro ao salvar conta no banco: ' + error.message); return; }
-            } else if (state.clientsRoster.some(c => (c.username || '').toLowerCase() === username)) {
-                showToast('Esse nome de usuário já existe. Escolha outro.');
-                return;
-            }
-
-            state.clientsRoster.unshift(newClient);
-            saveLocalBackup();
-            finishClientLogin(newClient);
-            showToast('Conta criada com sucesso!');
-        }
-
-        function logoutClientAccount() {
-            state.loggedClient = null;
-            localStorage.removeItem(CLIENT_SESSION_KEY);
-            closeClientAccountModal();
-            renderClientView();
-            showToast('Você saiu da conta.');
-        }
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredClientPwaPrompt = e;
-        });
-
-        async function installClientPwa() {
-            if (deferredClientPwaPrompt) {
-                deferredClientPwaPrompt.prompt();
-                await deferredClientPwaPrompt.userChoice;
-                deferredClientPwaPrompt = null;
-                return;
-            }
-            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-            showToast(isIos
-                ? 'No iPhone (Safari), toque em Compartilhar e depois "Adicionar à Tela de Início".'
-                : 'No menu do navegador (⋮), toque em "Instalar aplicativo" ou "Adicionar à tela inicial".');
-        }
-
-        function showToast(msg) {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.classList.remove('opacity-0');
-            el.classList.add('opacity-100');
-            clearTimeout(window._toastT);
-            window._toastT = setTimeout(() => {
-                el.classList.remove('opacity-100');
-                el.classList.add('opacity-0');
-            }, 3200);
-        }
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            initSupabase();
-            checkDbStatus();
-            await loadFromSupabase();
-            renderClientView();
-            subscribeClientRealtime();
-            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
-            lucide.createIcons();
-
-            setInterval(async () => {
-                await loadFromSupabase();
-                renderClientView();
-            }, 8000);
-
-            document.addEventListener('visibilitychange', async () => {
-                if (!document.hidden) {
-                    await loadFromSupabase();
-                    renderClientView();
-                }
-            });
-
-            window.addEventListener('pageshow', async () => {
-                await loadFromSupabase();
-                renderClientView();
-            });
-
-            window.addEventListener('focus', async () => {
-                await loadFromSupabase();
-                renderClientView();
-            });
-
-            window.addEventListener('storage', async (e) => {
-                if (e.key === LOCAL_CFG_KEY || e.key === LOCAL_DATA_KEY) {
-                    await loadFromSupabase();
-                    renderClientView();
-                }
-            });
-        });
-    </script>
+<body>
+<main>
+  <h1 id="nm">Carregando…</h1>
+  <p class="m" id="hr"></p>
+  <p class="warn" id="off" hidden>O agendamento online está pausado no momento.</p>
+  <div id="flow">
+    <h2>Profissional</h2><div class="chips" id="pros"></div>
+    <h2>Serviço</h2><div class="chips" id="svcs"></div>
+    <h2>Data</h2><input type="date" id="day">
+    <h2>Horário</h2><div class="chips" id="slots"></div>
+    <h2>Seus dados</h2>
+    <input id="name" placeholder="Nome completo" autocomplete="name">
+    <input id="ph" type="tel" placeholder="WhatsApp com DDD" autocomplete="tel">
+    <select id="pay"><option>Pix</option><option>Cartão</option><option>Dinheiro</option></select>
+    <button class="go" id="go">Solicitar agendamento</button>
+  </div>
+  <h2>Meus agendamentos</h2>
+  <div id="mine" class="m">Digite seu WhatsApp acima para ver seus horários.</div>
+</main>
+<div id="t" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.9"></script>
+<script src="./config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+const SLOTS = ['09:00','10:00','11:00','14:00','15:00','16:00','17:00','18:00'];
+const STATUS = { pending: 'Aguardando aceite', confirmed: 'Confirmado', done: 'Concluído' };
+const S = { pro: null, svc: null, time: null, pros: [], svcs: [], taken: [], st: {} };
+
+function toast(m) {
+  const t = $('t'); t.textContent = m; t.style.display = 'block';
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = 'none', 5000);
+}
+function today() { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
+
+if (!window.CFG || CFG.key.includes('COLE_AQUI') || CFG.url.includes('SEU-PROJETO')) {
+  $('nm').textContent = 'Configuração pendente';
+  $('flow').hidden = true;
+  $('hr').textContent = 'Preencha a url e a key no arquivo config.js.';
+  throw new Error('config.js não preenchido');
+}
+const sb = supabase.createClient(CFG.url, CFG.key);
+
+async function load() {
+  const [a, b, c] = await Promise.all([
+    sb.from('studio').select('*').eq('id', 1).maybeSingle(),
+    sb.from('services').select('*').order('name'),
+    sb.from('professionals').select('*').order('name')
+  ]);
+  const err = a.error || b.error || c.error;
+  if (err) { toast('Sem conexão com o banco: ' + err.message); return; }
+  S.st = a.data || {}; S.svcs = b.data; S.pros = c.data;
+  if (!S.pros.some(p => p.id === S.pro)) S.pro = S.pros[0]?.id || null;
+  if (!S.svcs.some(s => s.id === S.svc)) S.svc = S.svcs[0]?.id || null;
+  await loadTaken();
+  render();
+}
+async function loadTaken() {
+  if (!S.pro) { S.taken = []; return; }
+  const { data, error } = await sb.rpc('taken', { p: S.pro, d: $('day').value });
+  S.taken = error ? [] : data.map(r => r.t);
+}
+function render() {
+  document.documentElement.style.setProperty('--c', S.st.color || '#1f3d36');
+  $('nm').textContent = S.st.name || 'Agendamento';
+  $('hr').textContent = S.st.hours || '';
+  $('off').hidden = S.st.online !== false;
+  $('go').disabled = S.st.online === false;
+  const chip = (k, id, label, on) => `<button class="chip${on ? ' on' : ''}" data-k="${k}" data-v="${esc(id)}">${esc(label)}</button>`;
+  $('pros').innerHTML = S.pros.map(p => chip('pro', p.id, p.name, p.id === S.pro)).join('') || '<span class="m">Nenhum profissional cadastrado.</span>';
+  $('svcs').innerHTML = S.svcs.map(s => chip('svc', s.id, `${s.name} · R$ ${Number(s.price).toFixed(0)}`, s.id === S.svc)).join('') || '<span class="m">Nenhum serviço cadastrado.</span>';
+
+  const d = new Date(), now = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  const blocked = t => S.taken.includes(t) || ($('day').value === today() && t <= now);
+  if (!S.time || blocked(S.time)) S.time = SLOTS.find(t => !blocked(t)) || null;
+  $('slots').innerHTML = SLOTS.map(t => `<button class="chip${t === S.time ? ' on' : ''}" data-k="time" data-v="${t}" ${blocked(t) ? 'disabled' : ''}>${t}</button>`).join('');
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-k]'); if (!b) return;
+  S[b.dataset.k] = b.dataset.v;
+  if (b.dataset.k === 'pro') { await loadTaken(); }
+  render();
+});
+$('day').addEventListener('change', async () => { await loadTaken(); render(); });
+
+async function loadMine() {
+  const ph = $('ph').value;
+  if (ph.replace(/\D/g, '').length < 10) return;
+  const { data, error } = await sb.rpc('mine', { ph });
+  if (error) { $('mine').textContent = 'Erro: ' + error.message; return; }
+  $('mine').innerHTML = data.length ? data.map(b => `<div class="row"><span class="tag ${esc(b.status)}">${STATUS[b.status] || esc(b.status)}</span>${esc(b.day.split('-').reverse().join('/'))} às ${esc(b.time)}<br>${esc(b.service_name || 'Serviço removido')} com ${esc(b.pro_name || 'profissional removido')}</div>`).join('') : 'Nenhum agendamento para este número.';
+}
+$('ph').addEventListener('input', loadMine);
+
+$('go').onclick = async () => {
+  const n = $('name').value.trim(), ph = $('ph').value.trim();
+  if (!S.pro || !S.svc || !S.time) return toast('Escolha profissional, serviço e horário.');
+  if (!n) return toast('Informe seu nome.');
+  if (ph.replace(/\D/g, '').length < 10) return toast('Informe o WhatsApp com DDD.');
+  $('go').disabled = true;
+  const { error } = await sb.rpc('book', { p: S.pro, s: S.svc, d: $('day').value, t: S.time, n, ph, pay: $('pay').value });
+  $('go').disabled = false;
+  if (error) {
+    toast(error.code === '23505' ? 'Esse horário acabou de ser ocupado. Escolha outro.' : 'Não foi possível agendar: ' + error.message);
+    await loadTaken(); render(); return;
+  }
+  toast('Solicitação enviada! Você verá a confirmação em "Meus agendamentos".');
+  S.time = null; await loadTaken(); render(); loadMine();
+};
+
+$('day').value = today(); $('day').min = today();
+load();
+setInterval(() => { load(); loadMine(); }, 10000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { load(); loadMine(); } });
+</script>
 </body>
 </html>
