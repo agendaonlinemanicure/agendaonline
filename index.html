@@ -472,6 +472,16 @@
             } catch (e) {}
         }
 
+        async function checkDbStatus() {
+            if (!dbConnected) {
+                console.warn('Supabase não conectado. window.SUPABASE_CONFIG =', window.SUPABASE_CONFIG);
+                showToast('Banco não conectado: os dados exibidos são só deste navegador.');
+                return;
+            }
+            const { error } = await sbClient.from('estabelecimentos').select('id').limit(1);
+            if (error) { console.error('Supabase leitura falhou:', error); showToast('Falha ao ler o banco: ' + error.message); }
+        }
+
         function initSupabase() {
             const cfg = window.SUPABASE_CONFIG;
             if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) return;
@@ -1122,6 +1132,7 @@
 
         window.addEventListener('DOMContentLoaded', async () => {
             initSupabase();
+            checkDbStatus();
             await loadFromSupabase();
             renderClientView();
             subscribeClientRealtime();

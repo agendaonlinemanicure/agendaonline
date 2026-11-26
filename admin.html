@@ -1120,6 +1120,30 @@
             } catch (e) {}
         }
 
+        /* Em update/delete o Supabase NÃO retorna erro quando a RLS bloqueia: ele só afeta 0 linhas.
+           Esta função detecta isso e transforma em erro visível. */
+        async function dbCheck(query) {
+            const { data, error } = await query.select();
+            if (error) return error;
+            if (Array.isArray(data) && data.length === 0) {
+                return { message: 'o banco não gravou nada (política RLS bloqueando ou registro inexistente). Rode o arquivo supabase_setup.sql.' };
+            }
+            return null;
+        }
+
+        async function checkDbStatus() {
+            if (!dbConnected) {
+                showToast('Banco NÃO conectado (config.js). Alterações ficam só neste navegador e não chegam ao app do cliente.');
+                console.warn('Supabase não conectado. window.SUPABASE_CONFIG =', window.SUPABASE_CONFIG);
+                return;
+            }
+            const { error } = await sbClient.from('estabelecimentos').select('id').limit(1);
+            if (error) {
+                showToast('Falha ao ler o banco: ' + error.message);
+                console.error('Supabase leitura falhou:', error);
+            }
+        }
+
         function initSupabase() {
             const cfg = window.SUPABASE_CONFIG;
             if (!cfg || !cfg.url || !cfg.anonKey || cfg.url.includes('COLE_AQUI')) return;
@@ -1652,7 +1676,7 @@
             state.latestConfirmationDataUrl = app.confirmationImage;
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('agendamentos').update({ status: 'confirmed' }).eq('id', id);
+                const error = await dbCheck(sbClient.from('agendamentos').update({ status: 'confirmed' }).eq('id', id));
                 if (error) showToast('Erro ao atualizar status no banco: ' + error.message);
             }
             renderProDashboard();
@@ -1664,7 +1688,7 @@
             state.appointments = state.appointments.filter(a => a.id !== id);
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('agendamentos').delete().eq('id', id);
+                const error = await dbCheck(sbClient.from('agendamentos').delete().eq('id', id));
                 if (error) showToast('Erro ao recusar no banco: ' + error.message);
             }
             renderProDashboard();
@@ -1675,7 +1699,7 @@
             state.appointments = state.appointments.filter(a => a.id !== id);
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('agendamentos').delete().eq('id', id);
+                const error = await dbCheck(sbClient.from('agendamentos').delete().eq('id', id));
                 if (error) showToast('Erro ao excluir no banco: ' + error.message);
             }
             renderProDashboard();
@@ -1689,7 +1713,7 @@
             app.status = app.status === 'done' ? 'confirmed' : 'done';
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('agendamentos').update({ status: app.status }).eq('id', id);
+                const error = await dbCheck(sbClient.from('agendamentos').update({ status: app.status }).eq('id', id));
                 if (error) showToast('Erro ao atualizar status: ' + error.message);
             }
             renderProDashboard();
@@ -1849,7 +1873,7 @@
             if (dbConnected && sbClient) {
                 const upd = { nome_completo: c.name, whatsapp: c.phone, observacoes: c.notes, visitas: c.visits };
                 if (c.pin) upd.senha_pin = c.pin;
-                const { error } = await sbClient.from('clientes').update(upd).eq('id', id);
+                const error = await dbCheck(sbClient.from('clientes').update(upd).eq('id', id));
                 if (error) showToast('Erro ao atualizar cliente: ' + error.message);
             }
             closeEditClientModal();
@@ -1861,7 +1885,7 @@
             state.clientsRoster = state.clientsRoster.filter(x => x.id !== id);
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('clientes').delete().eq('id', id);
+                const error = await dbCheck(sbClient.from('clientes').delete().eq('id', id));
                 if (error) showToast('Erro ao excluir cliente no banco: ' + error.message);
             }
             renderClientsRosterPage();
@@ -1943,9 +1967,9 @@
             s.duration = Number(document.getElementById('edit-service-duration').value) || 45;
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('servicos').update({
+                const error = await dbCheck(sbClient.from('servicos').update({
                     nome: s.name, categoria: s.specialty, preco: s.price, duracao_min: s.duration
-                }).eq('id', id);
+                }).eq('id', id));
                 if (error) showToast('Erro ao atualizar serviço: ' + error.message);
             }
             closeEditServiceModal();
@@ -1965,7 +1989,7 @@
             if (dbConnected && sbClient) {
                 await sbClient.from('profissional_servicos').delete().eq('servico_id', id);
                 // arquiva em vez de apagar: agendamentos antigos continuam mostrando o nome do serviço
-                const { error } = await sbClient.from('servicos').update({ ativo: false }).eq('id', id);
+                const error = await dbCheck(sbClient.from('servicos').update({ ativo: false }).eq('id', id));
                 if (error) showToast('Erro ao excluir serviço no banco: ' + error.message);
             }
             renderServicesCatalog();
@@ -2118,7 +2142,7 @@
             saveLocalBackupConfig();
 
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('profissionais').update({ nome: pro.name, especialidade: pro.specialty }).eq('id', proId);
+                const error = await dbCheck(sbClient.from('profissionais').update({ nome: pro.name, especialidade: pro.specialty }).eq('id', proId));
                 if (error) showToast('Erro ao atualizar profissional: ' + error.message);
                 await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
                 const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
@@ -2140,7 +2164,7 @@
             if (dbConnected && sbClient) {
                 await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
                 // arquiva em vez de apagar: agendamentos antigos continuam mostrando o nome do profissional
-                const { error } = await sbClient.from('profissionais').update({ ativo: false }).eq('id', proId);
+                const error = await dbCheck(sbClient.from('profissionais').update({ ativo: false }).eq('id', proId));
                 if (error) showToast('Erro ao excluir profissional no banco: ' + error.message);
             }
             renderProfessionalsSection();
@@ -2215,7 +2239,7 @@
             pm.detail = document.getElementById('edit-pay-detail').value.trim();
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('formas_pagamento').update({ nome: pm.label, descricao: pm.detail }).eq('id', id);
+                const error = await dbCheck(sbClient.from('formas_pagamento').update({ nome: pm.label, descricao: pm.detail }).eq('id', id));
                 if (error) showToast('Erro ao atualizar pagamento: ' + error.message);
             }
             closeEditPaymentModal();
@@ -2227,7 +2251,7 @@
             state.paymentMethods = state.paymentMethods.filter(p => p.id !== id);
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('formas_pagamento').delete().eq('id', id);
+                const error = await dbCheck(sbClient.from('formas_pagamento').delete().eq('id', id));
                 if (error) showToast('Erro ao excluir pagamento no banco: ' + error.message);
             }
             renderPaymentMethodsSection();
@@ -2314,7 +2338,7 @@
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 const col = windowKey === 'dayBefore' ? 'lembrete_24h_enviado' : 'lembrete_1h_enviado';
-                const { error } = await sbClient.from('agendamentos').update({ [col]: true }).eq('id', appId);
+                const error = await dbCheck(sbClient.from('agendamentos').update({ [col]: true }).eq('id', appId));
                 if (error) showToast('Erro ao registrar lembrete enviado: ' + error.message);
             }
             renderRemindersSection();
@@ -2449,11 +2473,11 @@
                     app.confirmationImage = generateConfirmationImageDataUrl(app);
                     saveLocalBackupConfig();
                     if (dbConnected && sbClient) {
-                        const { error } = await sbClient.from('agendamentos').update({
+                        const error = await dbCheck(sbClient.from('agendamentos').update({
                             cliente_nome: app.clientName, cliente_whatsapp: app.clientPhone, profissional_id: app.proId,
                             servico_id: app.serviceId, data_agendamento: app.date, hora_agendamento: app.time,
                             valor: app.price, forma_pagamento: app.paymentMethod, status: app.status
-                        }).eq('id', existingId);
+                        }).eq('id', existingId));
                         if (error) showToast('Erro ao atualizar agendamento: ' + error.message);
                     }
                 }
@@ -2519,6 +2543,7 @@
         window.addEventListener('DOMContentLoaded', async () => {
             updateDateLabel();
             initSupabase();
+            checkDbStatus();
             await loadFromSupabase(false);
             applyBrandingAndTheme();
             renderProDashboard();
