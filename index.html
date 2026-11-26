@@ -182,7 +182,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input id="client-name" type="text" placeholder="Seu nome completo"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
-                        <input id="client-phone" type="tel" placeholder="WhatsApp (ex: 11 99999-9999)"
+                        <input id="client-phone" type="tel" oninput="renderClientAppointments()" placeholder="WhatsApp (ex: 11 99999-9999)"
                                class="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEAEA] bg-white text-sm font-light focus:outline-none focus:border-[#111111]">
                     </div>
                 </div>
@@ -326,7 +326,45 @@
             return new Date(now.getTime() - off * 60000).toISOString().slice(0, 10);
         }
 
-        const TODAY_ISO = getTodayLocalIso();
+        let TODAY_ISO = getTodayLocalIso();
+
+        /* ===== Helpers compartilhados (idênticos no admin e no app do cliente) ===== */
+        function escapeHtml(v) {
+            return String(v === null || v === undefined ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function newId(prefix) {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+            return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        }
+        function normTime(t) {
+            const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+            return m ? m[1].padStart(2, '0') + ':' + m[2] : String(t || '');
+        }
+        function timeToMin(t) {
+            const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+            return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+        }
+        function phoneKey(p) {
+            const d = String(p || '').replace(/\D/g, '');
+            return d.length >= 8 ? d.slice(-8) : '';
+        }
+        function normalizeAppointment(a) {
+            return {
+                ...a,
+                time: normTime(a.time),
+                remindersSent: a.remindersSent || { dayBefore: false, hourBefore: false },
+                confirmationImage: a.confirmationImage || null
+            };
+        }
+        function apptDuration(a) {
+            return getProServiceInfo(getProById(a.proId), a.serviceId).duration || 45;
+        }
+        function hasTimeConflict(list, proId, date, startMin, durMin, ignoreId) {
+            return list.some(a => a.id !== ignoreId && a.proId === proId && a.date === date &&
+                startMin < timeToMin(a.time) + apptDuration(a) && timeToMin(a.time) < startMin + durMin);
+        }
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
         const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
         const CLIENT_SESSION_KEY = 'atelier_client_session_v1';
@@ -337,6 +375,7 @@
         let dbConnected = false;
         let deferredClientPwaPrompt = null;
         let syncInFlight = false;
+        let resyncQueued = false;
 
         const state = {
             studioOnline: true,
@@ -365,6 +404,8 @@
                 { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
                 { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
             ],
+            archivedServices: [],
+            archivedProfessionals: [],
             clientsRoster: [],
             paymentMethods: [
                 { id: 'pay-pix', label: 'Pix', detail: 'Transferência instantânea', enabled: true },
@@ -396,7 +437,7 @@
                     if (Array.isArray(d.professionals)) state.professionals = d.professionals;
                     if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
                     if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
-                    if (Array.isArray(d.appointments)) state.appointments = d.appointments;
+                    if (Array.isArray(d.appointments)) state.appointments = d.appointments.map(normalizeAppointment);
                 }
 
                 const rawSession = localStorage.getItem(CLIENT_SESSION_KEY);
@@ -409,7 +450,10 @@
 
         function saveLocalBackup() {
             try {
+                let prevCfg = {};
+                try { prevCfg = JSON.parse(localStorage.getItem(LOCAL_CFG_KEY) || '{}') || {}; } catch (e) {}
                 localStorage.setItem(LOCAL_CFG_KEY, JSON.stringify({
+                    ...prevCfg, // preserva campos que só o admin conhece (ex.: reminderRules)
                     studioName: state.studioName,
                     studioNiche: state.studioNiche,
                     studioOnline: state.studioOnline,
@@ -421,9 +465,9 @@
                 localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify({
                     servicesCatalog: state.servicesCatalog,
                     professionals: state.professionals,
-                    clientsRoster: state.clientsRoster,
+                    clientsRoster: dbConnected ? [] : state.clientsRoster, // nunca guardar PINs vindos do banco
                     paymentMethods: state.paymentMethods,
-                    appointments: state.appointments
+                    appointments: state.appointments.map(ap => ({ ...ap, confirmationImage: null }))
                 }));
             } catch (e) {}
         }
@@ -437,8 +481,9 @@
         }
 
         async function loadFromSupabase() {
-            if (syncInFlight) return;
+            if (syncInFlight) { resyncQueued = true; return; }
             syncInFlight = true;
+            TODAY_ISO = getTodayLocalIso();
 
             try {
                 if (!dbConnected || !sbClient) {
@@ -463,23 +508,25 @@
                     };
                 }
 
-                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*').eq('ativo', true);
+                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*');
                 if (!svcErr && Array.isArray(svcs)) {
-                    state.servicesCatalog = svcs.map(s => ({
-                        id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
-                    }));
+                    const mapSvc = s => ({ id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0 });
+                    state.servicesCatalog = svcs.filter(s => s.ativo !== false).map(mapSvc);
+                    state.archivedServices = svcs.filter(s => s.ativo === false).map(mapSvc);
                 }
 
-                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*').eq('ativo', true);
+                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*');
                 const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
                 if (!proErr && Array.isArray(pros)) {
-                    state.professionals = pros.map(p => {
+                    const mapPro = p => {
                         const rates = {};
                         (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
                             rates[ps.servico_id] = { enabled: true, price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
                         });
                         return { id: p.id, name: p.nome, specialty: p.especialidade || 'Profissional', serviceRates: rates };
-                    });
+                    };
+                    state.professionals = pros.filter(p => p.ativo !== false).map(mapPro);
+                    state.archivedProfessionals = pros.filter(p => p.ativo === false).map(mapPro);
                 }
 
                 const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
@@ -487,15 +534,7 @@
                     state.paymentMethods = pays.map(pm => ({ id: pm.id, label: pm.nome, detail: pm.descricao || '', enabled: !!pm.ativo }));
                 }
 
-                const { data: clis, error: cliErr } = await sbClient.from('clientes').select('*');
-                if (!cliErr && Array.isArray(clis)) {
-                    state.clientsRoster = clis.map(c => ({
-                        id: c.id, name: c.nome_completo, username: c.usuario || '', pin: c.senha_pin || '',
-                        phone: c.whatsapp || '', notes: c.observacoes || '', visits: Number(c.visitas) || 0
-                    }));
-                }
-
-                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
+                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('data_agendamento', { ascending: true }).order('hora_agendamento', { ascending: true });
                 if (!appErr && Array.isArray(apps)) {
                     state.appointments = apps.map(a => ({
                         id: a.id,
@@ -504,10 +543,11 @@
                         proId: a.profissional_id,
                         serviceId: a.servico_id,
                         date: a.data_agendamento,
-                        time: a.hora_agendamento,
+                        time: normTime(a.hora_agendamento),
                         price: Number(a.valor) || 0,
                         paymentMethod: a.forma_pagamento || 'Pix',
-                        status: a.status || 'pending'
+                        status: a.status || 'pending',
+                        remindersSent: { dayBefore: !!a.lembrete_24h_enviado, hourBefore: !!a.lembrete_1h_enviado }
                     }));
                 }
 
@@ -516,13 +556,17 @@
                 console.warn('Erro ao sincronizar app cliente:', e);
             } finally {
                 syncInFlight = false;
+                if (resyncQueued) {
+                    resyncQueued = false;
+                    loadFromSupabase().then(() => renderClientView());
+                }
             }
         }
 
         function subscribeClientRealtime() {
             if (!dbConnected || !sbClient || !sbClient.channel) return;
             try {
-                const tables = ['agendamentos', 'estabelecimentos', 'servicos', 'profissionais', 'profissional_servicos', 'formas_pagamento', 'clientes'];
+                const tables = ['agendamentos', 'estabelecimentos', 'servicos', 'profissionais', 'profissional_servicos', 'formas_pagamento'];
                 const channel = sbClient.channel('client-full-realtime');
                 tables.forEach(tbl => {
                     channel.on('postgres_changes', { event: '*', schema: 'public', table: tbl }, async () => {
@@ -555,7 +599,7 @@
             const initial = (state.studioName || 'A').trim().charAt(0).toUpperCase() || 'A';
             const logoEl = document.getElementById('client-header-logo');
             if (state.studioLogo) {
-                logoEl.innerHTML = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                logoEl.innerHTML = `<img src="${escapeHtml(state.studioLogo)}" alt="Logo" class="w-full h-full object-cover">`;
             } else {
                 logoEl.textContent = initial;
             }
@@ -571,10 +615,16 @@
         }
 
         function getProById(id) {
-            return state.professionals.find(p => p.id === id) || state.professionals[0] || { id: 'p1', name: 'Profissional', specialty: '', serviceRates: {} };
+            const found = state.professionals.find(p => p.id === id) || state.archivedProfessionals.find(p => p.id === id);
+            if (found) return found;
+            if (id) return { id, name: 'Profissional removido', specialty: '', serviceRates: {} };
+            return state.professionals[0] || { id: null, name: 'Profissional', specialty: '', serviceRates: {} };
         }
         function getServiceById(id) {
-            return state.servicesCatalog.find(s => s.id === id) || state.servicesCatalog[0] || { id: 's1', name: 'Serviço', specialty: '', duration: 45, price: 0 };
+            const found = state.servicesCatalog.find(s => s.id === id) || state.archivedServices.find(s => s.id === id);
+            if (found) return found;
+            if (id) return { id, name: 'Serviço removido', specialty: '', duration: 45, price: 0 };
+            return state.servicesCatalog[0] || { id: null, name: 'Serviço', specialty: '', duration: 45, price: 0 };
         }
         function getProServiceInfo(pro, serviceId) {
             const base = getServiceById(serviceId);
@@ -605,7 +655,8 @@
             ensureValidSelections();
 
             const dateInput = document.getElementById('client-date');
-            if (!dateInput.value) dateInput.value = state.selectedDate || TODAY_ISO;
+            dateInput.min = TODAY_ISO;
+            if (!dateInput.value || dateInput.value < TODAY_ISO) dateInput.value = TODAY_ISO;
             state.selectedDate = dateInput.value || TODAY_ISO;
 
             if (state.loggedClient) {
@@ -646,10 +697,10 @@
                     <button type="button" onclick="selectClientPro('${p.id}')"
                             class="p-4 rounded-2xl border text-left transition-all ${active ? 'border-[#111111] btn-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm font-normal">${p.name}</span>
+                            <span class="text-sm font-normal">${escapeHtml(p.name)}</span>
                             <span class="text-[11px] ${active ? 'text-white/75' : 'text-[#737373]'}">${count} serviço(s)</span>
                         </div>
-                        <p class="text-xs mt-1 ${active ? 'text-white/80' : 'text-[#737373]'}">${p.specialty || 'Profissional'}</p>
+                        <p class="text-xs mt-1 ${active ? 'text-white/80' : 'text-[#737373]'}">${escapeHtml(p.specialty || 'Profissional')}</p>
                     </button>
                 `;
             }).join('');
@@ -678,8 +729,8 @@
                     <button type="button" onclick="selectClientService('${s.id}')"
                             class="w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all ${active ? 'border-[#111111] surface-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
                         <div>
-                            <p class="text-sm font-normal text-[#111111]">${s.name}</p>
-                            <p class="text-xs text-[#737373]">${info.duration} min${s.specialty ? ` • ${s.specialty}` : ''}</p>
+                            <p class="text-sm font-normal text-[#111111]">${escapeHtml(s.name)}</p>
+                            <p class="text-xs text-[#737373]">${info.duration} min${s.specialty ? ` • ${escapeHtml(s.specialty)}` : ''}</p>
                         </div>
                         <span class="text-sm font-normal text-[#111111]">R$ ${info.price}</span>
                     </button>
@@ -690,21 +741,30 @@
         function selectClientService(svcId) {
             state.selectedServiceId = svcId;
             renderClientServiceList();
+            renderClientTimeSlots(); // a duração do serviço muda quais horários ficam livres
             updateClientTotal();
         }
 
         function renderClientTimeSlots() {
             const dateVal = document.getElementById('client-date').value || TODAY_ISO;
             state.selectedDate = dateVal;
-            const bookedTimes = new Set(
-                state.appointments
-                    .filter(a => a.proId === state.selectedProId && a.date === dateVal)
-                    .map(a => a.time)
-            );
+            const pro = getProById(state.selectedProId);
+            const dur = getProServiceInfo(pro, state.selectedServiceId).duration || 45;
+            const now = new Date();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            const isTaken = (slot) => {
+                const start = timeToMin(slot);
+                if (dateVal < TODAY_ISO) return true;
+                if (dateVal === TODAY_ISO && start <= nowMin) return true;
+                return hasTimeConflict(state.appointments, state.selectedProId, dateVal, start, dur, null);
+            };
+            if (!state.selectedTime || isTaken(state.selectedTime)) {
+                state.selectedTime = TIME_SLOTS.find(s => !isTaken(s)) || null;
+            }
 
             const container = document.getElementById('client-time-slots');
             container.innerHTML = TIME_SLOTS.map(slot => {
-                const taken = bookedTimes.has(slot);
+                const taken = isTaken(slot);
                 const active = !taken && state.selectedTime === slot;
                 return `
                     <button type="button" ${taken ? 'disabled' : `onclick="selectClientTime('${slot}')"`}
@@ -733,10 +793,10 @@
             container.innerHTML = list.map(pm => {
                 const active = pm.label === state.selectedPayment;
                 return `
-                    <button type="button" onclick="selectClientPayment('${pm.label.replace(/'/g, "\\'")}')"
+                    <button type="button" data-label="${escapeHtml(pm.label)}" onclick="selectClientPayment(this.dataset.label)"
                             class="p-3 rounded-xl border text-left transition-colors ${active ? 'border-[#111111] btn-brand' : 'border-[#EAEAEA] bg-white hover:border-[#111111]'}">
-                        <span class="block text-xs font-normal">${pm.label}</span>
-                        <span class="block text-[10px] mt-0.5 ${active ? 'text-white/75' : 'text-[#737373]'}">${pm.detail || ''}</span>
+                        <span class="block text-xs font-normal">${escapeHtml(pm.label)}</span>
+                        <span class="block text-[10px] mt-0.5 ${active ? 'text-white/75' : 'text-[#737373]'}">${escapeHtml(pm.detail || '')}</span>
                     </button>
                 `;
             }).join('');
@@ -755,7 +815,10 @@
             document.getElementById('client-total-meta').textContent = `${svc.name} • ${info.duration} min • com ${pro.name}`;
         }
 
+        let bookingInFlight = false;
+
         async function submitClientBooking() {
+            if (bookingInFlight) return;
             if (!state.studioOnline) {
                 showToast('O agendamento online está pausado no momento.');
                 return;
@@ -764,64 +827,99 @@
             const phone = document.getElementById('client-phone').value.trim();
             const date = document.getElementById('client-date').value || TODAY_ISO;
 
-            if (!name) {
-                showToast('Por favor, informe seu nome.');
-                return;
-            }
-            if (!phone) {
-                showToast('Por favor, informe seu WhatsApp.');
-                return;
-            }
+            if (!name) { showToast('Por favor, informe seu nome.'); return; }
+            if (!phone) { showToast('Por favor, informe seu WhatsApp.'); return; }
+            if (!phoneKey(phone)) { showToast('Informe um WhatsApp válido, com DDD.'); return; }
+            if (date < TODAY_ISO) { showToast('Escolha uma data a partir de hoje.'); return; }
 
             const pro = getProById(state.selectedProId);
             const svc = getServiceById(state.selectedServiceId);
             const info = getProServiceInfo(pro, svc.id);
-            const item = {
-                id: 'a-' + Date.now(),
-                clientName: name,
-                clientPhone: phone,
-                proId: pro.id,
-                serviceId: svc.id,
-                date,
-                time: state.selectedTime,
-                price: info.price,
-                paymentMethod: state.selectedPayment,
-                status: 'pending'
-            };
+            if (!pro.id || !svc.id) { showToast('Nenhum profissional ou serviço disponível no momento.'); return; }
+            if (!info.available) { showToast('Este profissional não realiza o serviço selecionado.'); return; }
+            if (!state.selectedTime) { showToast('Não há horários livres nesta data. Escolha outro dia.'); return; }
 
-            state.appointments.push(item);
-            saveLocalBackup();
-
-            if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('agendamentos').insert({
-                    id: item.id,
-                    cliente_nome: item.clientName,
-                    cliente_whatsapp: item.clientPhone,
-                    profissional_id: item.proId,
-                    servico_id: item.serviceId,
-                    data_agendamento: item.date,
-                    hora_agendamento: item.time,
-                    valor: item.price,
-                    forma_pagamento: item.paymentMethod,
-                    status: 'pending'
-                });
-                if (error) {
-                    showToast('Erro ao enviar solicitação: ' + error.message);
-                }
+            const startMin = timeToMin(state.selectedTime);
+            const now = new Date();
+            if (date === TODAY_ISO && startMin <= now.getHours() * 60 + now.getMinutes()) {
+                showToast('Esse horário já passou. Escolha outro.');
+                renderClientTimeSlots();
+                return;
             }
 
-            document.getElementById('client-booking-flow').classList.add('hidden');
-            const box = document.getElementById('client-success-box');
-            box.classList.remove('hidden');
-            document.getElementById('client-success-summary').textContent =
-                `${name}, sua solicitação de ${svc.name} com ${pro.name} para ${date} às ${item.time} (${item.paymentMethod} • R$ ${item.price}) foi enviada.`;
+            bookingInFlight = true;
+            try {
+                const item = {
+                    id: newId('a'),
+                    clientName: name,
+                    clientPhone: phone,
+                    proId: pro.id,
+                    serviceId: svc.id,
+                    date,
+                    time: state.selectedTime,
+                    price: info.price,
+                    paymentMethod: state.selectedPayment,
+                    status: 'pending',
+                    remindersSent: { dayBefore: false, hourBefore: false }
+                };
 
-            const waMsg = `Olá! Solicitei um agendamento no ${state.studioName}: ${svc.name} com ${pro.name} em ${date} às ${item.time} (${item.paymentMethod}). Nome: ${name}.`;
-            document.getElementById('client-whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+                if (dbConnected && sbClient) {
+                    // revalida no banco: outro cliente (ou o admin) pode ter ocupado o horário nos últimos segundos
+                    const { data: rows, error: chkErr } = await sbClient.from('agendamentos')
+                        .select('id,profissional_id,servico_id,data_agendamento,hora_agendamento')
+                        .eq('profissional_id', pro.id).eq('data_agendamento', date);
+                    if (!chkErr && Array.isArray(rows)) {
+                        const remote = rows.map(r => ({ id: r.id, proId: r.profissional_id, serviceId: r.servico_id, date: r.data_agendamento, time: normTime(r.hora_agendamento) }));
+                        if (hasTimeConflict(remote, pro.id, date, startMin, info.duration, null)) {
+                            await loadFromSupabase();
+                            renderClientView();
+                            showToast('Esse horário acabou de ser ocupado. Escolha outro.');
+                            return;
+                        }
+                    }
+                    const { error } = await sbClient.from('agendamentos').insert({
+                        id: item.id,
+                        cliente_nome: item.clientName,
+                        cliente_whatsapp: item.clientPhone,
+                        profissional_id: item.proId,
+                        servico_id: item.serviceId,
+                        data_agendamento: item.date,
+                        hora_agendamento: item.time,
+                        valor: item.price,
+                        forma_pagamento: item.paymentMethod,
+                        status: 'pending'
+                    });
+                    if (error) {
+                        // não mostra "enviado" se o banco recusou
+                        showToast(error.code === '23505'
+                            ? 'Esse horário acabou de ser ocupado. Escolha outro.'
+                            : 'Não foi possível enviar a solicitação: ' + error.message);
+                        return;
+                    }
+                } else if (hasTimeConflict(state.appointments, pro.id, date, startMin, info.duration, null)) {
+                    showToast('Esse horário já está ocupado. Escolha outro.');
+                    renderClientTimeSlots();
+                    return;
+                }
 
-            renderClientAppointments();
-            lucide.createIcons();
-            showToast('Solicitação enviada ao profissional!');
+                state.appointments.push(item);
+                saveLocalBackup();
+
+                document.getElementById('client-booking-flow').classList.add('hidden');
+                const box = document.getElementById('client-success-box');
+                box.classList.remove('hidden');
+                document.getElementById('client-success-summary').textContent =
+                    `${name}, sua solicitação de ${svc.name} com ${pro.name} para ${date} às ${item.time} (${item.paymentMethod} • R$ ${item.price}) foi enviada.`;
+
+                const waMsg = `Olá! Solicitei um agendamento no ${state.studioName}: ${svc.name} com ${pro.name} em ${date} às ${item.time} (${item.paymentMethod}). Nome: ${name}.`;
+                document.getElementById('client-whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+
+                renderClientAppointments();
+                lucide.createIcons();
+                showToast('Solicitação enviada ao profissional!');
+            } finally {
+                bookingInFlight = false;
+            }
         }
 
         function resetClientBookingForm() {
@@ -844,13 +942,18 @@
         function renderClientAppointments() {
             const container = document.getElementById('client-my-appointments');
             const countEl = document.getElementById('client-appointments-count');
-            const typedName = (document.getElementById('client-name')?.value || '').trim().toLowerCase();
-            const loggedName = (state.loggedClient?.name || '').trim().toLowerCase();
-            const filterName = typedName || loggedName;
+            const typedPhone = document.getElementById('client-phone')?.value || '';
+            const key = phoneKey(typedPhone) || phoneKey(state.loggedClient?.phone);
 
-            const list = filterName
-                ? state.appointments.filter(a => (a.clientName || '').trim().toLowerCase().includes(filterName))
-                : state.appointments;
+            if (!key) {
+                countEl.textContent = '0';
+                container.innerHTML = `<p class="text-xs text-[#737373] py-4 text-center border border-dashed border-[#EAEAEA] rounded-2xl">Informe seu WhatsApp (ou entre na conta) para ver seus agendamentos.</p>`;
+                return;
+            }
+
+            const list = state.appointments
+                .filter(a => phoneKey(a.clientPhone) === key)
+                .sort((x, y) => `${x.date} ${x.time}`.localeCompare(`${y.date} ${y.time}`));
 
             countEl.textContent = `${list.length}`;
             if (!list.length) {
@@ -864,8 +967,8 @@
                 return `
                     <div class="p-3.5 rounded-2xl border border-[#EAEAEA] bg-white flex items-center justify-between gap-3">
                         <div>
-                            <p class="text-xs font-normal text-[#111111]">${app.date} às ${app.time} • ${svc.name}</p>
-                            <p class="text-[11px] text-[#737373]">${app.clientName} • com ${pro.name} • R$ ${app.price}</p>
+                            <p class="text-xs font-normal text-[#111111]">${escapeHtml(app.date)} às ${escapeHtml(app.time)} • ${escapeHtml(svc.name)}</p>
+                            <p class="text-[11px] text-[#737373]">${escapeHtml(app.clientName)} • com ${escapeHtml(pro.name)} • R$ ${escapeHtml(app.price)}</p>
                         </div>
                         ${getClientStatusBadge(app.status)}
                     </div>
@@ -903,72 +1006,61 @@
             document.getElementById('form-client-register').classList.toggle('hidden', isLogin);
         }
 
+        function finishClientLogin(c) {
+            state.loggedClient = { id: c.id, name: c.name, username: c.username || '', phone: c.phone || '' };
+            localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
+            document.getElementById('client-name').value = state.loggedClient.name;
+            document.getElementById('client-phone').value = state.loggedClient.phone;
+            closeClientAccountModal();
+            renderClientView();
+            showToast(`Bem-vindo(a), ${state.loggedClient.name}!`);
+        }
+
         async function handleClientLogin(event) {
             event.preventDefault();
             const ident = document.getElementById('login-client-identifier').value.trim().toLowerCase();
             const pin = document.getElementById('login-client-pin').value.trim();
+            const identDigits = ident.replace(/\D/g, '');
 
+            let pool = [];
             if (dbConnected && sbClient) {
-                const { data } = await sbClient.from('clientes').select('*');
-                if (Array.isArray(data)) {
-                    const match = data.find(c =>
-                        ((c.usuario || '').toLowerCase() === ident || (c.whatsapp || '').replace(/\D/g, '') === ident.replace(/\D/g, '')) &&
-                        (c.senha_pin || '') === pin
-                    );
-                    if (match) {
-                        state.loggedClient = { id: match.id, name: match.nome_completo, username: match.usuario || '', phone: match.whatsapp || '' };
-                        localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
-                        document.getElementById('client-name').value = state.loggedClient.name;
-                        document.getElementById('client-phone').value = state.loggedClient.phone;
-                        closeClientAccountModal();
-                        renderClientView();
-                        showToast(`Bem-vindo(a), ${state.loggedClient.name}!`);
-                        return;
-                    }
+                const { data, error } = await sbClient.from('clientes').select('id,nome_completo,usuario,whatsapp,senha_pin');
+                if (error) {
+                    showToast('Não foi possível validar o login agora. Tente novamente.');
+                    return;
                 }
+                pool = (data || []).map(c => ({ id: c.id, name: c.nome_completo, username: c.usuario || '', phone: c.whatsapp || '', pin: c.senha_pin || '' }));
+            } else {
+                pool = state.clientsRoster;
             }
 
-            const localMatch = state.clientsRoster.find(c =>
-                ((c.username || '').toLowerCase() === ident || (c.phone || '').replace(/\D/g, '') === ident.replace(/\D/g, '')) &&
-                (!c.pin || c.pin === pin)
+            const match = pool.find(c =>
+                ((c.username || '').toLowerCase() === ident || (identDigits.length >= 8 && phoneKey(c.phone) === phoneKey(identDigits))) &&
+                c.pin && c.pin === pin
             );
-            if (localMatch) {
-                state.loggedClient = { id: localMatch.id, name: localMatch.name, username: localMatch.username || '', phone: localMatch.phone || '' };
-                localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
-                document.getElementById('client-name').value = state.loggedClient.name;
-                document.getElementById('client-phone').value = state.loggedClient.phone;
-                closeClientAccountModal();
-                renderClientView();
-                showToast(`Bem-vindo(a), ${state.loggedClient.name}!`);
+            if (match) {
+                finishClientLogin(match);
                 return;
             }
-
             showToast('Usuário/WhatsApp ou PIN não encontrado.');
         }
 
         async function handleClientRegister(event) {
             event.preventDefault();
             const name = document.getElementById('reg-client-name').value.trim();
-            const username = document.getElementById('reg-client-username').value.trim();
+            const username = document.getElementById('reg-client-username').value.trim().toLowerCase().replace(/\s+/g, '');
             const phone = document.getElementById('reg-client-phone').value.trim();
             const pin = document.getElementById('reg-client-pin').value.trim();
 
-            const newClient = {
-                id: 'c-' + Date.now(),
-                name,
-                username,
-                phone,
-                pin,
-                notes: '',
-                visits: 0
-            };
+            if (!phoneKey(phone)) { showToast('Informe um WhatsApp válido, com DDD.'); return; }
+            if (pin.length < 4) { showToast('O PIN precisa ter pelo menos 4 caracteres.'); return; }
 
-            state.clientsRoster.unshift(newClient);
-            state.loggedClient = { id: newClient.id, name, username, phone };
-            localStorage.setItem(CLIENT_SESSION_KEY, JSON.stringify(state.loggedClient));
-            saveLocalBackup();
+            const newClient = { id: newId('c'), name, username, phone, pin, notes: '', visits: 0 };
 
             if (dbConnected && sbClient) {
+                const { data: dup, error: dupErr } = await sbClient.from('clientes').select('id').eq('usuario', username).limit(1);
+                if (dupErr) { showToast('Não foi possível criar a conta agora. Tente novamente.'); return; }
+                if (dup && dup.length) { showToast('Esse nome de usuário já existe. Escolha outro.'); return; }
                 const { error } = await sbClient.from('clientes').insert({
                     id: newClient.id,
                     nome_completo: name,
@@ -978,13 +1070,15 @@
                     observacoes: '',
                     visitas: 0
                 });
-                if (error) showToast('Erro ao salvar conta no banco: ' + error.message);
+                if (error) { showToast('Erro ao salvar conta no banco: ' + error.message); return; }
+            } else if (state.clientsRoster.some(c => (c.username || '').toLowerCase() === username)) {
+                showToast('Esse nome de usuário já existe. Escolha outro.');
+                return;
             }
 
-            document.getElementById('client-name').value = name;
-            document.getElementById('client-phone').value = phone;
-            closeClientAccountModal();
-            renderClientView();
+            state.clientsRoster.unshift(newClient);
+            saveLocalBackup();
+            finishClientLogin(newClient);
             showToast('Conta criada com sucesso!');
         }
 

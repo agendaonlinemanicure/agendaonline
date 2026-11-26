@@ -377,6 +377,11 @@
                             <input id="roster-client-notes" type="text" placeholder="Ex: Prefere esmalte nude ou corte social"
                                    class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
                         </div>
+                        <div>
+                            <label class="block text-[11px] text-[#737373] mb-1">PIN de acesso do cliente (opcional)</label>
+                            <input id="roster-client-pin" type="text" inputmode="numeric" minlength="4" placeholder="Em branco = gerar automaticamente"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] bg-white text-xs focus:outline-none focus:border-[#111111]">
+                        </div>
                         <button type="submit" class="w-full py-2.5 rounded-xl btn-brand text-xs font-normal hover:opacity-90 transition-opacity">
                             Adicionar à cartela
                         </button>
@@ -805,6 +810,10 @@
                     <input id="edit-client-notes" type="text" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
                 <div>
+                    <label class="block text-xs text-[#737373] mb-1">PIN de acesso do cliente</label>
+                    <input id="edit-client-pin" type="text" inputmode="numeric" minlength="4" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
+                </div>
+                <div>
                     <label class="block text-xs text-[#737373] mb-1">Quantidade de atendimentos</label>
                     <input id="edit-client-visits" type="number" min="0" class="w-full px-3.5 py-2 rounded-xl border border-[#EAEAEA] text-xs">
                 </div>
@@ -956,7 +965,45 @@
             return new Date(now.getTime() - off * 60000).toISOString().slice(0, 10);
         }
 
-        const TODAY_ISO = getTodayLocalIso();
+        let TODAY_ISO = getTodayLocalIso();
+
+        /* ===== Helpers compartilhados (idênticos no admin e no app do cliente) ===== */
+        function escapeHtml(v) {
+            return String(v === null || v === undefined ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function newId(prefix) {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+            return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        }
+        function normTime(t) {
+            const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+            return m ? m[1].padStart(2, '0') + ':' + m[2] : String(t || '');
+        }
+        function timeToMin(t) {
+            const m = String(t || '').match(/^(\d{1,2}):(\d{2})/);
+            return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+        }
+        function phoneKey(p) {
+            const d = String(p || '').replace(/\D/g, '');
+            return d.length >= 8 ? d.slice(-8) : '';
+        }
+        function normalizeAppointment(a) {
+            return {
+                ...a,
+                time: normTime(a.time),
+                remindersSent: a.remindersSent || { dayBefore: false, hourBefore: false },
+                confirmationImage: a.confirmationImage || null
+            };
+        }
+        function apptDuration(a) {
+            return getProServiceInfo(getProById(a.proId), a.serviceId).duration || 45;
+        }
+        function hasTimeConflict(list, proId, date, startMin, durMin, ignoreId) {
+            return list.some(a => a.id !== ignoreId && a.proId === proId && a.date === date &&
+                startMin < timeToMin(a.time) + apptDuration(a) && timeToMin(a.time) < startMin + durMin);
+        }
         const LOCAL_CFG_KEY = 'atelier_studio_cfg_v1';
         const LOCAL_DATA_KEY = 'atelier_studio_data_v1';
         const DEFAULT_COVER = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80';
@@ -964,6 +1011,7 @@
         let dbConnected = false;
         let knownPendingIds = new Set();
         let syncInFlight = false;
+        let resyncQueued = false;
 
         const state = {
             scheduleMode: 'day',
@@ -992,6 +1040,8 @@
                 { id: 'p1', name: 'Rafael Mendes', specialty: 'Profissional', serviceRates: { s1: { enabled: true, price: 130, duration: 50 }, s2: { enabled: true, price: 75, duration: 40 } } },
                 { id: 'p2', name: 'Camila Rocha', specialty: 'Profissional', serviceRates: { s3: { enabled: true, price: 100, duration: 60 } } },
             ],
+            archivedServices: [],
+            archivedProfessionals: [],
             expandedProCards: {},
             clientsRoster: [
                 { id: 'c1', name: 'Lucas Tavares', phone: '(11) 98111-2233', notes: 'Prefere degradê navalhado na lateral', visits: 8 },
@@ -1042,7 +1092,7 @@
                     if (Array.isArray(d.professionals)) state.professionals = d.professionals;
                     if (Array.isArray(d.clientsRoster)) state.clientsRoster = d.clientsRoster;
                     if (Array.isArray(d.paymentMethods)) state.paymentMethods = d.paymentMethods;
-                    if (Array.isArray(d.appointments)) state.appointments = d.appointments;
+                    if (Array.isArray(d.appointments)) state.appointments = d.appointments.map(normalizeAppointment);
                 }
             } catch (e) {}
         }
@@ -1064,7 +1114,8 @@
                     professionals: state.professionals,
                     clientsRoster: state.clientsRoster,
                     paymentMethods: state.paymentMethods,
-                    appointments: state.appointments
+                    // imagens de confirmação (base64) estouram a cota do localStorage; são regeneradas sob demanda
+                    appointments: state.appointments.map(ap => ({ ...ap, confirmationImage: null }))
                 }));
             } catch (e) {}
         }
@@ -1078,8 +1129,9 @@
         }
 
         async function loadFromSupabase(notifyNewPending = false) {
-            if (syncInFlight) return;
+            if (syncInFlight) { resyncQueued = true; return; }
             syncInFlight = true;
+            TODAY_ISO = getTodayLocalIso();
 
             try {
                 if (!dbConnected || !sbClient) {
@@ -1106,23 +1158,25 @@
                     state.reminderRules.hourBefore = typeof est.lembrete_1h === 'boolean' ? est.lembrete_1h : true;
                 }
 
-                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*').eq('ativo', true);
+                const { data: svcs, error: svcErr } = await sbClient.from('servicos').select('*');
                 if (!svcErr && Array.isArray(svcs)) {
-                    state.servicesCatalog = svcs.map(s => ({
-                        id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0
-                    }));
+                    const mapSvc = s => ({ id: s.id, name: s.nome, specialty: s.categoria || 'Atendimento', duration: Number(s.duracao_min) || 45, price: Number(s.preco) || 0 });
+                    state.servicesCatalog = svcs.filter(s => s.ativo !== false).map(mapSvc);
+                    state.archivedServices = svcs.filter(s => s.ativo === false).map(mapSvc);
                 }
 
-                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*').eq('ativo', true);
+                const { data: pros, error: proErr } = await sbClient.from('profissionais').select('*');
                 const { data: proSvcs } = await sbClient.from('profissional_servicos').select('*');
                 if (!proErr && Array.isArray(pros)) {
-                    state.professionals = pros.map(p => {
+                    const mapPro = p => {
                         const rates = {};
                         (proSvcs || []).filter(ps => ps.profissional_id === p.id && ps.habilitado).forEach(ps => {
                             rates[ps.servico_id] = { enabled: true, price: Number(ps.preco) || 0, duration: Number(ps.duracao_min) || 45 };
                         });
                         return { id: p.id, name: p.nome, specialty: p.especialidade || 'Profissional', serviceRates: rates };
-                    });
+                    };
+                    state.professionals = pros.filter(p => p.ativo !== false).map(mapPro);
+                    state.archivedProfessionals = pros.filter(p => p.ativo === false).map(mapPro);
                 }
 
                 const { data: pays, error: payErr } = await sbClient.from('formas_pagamento').select('*');
@@ -1132,10 +1186,10 @@
 
                 const { data: clis, error: cliErr } = await sbClient.from('clientes').select('*');
                 if (!cliErr && Array.isArray(clis)) {
-                    state.clientsRoster = clis.map(c => ({ id: c.id, name: c.nome_completo, phone: c.whatsapp, notes: c.observacoes || '', visits: Number(c.visitas) || 0 }));
+                    state.clientsRoster = clis.map(c => ({ id: c.id, name: c.nome_completo, username: c.usuario || '', pin: c.senha_pin || '', phone: c.whatsapp || '', notes: c.observacoes || '', visits: Number(c.visitas) || 0 }));
                 }
 
-                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('hora_agendamento', { ascending: true });
+                const { data: apps, error: appErr } = await sbClient.from('agendamentos').select('*').order('data_agendamento', { ascending: true }).order('hora_agendamento', { ascending: true });
                 if (!appErr && Array.isArray(apps)) {
                     const prevMap = new Map(state.appointments.map(a => [a.id, a]));
                     state.appointments = apps.map(a => {
@@ -1147,7 +1201,7 @@
                             proId: a.profissional_id,
                             serviceId: a.servico_id,
                             date: a.data_agendamento,
-                            time: a.hora_agendamento,
+                            time: normTime(a.hora_agendamento),
                             price: Number(a.valor) || 0,
                             paymentMethod: a.forma_pagamento || 'Pix',
                             status: a.status || 'pending',
@@ -1171,6 +1225,10 @@
                 console.warn('Erro ao carregar do Supabase:', err);
             } finally {
                 syncInFlight = false;
+                if (resyncQueued) {
+                    resyncQueued = false;
+                    loadFromSupabase(notifyNewPending).then(() => { applyBrandingAndTheme(); renderProDashboard(); });
+                }
             }
         }
 
@@ -1241,7 +1299,7 @@
             const cfgLogo = document.getElementById('cfg-logo-preview');
 
             if (state.studioLogo) {
-                const imgHtml = `<img src="${state.studioLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                const imgHtml = `<img src="${escapeHtml(state.studioLogo)}" alt="Logo" class="w-full h-full object-cover">`;
                 headerLogo.innerHTML = imgHtml;
                 coverLogo.innerHTML = imgHtml;
                 if (cfgLogo) cfgLogo.innerHTML = imgHtml;
@@ -1367,8 +1425,8 @@
                 <button type="button" onclick="closeProDrawer(); navigateProSection('clients');"
                         class="w-full text-left px-2.5 py-2 rounded-lg hover:opacity-80 flex items-center justify-between gap-2">
                     <div class="min-w-0">
-                        <p class="text-xs text-[#111111] truncate">${c.name}</p>
-                        <p class="text-[10px] text-[#737373] truncate">${c.phone}</p>
+                        <p class="text-xs text-[#111111] truncate">${escapeHtml(c.name)}</p>
+                        <p class="text-[10px] text-[#737373] truncate">${escapeHtml(c.phone)}</p>
                     </div>
                     <span class="text-[10px] text-[#737373] shrink-0">${c.visits}x</span>
                 </button>
@@ -1425,10 +1483,14 @@
         }
 
         function getProById(id) {
-            return state.professionals.find(p => p.id === id) || { name: 'Profissional', specialty: '', serviceRates: {} };
+            return state.professionals.find(p => p.id === id)
+                || state.archivedProfessionals.find(p => p.id === id)
+                || { id, name: id ? 'Profissional removido' : 'Profissional', specialty: '', serviceRates: {} };
         }
         function getServiceById(id) {
-            return state.servicesCatalog.find(s => s.id === id) || { name: 'Serviço', specialty: '', duration: 45, price: 0 };
+            return state.servicesCatalog.find(s => s.id === id)
+                || state.archivedServices.find(s => s.id === id)
+                || { id, name: id ? 'Serviço removido' : 'Serviço', specialty: '', duration: 45, price: 0 };
         }
         function getProServiceInfo(pro, serviceId) {
             const base = getServiceById(serviceId);
@@ -1478,7 +1540,7 @@
         function updateProStats() {
             const list = state.appointments.filter(a => a.date === TODAY_ISO || a.status === 'pending');
             const confirmed = list.filter(a => a.status === 'confirmed' || a.status === 'done').length;
-            const revenue = list.reduce((sum, item) => sum + Number(item.price || 0), 0);
+            const revenue = list.filter(i => i.status !== 'pending').reduce((sum, item) => sum + Number(item.price || 0), 0);
             document.getElementById('stat-count').textContent = list.length;
             document.getElementById('stat-confirmed').textContent = confirmed;
             document.getElementById('stat-revenue').textContent = `R$ ${revenue}`;
@@ -1517,15 +1579,15 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border ${pendingClass}">
                         <div class="flex items-start sm:items-center gap-4">
                             <div class="w-16 shrink-0">
-                                <span class="block text-sm font-normal text-[#111111]">${app.time}</span>
-                                <span class="block text-[10px] text-[#737373]">${app.date || ''}</span>
+                                <span class="block text-sm font-normal text-[#111111]">${escapeHtml(app.time)}</span>
+                                <span class="block text-[10px] text-[#737373]">${escapeHtml(app.date || '')}</span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-sm font-normal text-[#111111]">${app.clientName}</span>
-                                    <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${pro.name}</span>
+                                    <span class="text-sm font-normal text-[#111111]">${escapeHtml(app.clientName)}</span>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${escapeHtml(pro.name)}</span>
                                 </div>
-                                <p class="text-xs text-[#737373] mt-0.5">${svc.name} • ${app.paymentMethod}</p>
+                                <p class="text-xs text-[#737373] mt-0.5">${escapeHtml(svc.name)} • ${escapeHtml(app.paymentMethod)}</p>
                             </div>
                         </div>
                         <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
@@ -1568,8 +1630,8 @@
                         <div class="space-y-2">
                             ${apps.length ? apps.map(a => `
                                 <div class="p-2.5 rounded-xl border border-[#EAEAEA] bg-white text-xs space-y-1.5">
-                                    <p class="font-normal">${a.time} · ${a.clientName}</p>
-                                    <p class="text-[11px] text-[#737373]">${getServiceById(a.serviceId).name}</p>
+                                    <p class="font-normal">${escapeHtml(a.time)} · ${escapeHtml(a.clientName)}</p>
+                                    <p class="text-[11px] text-[#737373]">${escapeHtml(getServiceById(a.serviceId).name)}</p>
                                     <div class="flex items-center gap-2 pt-1">
                                         <button onclick="openEditAppointmentModal('${a.id}')" class="text-[10px] underline text-[#111111]">Editar</button>
                                         <button onclick="deleteAppointment('${a.id}')" class="text-[10px] underline text-[#737373]">Excluir</button>
@@ -1671,6 +1733,7 @@
 
         function openConfirmationModal(appId) {
             const app = state.appointments.find(a => a.id === appId);
+            if (app && !app.confirmationImage) app.confirmationImage = generateConfirmationImageDataUrl(app);
             const url = (app && app.confirmationImage) || state.latestConfirmationDataUrl;
             if (!url) return;
             state.latestConfirmationDataUrl = url;
@@ -1702,8 +1765,9 @@
             document.getElementById('clients-roster-cards').innerHTML = state.clientsRoster.map(c => `
                 <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <p class="text-sm font-normal text-[#111111]">${c.name}</p>
-                        <p class="text-xs text-[#737373]">${c.phone}${c.notes ? ` • ${c.notes}` : ''}</p>
+                        <p class="text-sm font-normal text-[#111111]">${escapeHtml(c.name)}</p>
+                        <p class="text-xs text-[#737373]">${escapeHtml(c.phone)}${c.notes ? ` • ${escapeHtml(c.notes)}` : ''}</p>
+                        <p class="text-[11px] text-[#A3A3A3] mt-0.5">${c.username ? `Usuário: ${escapeHtml(c.username)} • ` : ''}Acesso: telefone + PIN ${escapeHtml(c.pin || 'não definido')}</p>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-xs px-3 py-1 rounded-full surface-brand border border-[#EAEAEA]">${c.visits} atendimento(s)</span>
@@ -1716,9 +1780,15 @@
 
         async function addClientToRoster(event) {
             event.preventDefault();
+            const name = document.getElementById('roster-client-name').value.trim();
+            const pinInput = (document.getElementById('roster-client-pin').value || '').trim();
+            const pin = pinInput || String(Math.floor(1000 + Math.random() * 9000));
+            const slug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '') || 'cliente';
             const item = {
-                id: 'c-' + Date.now(),
-                name: document.getElementById('roster-client-name').value.trim(),
+                id: newId('c'),
+                name,
+                username: slug + Math.floor(10 + Math.random() * 90),
+                pin,
                 phone: document.getElementById('roster-client-phone').value.trim(),
                 notes: document.getElementById('roster-client-notes').value.trim(),
                 visits: 0
@@ -1727,14 +1797,20 @@
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 const { error } = await sbClient.from('clientes').insert({
-                    id: item.id, nome_completo: item.name, usuario: item.name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 99),
-                    senha_pin: '1234', whatsapp: item.phone, observacoes: item.notes, visitas: 0
+                    id: item.id, nome_completo: item.name, usuario: item.username,
+                    senha_pin: item.pin, whatsapp: item.phone, observacoes: item.notes, visitas: 0
                 });
-                if (error) showToast('Erro ao salvar cliente no banco: ' + error.message);
+                if (error) {
+                    state.clientsRoster = state.clientsRoster.filter(c => c.id !== item.id);
+                    saveLocalBackupConfig();
+                    renderClientsRosterPage();
+                    showToast('Erro ao salvar cliente no banco: ' + error.message);
+                    return;
+                }
             }
             event.target.reset();
             renderClientsRosterPage();
-            showToast(`${item.name} adicionado à cartela.`);
+            showToast(`${item.name} adicionado. Acesso no app: telefone + PIN ${item.pin}`);
         }
 
         function openEditClientModal(id) {
@@ -1744,6 +1820,7 @@
             document.getElementById('edit-client-name').value = c.name;
             document.getElementById('edit-client-phone').value = c.phone;
             document.getElementById('edit-client-notes').value = c.notes || '';
+            document.getElementById('edit-client-pin').value = c.pin || '';
             document.getElementById('edit-client-visits').value = c.visits || 0;
             const m = document.getElementById('modal-edit-client');
             m.classList.remove('hidden');
@@ -1766,11 +1843,13 @@
             c.phone = document.getElementById('edit-client-phone').value.trim();
             c.notes = document.getElementById('edit-client-notes').value.trim();
             c.visits = Number(document.getElementById('edit-client-visits').value) || 0;
+            const newPin = (document.getElementById('edit-client-pin').value || '').trim();
+            if (newPin) c.pin = newPin;
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
-                const { error } = await sbClient.from('clientes').update({
-                    nome_completo: c.name, whatsapp: c.phone, observacoes: c.notes, visitas: c.visits
-                }).eq('id', id);
+                const upd = { nome_completo: c.name, whatsapp: c.phone, observacoes: c.notes, visitas: c.visits };
+                if (c.pin) upd.senha_pin = c.pin;
+                const { error } = await sbClient.from('clientes').update(upd).eq('id', id);
                 if (error) showToast('Erro ao atualizar cliente: ' + error.message);
             }
             closeEditClientModal();
@@ -1795,8 +1874,8 @@
                 <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-normal text-[#111111]">${s.name}</span>
-                            ${s.specialty ? `<span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${s.specialty}</span>` : ''}
+                            <span class="text-sm font-normal text-[#111111]">${escapeHtml(s.name)}</span>
+                            ${s.specialty ? `<span class="text-[11px] px-2 py-0.5 rounded-full surface-brand border border-[#EAEAEA] text-[#737373]">${escapeHtml(s.specialty)}</span>` : ''}
                         </div>
                         <p class="text-xs text-[#737373] mt-0.5">Duração base: ${s.duration} min</p>
                     </div>
@@ -1812,7 +1891,7 @@
         async function addServiceCatalogItem(event) {
             event.preventDefault();
             const item = {
-                id: 's-' + Date.now(),
+                id: newId('s'),
                 name: document.getElementById('new-service-name').value.trim(),
                 specialty: document.getElementById('new-service-specialty').value.trim() || 'Atendimento',
                 price: Number(document.getElementById('new-service-price').value),
@@ -1876,6 +1955,8 @@
         }
 
         async function deleteServiceCatalogItem(id) {
+            const removedSvc = state.servicesCatalog.find(x => x.id === id);
+            if (removedSvc) state.archivedServices.push(removedSvc);
             state.servicesCatalog = state.servicesCatalog.filter(x => x.id !== id);
             state.professionals.forEach(p => {
                 if (p.serviceRates && p.serviceRates[id]) delete p.serviceRates[id];
@@ -1883,7 +1964,8 @@
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('profissional_servicos').delete().eq('servico_id', id);
-                const { error } = await sbClient.from('servicos').delete().eq('id', id);
+                // arquiva em vez de apagar: agendamentos antigos continuam mostrando o nome do serviço
+                const { error } = await sbClient.from('servicos').update({ ativo: false }).eq('id', id);
                 if (error) showToast('Erro ao excluir serviço no banco: ' + error.message);
             }
             renderServicesCatalog();
@@ -1903,7 +1985,7 @@
                             <button type="button" onclick="state.expandedProCards['${pro.id}']=!state.expandedProCards['${pro.id}']; renderProfessionalsSection();"
                                     class="flex-1 text-left flex items-center justify-between gap-2">
                                 <div>
-                                    <p class="text-sm font-normal text-[#111111]">${pro.name}</p>
+                                    <p class="text-sm font-normal text-[#111111]">${escapeHtml(pro.name)}</p>
                                     <p class="text-[11px] text-[#737373]">${enabled.length} serviço(s) na tabela</p>
                                 </div>
                                 <i data-lucide="chevron-down" class="w-4 h-4 text-[#737373] ${isExpanded ? 'rotate-180' : ''}"></i>
@@ -1914,7 +1996,7 @@
                             </div>
                         </div>
                         <div class="${isExpanded ? 'block' : 'hidden'} px-4 pb-4 pt-2 border-t border-[#EAEAEA] surface-brand space-y-1.5">
-                            ${enabled.map(([svcId, cfg]) => `<div class="flex justify-between text-xs"><span>${getServiceById(svcId).name}</span><span>R$ ${cfg.price} · ${cfg.duration}m</span></div>`).join('') || `<p class="text-xs text-[#737373]">Sem serviços vinculados.</p>`}
+                            ${enabled.map(([svcId, cfg]) => `<div class="flex justify-between text-xs"><span>${escapeHtml(getServiceById(svcId).name)}</span><span>R$ ${cfg.price} · ${cfg.duration}m</span></div>`).join('') || `<p class="text-xs text-[#737373]">Sem serviços vinculados.</p>`}
                         </div>
                     </div>
                 `;
@@ -1926,7 +2008,7 @@
             document.getElementById('pro-services-matrix').innerHTML = state.servicesCatalog.map(svc => `
                 <div class="p-3 rounded-xl border border-[#EAEAEA] bg-white space-y-2">
                     <label class="flex items-center justify-between text-xs cursor-pointer">
-                        <span class="flex items-center gap-2"><input type="checkbox" class="pro-svc-check accent-[#111111]" data-svc-id="${svc.id}" onchange="document.getElementById('pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)"><span>${svc.name}</span></span>
+                        <span class="flex items-center gap-2"><input type="checkbox" class="pro-svc-check accent-[#111111]" data-svc-id="${svc.id}" onchange="document.getElementById('pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)"><span>${escapeHtml(svc.name)}</span></span>
                         <span class="text-[11px] text-[#737373]">R$ ${svc.price}</span>
                     </label>
                     <div id="pro-svc-fields-${svc.id}" class="hidden grid grid-cols-2 gap-2">
@@ -1941,7 +2023,7 @@
             event.preventDefault();
             const name = document.getElementById('pro-form-name').value.trim();
             const specialty = document.getElementById('pro-form-specialty').value.trim() || 'Profissional';
-            const proId = 'p-' + Date.now();
+            const proId = newId('p');
             const serviceRates = {};
 
             document.querySelectorAll('.pro-svc-check').forEach(chk => {
@@ -1961,7 +2043,7 @@
                 const { error } = await sbClient.from('profissionais').insert({ id: proId, nome: name, especialidade: specialty, ativo: true });
                 if (error) showToast('Erro ao salvar profissional no banco: ' + error.message);
                 const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
-                    id: `ps-${Date.now()}-${idx}`, profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
+                    id: newId('ps'), profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
                 }));
                 if (rows.length) await sbClient.from('profissional_servicos').insert(rows);
             }
@@ -1990,7 +2072,7 @@
                             <span class="flex items-center gap-2">
                                 <input type="checkbox" ${checked ? 'checked' : ''} class="edit-pro-svc-check accent-[#111111]" data-svc-id="${svc.id}"
                                        onchange="document.getElementById('edit-pro-svc-fields-${svc.id}').classList.toggle('hidden', !this.checked)">
-                                <span>${svc.name}</span>
+                                <span>${escapeHtml(svc.name)}</span>
                             </span>
                             <span class="text-[11px] text-[#737373]">R$ ${svc.price}</span>
                         </label>
@@ -2040,7 +2122,7 @@
                 if (error) showToast('Erro ao atualizar profissional: ' + error.message);
                 await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
                 const rows = Object.entries(serviceRates).map(([svcId, cfg], idx) => ({
-                    id: `ps-${Date.now()}-${idx}`, profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
+                    id: newId('ps'), profissional_id: proId, servico_id: svcId, preco: cfg.price, duracao_min: cfg.duration, habilitado: true
                 }));
                 if (rows.length) await sbClient.from('profissional_servicos').insert(rows);
             }
@@ -2051,11 +2133,14 @@
         }
 
         async function deleteProfessional(proId) {
+            const removedPro = state.professionals.find(p => p.id === proId);
+            if (removedPro) state.archivedProfessionals.push(removedPro);
             state.professionals = state.professionals.filter(p => p.id !== proId);
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 await sbClient.from('profissional_servicos').delete().eq('profissional_id', proId);
-                const { error } = await sbClient.from('profissionais').delete().eq('id', proId);
+                // arquiva em vez de apagar: agendamentos antigos continuam mostrando o nome do profissional
+                const { error } = await sbClient.from('profissionais').update({ ativo: false }).eq('id', proId);
                 if (error) showToast('Erro ao excluir profissional no banco: ' + error.message);
             }
             renderProfessionalsSection();
@@ -2068,8 +2153,8 @@
                 <div class="p-4 rounded-2xl border space-y-3 ${pm.enabled ? 'border-[#111111] bg-white' : 'border-[#EAEAEA] surface-brand opacity-70'}">
                     <div class="flex items-start justify-between gap-2">
                         <div>
-                            <p class="text-sm font-normal text-[#111111]">${pm.label}</p>
-                            <p class="text-xs text-[#737373]">${pm.detail || ''}</p>
+                            <p class="text-sm font-normal text-[#111111]">${escapeHtml(pm.label)}</p>
+                            <p class="text-xs text-[#737373]">${escapeHtml(pm.detail || '')}</p>
                         </div>
                         <button type="button" onclick="togglePaymentMethod('${pm.id}')"
                                 class="text-[11px] px-2.5 py-1 rounded-full ${pm.enabled ? 'btn-brand' : 'bg-[#EAEAEA] text-[#737373]'}">
@@ -2087,7 +2172,7 @@
         async function addPaymentMethod(event) {
             event.preventDefault();
             const item = {
-                id: 'pay-' + Date.now(),
+                id: newId('pay'),
                 label: document.getElementById('new-pay-label').value.trim(),
                 detail: document.getElementById('new-pay-detail').value.trim(),
                 enabled: true
@@ -2166,7 +2251,7 @@
             const now = new Date();
             const due = [];
             state.appointments.forEach(app => {
-                if (app.status === 'done') return;
+                if (app.status === 'done' || app.status === 'pending') return;
                 const [y, m, d] = (app.date || TODAY_ISO).split('-').map(Number);
                 const [hh, mm] = (app.time || '09:00').split(':').map(Number);
                 const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
@@ -2206,8 +2291,8 @@
                 <div class="p-4 rounded-2xl border border-[#EAEAEA] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <span class="text-[11px] px-2.5 py-0.5 rounded-full surface-brand border border-[#EAEAEA]">${item.label}</span>
-                        <p class="text-sm font-normal text-[#111111] mt-1">${item.app.clientName} • ${item.app.time}</p>
-                        <p class="text-xs text-[#737373]">${getServiceById(item.app.serviceId).name} com ${getProById(item.app.proId).name}</p>
+                        <p class="text-sm font-normal text-[#111111] mt-1">${escapeHtml(item.app.clientName)} • ${escapeHtml(item.app.time)}</p>
+                        <p class="text-xs text-[#737373]">${escapeHtml(getServiceById(item.app.serviceId).name)} com ${escapeHtml(getProById(item.app.proId).name)}</p>
                     </div>
                     <button onclick="sendWhatsAppReminder('${item.appId}','${item.windowKey}')" class="px-3.5 py-1.5 rounded-full text-xs btn-brand">
                         ${item.sent ? 'Reenviar WhatsApp' : 'Enviar WhatsApp'}
@@ -2224,11 +2309,13 @@
             const digits = String(app.clientPhone || '').replace(/\D/g, '');
             const wa = digits ? (digits.startsWith('55') ? digits : `55${digits}`) : '';
             window.open(wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+            app.remindersSent = app.remindersSent || { dayBefore: false, hourBefore: false };
             app.remindersSent[windowKey] = true;
             saveLocalBackupConfig();
             if (dbConnected && sbClient) {
                 const col = windowKey === 'dayBefore' ? 'lembrete_24h_enviado' : 'lembrete_1h_enviado';
-                await sbClient.from('agendamentos').update({ [col]: true }).eq('id', appId);
+                const { error } = await sbClient.from('agendamentos').update({ [col]: true }).eq('id', appId);
+                if (error) showToast('Erro ao registrar lembrete enviado: ' + error.message);
             }
             renderRemindersSection();
         }
@@ -2248,11 +2335,12 @@
             const weekEndIso = weekEnd.toISOString().slice(0, 10);
             const monthPrefix = TODAY_ISO.slice(0, 7);
 
-            const apps = state.reportPeriod === 'day'
+            const periodApps = state.reportPeriod === 'day'
                 ? state.appointments.filter(a => a.date === TODAY_ISO)
                 : state.reportPeriod === 'week'
                     ? state.appointments.filter(a => a.date >= TODAY_ISO && a.date <= weekEndIso)
                     : state.appointments.filter(a => (a.date || '').startsWith(monthPrefix));
+            const apps = periodApps.filter(a => a.status !== 'pending');
 
             const total = apps.length;
             const rev = apps.reduce((s, a) => s + Number(a.price || 0), 0);
@@ -2268,7 +2356,7 @@
                 const pct = rev ? Math.round((pRev / rev) * 100) : 0;
                 return `
                     <div class="space-y-1">
-                        <div class="flex justify-between text-xs"><span>${pro.name}</span><span>${pApps.length} atend. • R$ ${pRev}</span></div>
+                        <div class="flex justify-between text-xs"><span>${escapeHtml(pro.name)}</span><span>${pApps.length} atend. • R$ ${pRev}</span></div>
                         <div class="w-full h-1.5 rounded-full bg-[#F2F2F2] overflow-hidden"><div class="h-full btn-brand" style="width:${pct}%"></div></div>
                     </div>
                 `;
@@ -2277,10 +2365,10 @@
 
         /* ================= MODAL CRIAR / EDITAR AGENDAMENTO ================= */
         function populateAppointmentSelects() {
-            document.getElementById('input-pro-select').innerHTML = state.professionals.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            document.getElementById('input-service-select').innerHTML = state.servicesCatalog.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            document.getElementById('input-pro-select').innerHTML = state.professionals.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
+            document.getElementById('input-service-select').innerHTML = state.servicesCatalog.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
             const activePay = state.paymentMethods.filter(m => m.enabled);
-            document.getElementById('input-payment').innerHTML = (activePay.length ? activePay : state.paymentMethods).map(m => `<option value="${m.label}">${m.label}</option>`).join('');
+            document.getElementById('input-payment').innerHTML = (activePay.length ? activePay : state.paymentMethods).map(m => `<option value="${escapeHtml(m.label)}">${escapeHtml(m.label)}</option>`).join('');
         }
 
         function openNewAppointmentModal() {
@@ -2338,15 +2426,21 @@
             const existingId = document.getElementById('input-app-id').value;
             const payload = {
                 clientName: document.getElementById('input-client-name').value.trim(),
-                clientPhone: document.getElementById('input-client-phone').value.trim() || '11999990000',
+                clientPhone: document.getElementById('input-client-phone').value.trim(),
                 proId: document.getElementById('input-pro-select').value,
                 serviceId: document.getElementById('input-service-select').value,
                 date: document.getElementById('input-date').value,
-                time: document.getElementById('input-time').value,
+                time: normTime(document.getElementById('input-time').value),
                 price: Number(document.getElementById('input-price').value) || 0,
                 paymentMethod: document.getElementById('input-payment').value || 'Pix',
                 status: document.getElementById('input-status').value || 'confirmed'
             };
+
+            const durNeeded = getProServiceInfo(getProById(payload.proId), payload.serviceId).duration || 45;
+            if (hasTimeConflict(state.appointments, payload.proId, payload.date, timeToMin(payload.time), durNeeded, existingId || null)
+                && !confirm('Este profissional já tem um atendimento que se sobrepõe a esse horário. Salvar mesmo assim?')) {
+                return;
+            }
 
             if (existingId) {
                 const app = state.appointments.find(a => a.id === existingId);
@@ -2366,7 +2460,7 @@
                 showToast('Agendamento atualizado.');
             } else {
                 const item = {
-                    id: 'a-' + Date.now(), ...payload,
+                    id: newId('a'), ...payload,
                     remindersSent: { dayBefore: false, hourBefore: false }, confirmationImage: null
                 };
                 item.confirmationImage = generateConfirmationImageDataUrl(item);
@@ -2378,7 +2472,11 @@
                         servico_id: item.serviceId, data_agendamento: item.date, hora_agendamento: item.time, valor: item.price,
                         forma_pagamento: item.paymentMethod, status: item.status
                     });
-                    if (error) showToast('Erro ao salvar agendamento no banco: ' + error.message);
+                    if (error) {
+                        state.appointments = state.appointments.filter(x => x.id !== item.id);
+                        saveLocalBackupConfig();
+                        showToast('Erro ao salvar agendamento no banco: ' + error.message);
+                    }
                 }
                 showToast('Agendamento adicionado.');
             }
